@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apache HTTPD - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .subtitle {
+    font-family: 'Caveat', cursive;
+    color: #047857;
+    font-size: 20px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: inline-block;
+    margin: 2px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .code-block {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 6px 10px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">🌐 Apache HTTPD — Part 1</div>
+  <div class="subtitle">Core Concepts, Installation, DNS Mapping & SSL Configuration</div>
+
+  <!-- 1. Introduction to Web Servers -->
+  <h2 class="sec-heading">1. Introduction to Web Servers</h2>
+  <h3 class="subsec-heading">What is a Web Server?</h3>
+  <p>A web server is software that receives requests from clients (usually web browsers) and sends back web content such as:</p>
+  <div class="two-col" style="margin-top: 4px;">
+    <ul>
+      <li>HTML</li>
+      <li>CSS</li>
+      <li>JavaScript</li>
+    </ul>
+    <ul>
+      <li>Images</li>
+      <li>Videos</li>
+      <li>Other static files</li>
+    </ul>
+  </div>
+  <p>Communication generally happens using:</p>
+  <ul>
+    <li><strong>HTTP</strong> — Hypertext Transfer Protocol</li>
+    <li><strong>HTTPS</strong> — HTTP Secure, which uses TLS encryption</li>
+  </ul>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Basic Working</h3>
+    <div class="ascii-tree" style="text-align: center;">┌─────────────────┐
+│  Client/Browser │
+└────────┬────────┘
+         │
+         │ HTTP Request
+         │ Port 80
+         ▼
+┌─────────────────────┐
+│  Apache Web Server  │
+│      (HTTPD)        │
+└──────────┬──────────┘
+           │
+           │ Fetches requested file
+           ▼
+┌─────────────────────┐
+│    Document Root    │
+│    /var/www/html    │
+└─────────────────────┘
+           │
+           ▼
+      HTTP Response
+      HTML / CSS / JS</div>
+  </div>
+
+  <h3 class="subsec-heading">Example</h3>
+  <p>When a user enters: <span class="code-inline">http://example.com</span> the browser sends a request to the web server.</p>
+  <p>Apache receives the request, finds the required content, and sends it back to the browser.</p>
+
+  <!-- 2. Local Hosting vs Production Hosting -->
+  <h2 class="sec-heading">2. Local Hosting vs Production Hosting</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Local File</h3>
+      <p>If you open an HTML file directly from your computer:</p>
+      <span class="code-block" style="font-size:12px;">file:///home/user/index.html</span>
+      <p>the browser is accessing the file directly from the local filesystem. This is not the same as hosting a website publicly.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Production Hosting</h3>
+      <p>To make a website accessible through the Internet:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">Internet</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Public IP / Domain</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Web Server</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Website Files</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <p>A server must:</p>
+  <ul style="font-size: 14.5px;">
+    <li>Be connected to the Internet.</li>
+    <li>Have a reachable public IP or domain.</li>
+    <li>Run web-server software.</li>
+    <li>Listen on the required network ports.</li>
+    <li>Allow traffic through its firewall/security rules.</li>
+  </ul>
+
+  <!-- 3. What is HTTPD? -->
+  <h2 class="sec-heading">3. What is HTTPD?</h2>
+  <p>HTTPD stands for <span class="highlight">HTTP Daemon</span>.</p>
+  <ul style="margin-top:0;">
+    <li><strong>HTTP</strong> → Hypertext Transfer Protocol</li>
+    <li><strong>D</strong> → Daemon</li>
+  </ul>
+  <p>A daemon is a background process that continuously runs and waits for incoming requests.<br>
+  Apache is commonly referred to as: <strong>Apache HTTPD</strong></p>
+
+  <h3 class="subsec-heading">Important Ports</h3>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Protocol</th><th>Port</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>HTTP</strong></td><td>80</td><td>Normal web traffic</td></tr>
+      <tr><td><strong>HTTPS</strong></td><td>443</td><td>Encrypted web traffic</td></tr>
+      <tr><td><strong>SSH</strong></td><td>22</td><td>Remote server administration</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">Remember</span>
+    HTTP → 80 &nbsp;|&nbsp; HTTPS → 443 &nbsp;|&nbsp; SSH → 22
+  </div>
+
+  <!-- 4. Apache in Production -->
+  <h2 class="sec-heading">4. Apache in Production</h2>
+  <p>Apache HTTPD can be used for several purposes.</p>
+
+  <h3 class="subsec-heading">4.1 Static Website Hosting</h3>
+  <p>Apache can directly serve: HTML, CSS, JavaScript, Images, Fonts, Videos.</p>
+  <div class="code-block" style="font-size:12px;">/var/www/html/index.html
+/var/www/html/styles.css
+/var/www/html/logo.png</div>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">4.2 Dynamic Web Applications</h3>
+      <p style="font-size: 13.5px;">Apache can work with application runtimes such as: <strong>PHP, Python, Perl</strong>. This allows Apache to serve applications rather than only static files.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">4.3 Reverse Proxy</h3>
+      <p style="font-size: 13.5px;">Apache can receive requests from users and forward them to backend applications.</p>
+      <div class="ascii-tree" style="font-size:11px;">Client
+  │
+  ▼
+Apache
+  │
+  ├──► Node.js Application
+  │
+  ├──► Flask Application
+  │
+  └──► Other Backend Services</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <p><strong>Why use a reverse proxy?</strong> It can help with: Routing, Security, SSL/TLS termination, Backend abstraction, Centralized access control.</p>
+
+  <h3 class="subsec-heading">4.4 Load Balancing</h3>
+  <p>Apache can distribute requests across multiple backend servers.</p>
+  <div class="ascii-tree">             ┌──► Server 1
+             │
+Client ──► Apache
+             │
+             ├──► Server 2
+             │
+             └──► Server 3</div>
+  <p>This can improve: Availability, Scalability, Fault tolerance, Performance.</p>
+
+  <h3 class="subsec-heading">4.5 Virtual Hosting</h3>
+  <p>A single server can host multiple websites. Example: <span class="code-inline">Server IP: 203.0.113.10</span></p>
+  <div class="code-block" style="font-size:12px;">example1.com ──► Website 1
+example2.com ──► Website 2
+example3.com ──► Website 3</div>
+  <p>This is called Virtual Hosting.</p>
+
+  <h3 class="subsec-heading">4.6 Security & Encryption</h3>
+  <p>Apache can also handle: SSL/TLS certificates, Access control, Authentication, Custom error pages, Security-related configuration.</p>
+
+  <!-- 5. Setting Up Apache on AWS EC2 -->
+  <h2 class="sec-heading">5. Setting Up Apache on AWS EC2</h2>
+  <p><strong>AWS EC2</strong>: Amazon EC2 (Elastic Compute Cloud) provides virtual machines called instances.<br>
+  For this setup, you can use: OS: Amazon Linux | Instance: t2.micro or an appropriate currently available Free Tier instance | Access: EC2 Instance Connect or SSH.</p>
+
+  <!-- 6. AWS Security Group Configuration -->
+  <h2 class="sec-heading">6. AWS Security Group Configuration</h2>
+  <p>A Security Group acts as a virtual firewall for the EC2 instance.</p>
+  
+  <h3 class="subsec-heading">Required Inbound Rules</h3>
+  <table class="hand-table" style="font-size:13.5px;">
+    <thead>
+      <tr><th>Type</th><th>Port</th><th>Source</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>SSH</td><td>22</td><td>Your IP</td><td>Server administration</td></tr>
+      <tr><td>HTTP</td><td>80</td><td>0.0.0.0/0</td><td>Public website</td></tr>
+      <tr><td>HTTPS</td><td>443</td><td>0.0.0.0/0</td><td>Secure website</td></tr>
+    </tbody>
+  </table>
+
+  <div class="warn-box">
+    <span class="tag-badge badge-imp">Security Tip</span>
+    <p style="margin:2px 0;">Do not unnecessarily expose SSH (22) to: <span class="code-inline">0.0.0.0/0</span></p>
+    <p style="margin:2px 0;">Restrict SSH access to trusted IP addresses whenever possible.</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 7. Installing Apache HTTPD -->
+  <h2 class="sec-heading">7. Installing Apache HTTPD</h2>
+  <p>On Amazon Linux/RHEL/Fedora-based systems, the Apache package is generally called: <span class="highlight">httpd</span></p>
+  <p>On Debian/Ubuntu systems, it is generally: <span class="highlight">apache2</span></p>
+
+  <h3 class="subsec-heading">Installation Commands</h3>
+  <div class="code-block"># Update installed packages
+sudo yum update -y
+
+# Install Apache
+sudo yum install httpd -y
+
+# Start Apache
+sudo systemctl start httpd
+
+# Enable Apache at boot
+sudo systemctl enable httpd
+
+# Check Apache status
+sudo systemctl status httpd</div>
+
+  <h3 class="subsec-heading">What Each Command Does</h3>
+  <div class="two-col" style="font-size: 13.5px;">
+    <div>
+      <p><strong>yum update</strong><br>Updates available packages.<br><span class="code-inline">sudo yum update -y</span></p>
+      <p><strong>yum install</strong><br>Installs Apache.<br><span class="code-inline">sudo yum install httpd -y</span></p>
+      <p><strong>systemctl start</strong><br>Starts the Apache service immediately.<br><span class="code-inline">sudo systemctl start httpd</span></p>
+    </div>
+    <div>
+      <p><strong>systemctl enable</strong><br>Makes Apache start automatically after reboot.<br><span class="code-inline">sudo systemctl enable httpd</span></p>
+      <p><strong>systemctl status</strong><br>Shows the current service state.<br><span class="code-inline">sudo systemctl status httpd</span></p>
+    </div>
+  </div>
+
+  <!-- 8. Linux Firewall Configuration -->
+  <h2 class="sec-heading">8. Linux Firewall Configuration</h2>
+  <p>When running Apache on a local RHEL/CentOS-type server, the operating-system firewall may also need to allow HTTP and HTTPS.</p>
+  <p>Using firewalld:</p>
+  <div class="code-block" style="font-size: 12px;">sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload</div>
+
+  <div class="warn-box">
+    <span class="tag-badge badge-imp">Important</span>
+    <p style="margin:2px 0;">On AWS, there can be multiple network-control layers, including:</p>
+    <div class="flow-h" style="font-size: 11px; gap: 2px;">
+      <span class="flow-node" style="padding:1px 2px;">Browser</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">AWS Security Group</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">OS Firewall</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Apache</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Website</span>
+    </div>
+    <p style="margin:2px 0;">Therefore, opening a port in only one place may not be sufficient.</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 9. Test Apache Installation -->
+  <h2 class="sec-heading">9. Test Apache Installation</h2>
+  <p>After installation, find the EC2 instance's public IP. Then open:</p>
+  <span class="code-term">http://&lt;EC2_PUBLIC_IP&gt;</span>
+  <p>If Apache is configured correctly, you should see its default test page. Example: <span class="code-inline">http://203.0.113.10</span></p>
+
+  <!-- 10. Document Root -->
+  <h2 class="sec-heading">10. Document Root</h2>
+  <h3 class="subsec-heading">What is Document Root?</h3>
+  <p>The Document Root is the directory from which Apache serves website files.</p>
+  <p>On Amazon Linux/RHEL-based Apache installations, a common default is:</p>
+  <span class="code-term">/var/www/html</span>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <div class="ascii-tree">/var/www/html
+│
+├── index.html
+├── styles.css
+├── images/
+└── scripts/</div>
+    <p style="margin-bottom:0;">When a browser requests: <span class="code-inline">http://example.com/index.html</span><br>Apache can map that URL to: <span class="code-inline">/var/www/html/index.html</span></p>
+  </div>
+
+  <!-- 11. Creating a Custom Website -->
+  <h2 class="sec-heading">11. Creating a Custom Website</h2>
+  <p>Navigate to the Document Root: <span class="code-inline">cd /var/www/html</span></p>
+  <p>Create an HTML file: <span class="code-inline">sudo vi index.html</span></p>
+
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">Example HTML</p>
+      <div class="code-block" style="font-size: 11px;">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;Production Web Server&lt;/title&gt;
+    &lt;link rel="stylesheet" href="styles.css"&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;h1&gt;Welcome to Our Production Web Server&lt;/h1&gt;
+    &lt;p&gt;This page is served by Apache.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</div>
+    </div>
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">Create CSS: <span class="code-inline">sudo vi styles.css</span></p>
+      <div class="code-block" style="font-size: 11px;">body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    text-align: center;
+    padding-top: 50px;
+}
+
+h1 {
+    color: #0056b3;
+}</div>
+      <p style="font-size:13.5px; margin-top:4px;">Now refresh: <span class="code-inline">http://&lt;EC2_PUBLIC_IP&gt;</span>. Your custom webpage should appear.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 12. Apache Configuration File -->
+  <h2 class="sec-heading">12. Apache Configuration File</h2>
+  <p>The main Apache configuration file on RHEL/Amazon Linux-style installations is:</p>
+  <span class="code-term">/etc/httpd/conf/httpd.conf</span>
+  <p>This file controls important Apache behavior.</p>
+
+  <h3 class="subsec-heading">Important Apache Directives</h3>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Directive</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>ServerRoot</strong></td><td>Defines Apache's main configuration/module directory</td></tr>
+      <tr><td><strong>Listen</strong></td><td>Specifies the port/IP Apache listens on</td></tr>
+      <tr><td><strong>IncludeOptional</strong></td><td>Loads additional configuration files</td></tr>
+      <tr><td><strong>User</strong></td><td>Defines the user running Apache processes</td></tr>
+      <tr><td><strong>Group</strong></td><td>Defines the group running Apache processes</td></tr>
+      <tr><td><strong>DocumentRoot</strong></td><td>Defines the website's root directory</td></tr>
+      <tr><td><strong>DirectoryIndex</strong></td><td>Defines the default file served for a directory</td></tr>
+      <tr><td><strong>ErrorLog</strong></td><td>Defines the error log</td></tr>
+      <tr><td><strong>CustomLog</strong></td><td>Defines the access log</td></tr>
+    </tbody>
+  </table>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <div class="code-block" style="font-size: 11px;">ServerRoot "/etc/httpd"
+
+Listen 80
+
+DocumentRoot "/var/www/html"
+
+DirectoryIndex index.html
+
+ErrorLog "logs/error_log"
+
+CustomLog "logs/access_log" combined</div>
+  </div>
+
+  <!-- 13. Understanding Important Directives -->
+  <h2 class="sec-heading">13. Understanding Important Directives</h2>
+  <div class="two-col">
+    <div>
+      <p><strong>Listen</strong><br><span class="code-inline">Listen 80</span><br>Tells Apache to listen for HTTP requests on port 80. For HTTPS: <span class="code-inline">Listen 443</span></p>
+      <p><strong>DocumentRoot</strong><br><span class="code-inline">DocumentRoot "/var/www/html"</span><br>Specifies where website files are stored.</p>
+    </div>
+    <div>
+      <p><strong>DirectoryIndex</strong><br><span class="code-inline">DirectoryIndex index.html</span><br>When a user visits <span class="code-inline">http://example.com/</span>, Apache can automatically look for <span class="code-inline">index.html</span>.</p>
+      <p><strong>ErrorLog & CustomLog</strong><br><span class="code-inline">ErrorLog "logs/error_log"</span> stores errors/warnings.<br><span class="code-inline">CustomLog "logs/access_log" combined</span> records incoming client requests.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 14. Apache Configuration Includes -->
+  <h2 class="sec-heading">14. Apache Configuration Includes</h2>
+  <p>Apache supports modular configuration. For example:</p>
+  <span class="code-term">IncludeOptional conf.d/*.conf</span>
+  <p>This means Apache can load additional <span class="code-inline">.conf</span> files from: <span class="code-inline">/etc/httpd/conf.d/</span><br>
+  This is useful because configurations can be separated into smaller files rather than putting everything into one large file.</p>
+
+  <!-- 15. Apache Directory Security -->
+  <h2 class="sec-heading">15. Apache Directory Security</h2>
+  <p>Apache controls access to filesystem directories using <span class="code-inline">&lt;Directory&gt;</span> blocks. Example:</p>
+  <div class="code-block" style="font-size:12px;">&lt;Directory /&gt;
+    AllowOverride none
+    Require all denied
+&lt;/Directory&gt;</div>
+  <p>This prevents general web access to the server's root filesystem. Then:</p>
+  <div class="code-block" style="font-size:12px;">&lt;Directory "/var/www/html"&gt;
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    Require all granted
+&lt;/Directory&gt;</div>
+  <p>allows access to the website's Document Root.</p>
+
+  <div class="warn-box" style="margin-top:0;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Security Principle</h3>
+    <div class="flow-v" style="font-size:12px; gap:2px;">
+      <span class="flow-node">Operating System</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#be123c; background:#ffe4e6;">Deny by default</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Website directory</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Explicitly allow access</span>
+    </div>
+    <p style="font-size:12.5px; margin-top:4px;">This is safer than allowing access to the entire filesystem.</p>
+  </div>
+
+  <!-- 16. MIME Types -->
+  <h2 class="sec-heading">16. MIME Types</h2>
+  <p>Browsers need to know what type of content they are receiving. Apache uses MIME type mappings to associate file extensions with media types.</p>
+  <div class="two-col">
+    <table class="hand-table" style="font-size:12.5px; margin-top:0;">
+      <thead><tr><th>File</th><th>MIME Type</th></tr></thead>
+      <tbody>
+        <tr><td>.html</td><td>text/html</td></tr>
+        <tr><td>.css</td><td>text/css</td></tr>
+        <tr><td>.js</td><td>text/javascript</td></tr>
+        <tr><td>.png</td><td>image/png</td></tr>
+        <tr><td>.jpg</td><td>image/jpeg</td></tr>
+        <tr><td>.json</td><td>application/json</td></tr>
+      </tbody>
+    </table>
+    <div>
+      <p style="font-size:13.5px;">A common MIME types file is: <span class="code-inline">/etc/mime.types</span></p>
+      <p style="font-size:13.5px;">Apache's <span class="highlight">mod_mime</span> module helps manage this mapping.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 17. Apache Logs & 18. Access Log -->
+  <h2 class="sec-heading">17. Apache Logs &nbsp;|&nbsp; 18. Access Log</h2>
+  <p>Logs are extremely important for: Troubleshooting, Debugging, Security analysis, Monitoring, Understanding user requests.</p>
+  <p>On many RHEL/Amazon Linux Apache installations, logs are located under: <span class="code-inline">/var/log/httpd/</span></p>
+  <p>There are two important logs: <strong>access_log</strong> and <strong>error_log</strong>.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Access Log</h3>
+    <p style="font-size:13px; margin:2px 0;">The access log records incoming requests. View it live:</p>
+    <span class="code-term" style="font-size:11px;">sudo tail -f /var/log/httpd/access_log</span>
+    <p style="font-size:13px; margin:4px 0 2px 0;">Typical Combined Log Format:</p>
+    <span class="code-term" style="font-size:11px;">&lt;Client_IP&gt; - - [Timestamp] "Method URI Protocol" Status_Code Bytes_Sent "Referrer" "User_Agent"</span>
+    <p style="font-size:13px; margin:4px 0 2px 0;">Example:</p>
+    <span class="code-term" style="font-size:10px;">192.0.2.10 - - [13/Sep/2026:22:00:00 +0530] "GET /index.html HTTP/1.1" 200 1234 "-" "Mozilla/5.0"</span>
+  </div>
+
+  <table class="hand-table" style="font-size:13px; margin-top:4px;">
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Client IP</strong></td><td>IP address of the requester</td></tr>
+      <tr><td><strong>Timestamp</strong></td><td>Time of request</td></tr>
+      <tr><td><strong>Method</strong></td><td>HTTP method such as GET</td></tr>
+      <tr><td><strong>URI</strong></td><td>Requested resource</td></tr>
+      <tr><td><strong>Status Code</strong></td><td>Result of request</td></tr>
+      <tr><td><strong>Bytes Sent</strong></td><td>Response size</td></tr>
+      <tr><td><strong>Referrer</strong></td><td>Previous page, if provided</td></tr>
+      <tr><td><strong>User Agent</strong></td><td>Browser/client information</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 19. HTTP Status Codes -->
+  <h2 class="sec-heading">19. HTTP Status Codes</h2>
+  <div class="two-col">
+    <table class="hand-table" style="font-size:13px; margin-top:0;">
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>200</strong></td><td>OK / Successful</td></tr>
+        <tr><td><strong>301</strong></td><td>Permanent Redirect</td></tr>
+        <tr><td><strong>302</strong></td><td>Temporary Redirect</td></tr>
+        <tr><td><strong>400</strong></td><td>Bad Request</td></tr>
+        <tr><td><strong>401</strong></td><td>Unauthorized</td></tr>
+        <tr><td><strong>403</strong></td><td>Forbidden</td></tr>
+        <tr><td><strong>404</strong></td><td>Not Found</td></tr>
+        <tr><td><strong>500</strong></td><td>Internal Server Error</td></tr>
+        <tr><td><strong>502</strong></td><td>Bad Gateway</td></tr>
+        <tr><td><strong>503</strong></td><td>Service Unavailable</td></tr>
+      </tbody>
+    </table>
+    <div class="sticky-note" style="margin-top:0;">
+      <span class="tag-badge badge-trick">Easy Memory Trick</span>
+      <ul style="font-size:14px; margin-bottom:0; font-weight:bold;">
+        <li>2xx → Success</li>
+        <li>3xx → Redirect</li>
+        <li>4xx → Client-side/request problem</li>
+        <li>5xx → Server-side problem</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 20. Error Log -->
+  <h2 class="sec-heading">20. Error Log</h2>
+  <p>The error log records problems such as: Configuration errors, Startup problems, Permission issues, Module problems, Runtime warnings.</p>
+  <p>View the last 50 lines: <span class="code-inline">sudo tail -n 50 /var/log/httpd/error_log</span></p>
+  <p>Real-Time Monitoring: <span class="code-inline">sudo tail -f /var/log/httpd/error_log</span></p>
+
+  <!-- 21 & 22. Domain Name & DNS -->
+  <h2 class="sec-heading">21. Domain Name &nbsp;|&nbsp; 22. What is DNS?</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;">A public IP address works, but users generally prefer a domain name. Instead of <span class="code-inline">http://203.0.113.10</span> we want <span class="code-inline">http://myexamplewebsite.xyz</span>.</p>
+      <p style="font-size:14px;"><strong>DNS = Domain Name System.</strong> DNS translates domain names into IP addresses.</p>
+    </div>
+    <div class="ascii-tree" style="text-align: center; font-size:11px;">myexamplewebsite.xyz
+         │
+         ▼
+        DNS (A Record)
+         │
+         ▼
+  EC2 Public IP
+         │
+         ▼
+ Apache Web Server</div>
+  </div>
+
+  <!-- 23 & 24. DNS Records & Configuration -->
+  <h2 class="sec-heading">23. DNS A Record &nbsp;|&nbsp; 24. DNS Configuration Steps</h2>
+  <p>An <strong>A record</strong> maps a domain name to an IPv4 address.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Example Records</h3>
+      <table class="hand-table" style="font-size:12px; margin:2px 0;">
+        <thead><tr><th>Host</th><th>Type</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>@</td><td>A</td><td>EC2 Public IP</td></tr>
+          <tr><td>www</td><td>A</td><td>EC2 Public IP</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px; margin:4px 0 0 0;"><strong>@</strong> generally represents the root/apex domain (<span class="code-inline">myexamplewebsite.xyz</span>).</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Configuration Steps</h3>
+      <ol style="font-size:12.5px; margin:0; padding-left:16px;">
+        <li>Open DNS Management (GoDaddy, Route 53, etc.)</li>
+        <li>Create A Record for root (<span class="code-inline">@</span>) to IP.</li>
+        <li>Create A Record for <span class="code-inline">www</span> to IP.</li>
+        <li>Verify DNS using: <span class="code-inline">dig +short myexamplewebsite.xyz</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top:4px;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">25. DNS Propagation</h3>
+    <p style="font-size:13.5px; margin-bottom:0;">DNS changes may not become visible everywhere immediately. Propagation time varies by TTL, caching, and resolvers. Don't assume a DNS change is broken simply because it doesn't appear instantly.</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 10 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 10</span>
+  </div>
+
+  <!-- 26. HTTPS & SSL/TLS -->
+  <h2 class="sec-heading">26. HTTPS & SSL/TLS</h2>
+  <p>HTTP traffic can be observed or modified more easily than properly encrypted HTTPS traffic. HTTPS uses <strong>TLS (Transport Layer Security)</strong> to provide: Encryption, Integrity, and Server authentication.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">HTTP</h3>
+      <p style="font-size:13px; margin:2px 0;">Browser ──► Server</p>
+      <p style="font-size:12px; color:#be123c;">Unencrypted traffic (Port 80)</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">HTTPS</h3>
+      <p style="font-size:13px; margin:2px 0;">Browser ══► Server</p>
+      <p style="font-size:12px; color:#16a34a;">Encrypted TLS connection (Port 443)</p>
+    </div>
+  </div>
+
+  <!-- 27 to 30. Let's Encrypt & Certbot -->
+  <h2 class="sec-heading">Let's Encrypt & Certbot (27 - 30)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;"><strong>Let's Encrypt</strong> provides publicly trusted TLS certificates.<br><strong>Certbot</strong> is a tool that obtains/manages certificates using the ACME protocol.</p>
+      <p style="font-size:14px;"><strong>28. Install:</strong> <span class="code-inline" style="font-size:11px;">sudo yum install certbot python3-certbot-apache -y</span></p>
+      <p style="font-size:14px;"><strong>29. Obtain Certificate:</strong> Standalone mode temporarily uses port 80. Stop Apache first!</p>
+      <span class="code-term" style="font-size:11px;">sudo systemctl stop httpd<br>sudo certbot certonly --standalone -d myexamplewebsite.xyz</span>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">30. Certificate Files</h3>
+      <p style="font-size:13px; margin:2px 0;">Stored in: <span class="code-inline">/etc/letsencrypt/live/...</span></p>
+      <ul style="font-size:13px; margin:2px 0 0 16px;">
+        <li><span class="code-inline">fullchain.pem</span> → Public cert chain</li>
+        <li><span class="code-inline">privkey.pem</span> → Private key (Secret!)</li>
+      </ul>
+      <p style="font-size:13px; font-weight:700; color:#b91c1c; margin-top:6px;">⚠️ Never expose or share the private key.</p>
+    </div>
+  </div>
+
+  <!-- 31. Configuring HTTPS in Apache -->
+  <h2 class="sec-heading">31. Configuring HTTPS in Apache</h2>
+  <p>Apache can be configured to listen on port 443.</p>
+  <div class="code-block" style="font-size:11.5px;">Listen 443
+
+&lt;VirtualHost *:443&gt;
+    ServerName myexamplewebsite.xyz
+    DocumentRoot /var/www/html
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/myexamplewebsite.xyz/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/myexamplewebsite.xyz/privkey.pem
+    ErrorLog /var/log/httpd/ssl_error_log
+    CustomLog /var/log/httpd/ssl_access_log combined
+&lt;/VirtualHost&gt;</div>
+
+</div>
+
+<!-- =================== PAGE 11 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 11</span>
+  </div>
+
+  <!-- 32. Understanding VirtualHost -->
+  <h2 class="sec-heading">32. Understanding &lt;VirtualHost&gt;</h2>
+  <p>A VirtualHost defines how Apache should handle requests for a particular host/domain.</p>
+  <span class="code-term">&lt;VirtualHost *:443&gt;<br>    ServerName myexamplewebsite.xyz<br>&lt;/VirtualHost&gt;</span>
+  <p>Meaning: Handle HTTPS requests for <span class="code-inline">myexamplewebsite.xyz</span> on port 443. This becomes especially useful when hosting multiple domains on one server.</p>
+
+  <!-- 33, 34. Validate and Reload -->
+  <h2 class="sec-heading">33. Validate Apache Config &nbsp;|&nbsp; 34. Reload vs Restart</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px; margin-bottom:2px;">Before restarting/reloading, check syntax:</p>
+      <span class="code-term" style="font-size:12px;">sudo httpd -t</span>
+      <p style="font-size:13.5px; margin-top:2px;">Expected result: <span class="highlight-green">Syntax OK</span></p>
+      <p style="font-size:13.5px; margin-top:6px;">Why? A mistake can prevent Apache from starting.</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <p style="font-size:13px; font-weight:700; margin:0;">Restart:</p>
+      <p style="font-size:12px; margin:0;">Stops and starts the service. (<span class="code-inline">systemctl restart</span>)</p>
+      <p style="font-size:13px; font-weight:700; margin:6px 0 0 0;">Reload:</p>
+      <p style="font-size:12px; margin:0;">Reloads config while keeping service running. (<span class="code-inline">systemctl reload</span>)</p>
+    </div>
+  </div>
+
+  <!-- 36 to 39. Custom 404 Error Page -->
+  <h2 class="sec-heading">Custom 404 Error Page (36 - 39)</h2>
+  <p><strong>404 Not Found</strong> means the requested resource could not be found. Apache returns a default page, but you can customize it.</p>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px; margin-bottom:2px;"><strong>Step 1:</strong> Create the HTML page:</p>
+      <span class="code-term" style="font-size:11px;">sudo vi /var/www/html/error_404.html</span>
+      <p style="font-size:14px; margin-top:4px;"><strong>Step 2:</strong> Configure <span class="code-inline">httpd.conf</span>:</p>
+      <span class="code-term" style="font-size:11px;">ErrorDocument 404 /error_404.html</span>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <p style="font-size:13px; font-weight:700; margin:0;">Step 3: Apply</p>
+      <div class="flow-h" style="font-size:11px; justify-content:flex-start; gap:4px; margin-top:4px;">
+        <span class="flow-node" style="padding:1px 4px;">httpd -t</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">reload</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">test bad URL</span>
+      </div>
+      <p style="font-size:12px; margin-top:4px;">Apache will now serve the custom HTML file instead of the default error message.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 12 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 12</span>
+  </div>
+
+  <!-- Complete Apache Architecture -->
+  <h2 class="sec-heading">⭐ Complete Apache Architecture (Part 1)</h2>
+  <p>The entire setup can be remembered like this:</p>
+  
+  <div class="ascii-tree" style="text-align:center; font-size:12px; line-height:1.2;">                    INTERNET
+                       │
+                       ▼
+              ┌────────────────┐
+              │   DNS Server   │
+              └───────┬────────┘
+                      │
+                 A Record
+                      │
+                      ▼
+              ┌────────────────┐
+              │   AWS EC2      │
+              │  Public IP     │
+              └───────┬────────┘
+                      │
+               Security Group
+                Ports 80/443
+                      │
+                      ▼
+              ┌────────────────┐
+              │ Apache HTTPD   │
+              └───────┬────────┘
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+       HTTP :80               HTTPS :443
+          │                       │
+          │                 TLS Certificate
+          │                       │
+          └───────────┬───────────┘
+                      │
+                      ▼
+             /var/www/html
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+       index.html  styles.css   images/</div>
+
+  <!-- End-to-End Workflow -->
+  <h2 class="sec-heading">🔄 End-to-End Workflow</h2>
+  <div class="two-col" style="font-size:12.5px;">
+    <ol style="margin:0; padding-left:16px;">
+      <li>Create EC2 Instance</li>
+      <li>Configure Security Group (22, 80, 443)</li>
+      <li>Install Apache HTTPD</li>
+      <li>Start + Enable Apache</li>
+      <li>Test using EC2 Public IP</li>
+      <li>Add Website Files (<span class="code-inline">/var/www/html/</span>)</li>
+      <li>Configure DNS (Domain → EC2 IP)</li>
+    </ol>
+    <ol start="8" style="margin:0; padding-left:16px;">
+      <li>Verify DNS (<span class="code-inline">dig +short</span>)</li>
+      <li>Obtain TLS Cert (Let's Encrypt)</li>
+      <li>Configure Apache HTTPS (Port 443)</li>
+      <li>Validate Config (<span class="code-inline">httpd -t</span>)</li>
+      <li>Reload Apache</li>
+      <li>Test HTTPS (<span class="code-inline">https://...</span>)</li>
+      <li>Add Custom Error Pages</li>
+    </ol>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 13 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 13</span>
+  </div>
+
+  <h2 class="sec-heading">🎯 Interview / Viva Questions (Part 1)</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is Apache?</div><div class="qa-a">Open-source web-server software used to serve websites over HTTP/HTTPS.</div></div>
+      <div class="qa-block"><div class="qa-q">Q2. What is HTTPD?</div><div class="qa-a">HTTP Daemon. The background process that handles HTTP requests.</div></div>
+      <div class="qa-block"><div class="qa-q">Q6. What is Document Root?</div><div class="qa-a">The directory from which Apache serves website content (e.g., <span class="code-inline">/var/www/html</span>).</div></div>
+      <div class="qa-block"><div class="qa-q">Q8. What is DNS?</div><div class="qa-a">Translates human-readable domain names into IP addresses.</div></div>
+    </div>
+    
+    <div>
+      <div class="qa-block"><div class="qa-q">Q11. What is Certbot?</div><div class="qa-a">Tool used to obtain and manage TLS certificates via the ACME protocol.</div></div>
+      <div class="qa-block"><div class="qa-q">Q12. What is a 404 error?</div><div class="qa-a">Means the requested resource could not be found.</div></div>
+      <div class="qa-block"><div class="qa-q">Q13. How to check config syntax?</div><div class="qa-a"><span class="code-inline">sudo httpd -t</span> (Expected: Syntax OK)</div></div>
+      <div class="qa-block"><div class="qa-q">Q14/15. How to monitor logs?</div><div class="qa-a"><span class="code-inline">sudo tail -f /var/log/httpd/access_log</span> (or error_log)</div></div>
+    </div>
+  </div>
+
+  <!-- Part 2 Start -->
+  <div style="margin-top: 20px; border-top: 2px dashed #94a3b8; padding-top: 10px;">
+    <div class="title-main" style="color:#0f766e;">🌐 Apache HTTPD — Part 2</div>
+    <div class="subtitle" style="color:#0f766e;">Virtual Hosts, Reverse Proxy, Load Balancing & Production Hardening</div>
+  </div>
+
+  <!-- 1. Virtual Hosts -->
+  <h2 class="sec-heading">1. Virtual Hosts (VHosts)</h2>
+  <p>Virtual Hosting allows a single Apache HTTPD server to host multiple websites/domains.</p>
+  <p>Each website can have its own: Domain name, Document Root, Log files, SSL/TLS config, Security rules, Application backend.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Virtual Host Architecture</h3>
+    <div class="ascii-tree" style="text-align:center; font-size:11px;">                  Incoming Web Requests
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+   Host: site1.xyz:443           Host: site2.com:80
+             │                           │
+             ▼                           ▼
+   /var/www/site1.xyz/          /var/www/site2.com/
+       HTTPS/TLS                     HTTP</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 14 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 14</span>
+  </div>
+
+  <!-- 2. Separate Directories & 3. Modular Config -->
+  <h2 class="sec-heading">2. Separate Directories &nbsp;|&nbsp; 3. Modular Config</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px; margin-bottom:2px;">Instead of putting everything in <span class="code-inline">/var/www/html/</span>, create independent directories:</p>
+      <span class="code-term" style="font-size:11px;">sudo mkdir -p /var/www/site1.xyz<br>sudo mkdir -p /var/www/site2.com</span>
+      <p style="font-size:14px; margin-top:4px;">Why? Better organization, security isolation, deployment mgmt, and troubleshooting.</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Modular Configuration</h3>
+      <p style="font-size:13px; margin:2px 0;">Instead of one huge <span class="code-inline">httpd.conf</span>, use separate files in <span class="code-inline">/etc/httpd/conf.d/</span> (e.g., <span class="code-inline">site1.conf</span>, <span class="code-inline">site2.conf</span>). Loaded via <span class="code-inline">IncludeOptional conf.d/*.conf</span>.</p>
+    </div>
+  </div>
+
+  <!-- 4. HTTPS & 5. HTTP VHosts -->
+  <h2 class="sec-heading">4. HTTPS Virtual Host &nbsp;|&nbsp; 5. HTTP Virtual Host</h2>
+  
+  <div class="two-col">
+    <div class="code-block" style="font-size: 10px;"># /etc/httpd/conf.d/site1.conf
+Listen 443
+&lt;VirtualHost *:443&gt;
+    ServerName myexamplewebsite.xyz
+    ServerAlias www.myexamplewebsite.xyz
+    DocumentRoot /var/www/site1.xyz
+    
+    SSLEngine on
+    SSLCertificateFile /etc/.../fullchain.pem
+    SSLCertificateKeyFile /etc/.../privkey.pem
+    
+    ErrorLog /var/log/httpd/site1_error.log
+    CustomLog /var/log/httpd/site1_access.log combined
+&lt;/VirtualHost&gt;</div>
+    
+    <div class="code-block" style="font-size: 10px;"># /etc/httpd/conf.d/site2.conf
+Listen 80
+&lt;VirtualHost *:80&gt;
+    ServerName mywebsite2.com
+    ServerAlias www.mywebsite2.com
+    DocumentRoot /var/www/site2.com
+    
+    ErrorLog /var/log/httpd/site2_error.log
+    CustomLog /var/log/httpd/site2_access.log combined
+&lt;/VirtualHost&gt;</div>
+  </div>
+
+  <!-- 7. Reverse Proxy -->
+  <h2 class="sec-heading">7. Reverse Proxy</h2>
+  <p>A reverse proxy is a server that receives requests from clients and forwards those requests to an internal backend server.</p>
+  <div class="flow-h" style="font-size:13px; justify-content:flex-start; gap:4px;">
+    <span class="flow-node">Internet</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#3b82f6; background:#eff6ff;">Apache (ProxyPass)</span><span class="flow-arrow">→</span><span class="flow-node">127.0.0.1:3000</span><span class="flow-arrow">→</span><span class="flow-node">Node.js App</span>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 15 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 15</span>
+  </div>
+
+  <!-- 8. Why Use Reverse Proxy -->
+  <h2 class="sec-heading">8. Why Use a Reverse Proxy?</h2>
+  <div class="two-col">
+    <div>
+      <ul style="font-size:14px; margin-top:0;">
+        <li><strong>Security:</strong> Backend app listens only on <span class="code-inline">127.0.0.1</span>. Not exposed publicly.</li>
+        <li><strong>Clean URLs:</strong> Users see <span class="code-inline">https://app.example.com</span> instead of <span class="code-inline">http://example.com:3000</span>.</li>
+        <li><strong>SSL/TLS Termination:</strong> Apache handles the HTTPS cert, app just uses HTTP over localhost.</li>
+      </ul>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">9. Node.js Setup</h3>
+      <span class="code-term" style="font-size:11px;">sudo yum install nodejs -y<br>npx create-react-app app<br>npm run build<br>npx serve -s build -l 3000</span>
+      <p style="font-size:12px; margin:2px 0;">Test: <span class="code-inline">curl -I http://127.0.0.1:3000</span></p>
+    </div>
+  </div>
+
+  <!-- 10 & 11. Apache Reverse Proxy Config -->
+  <h2 class="sec-heading">10. Apache Reverse Proxy Config &nbsp;|&nbsp; 11. Directives</h2>
+  
+  <div class="code-block" style="font-size: 11.5px;">&lt;VirtualHost *:80&gt;
+    ServerName app.myexamplewebsite.xyz
+    
+    ProxyPreserveHost On
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+    
+    ErrorLog /var/log/httpd/react_proxy_error.log
+    CustomLog /var/log/httpd/react_proxy_access.log combined
+&lt;/VirtualHost&gt;</div>
+
+  <table class="hand-table" style="font-size:13px;">
+    <thead><tr><th>Directive</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ProxyPreserveHost</strong></td><td>Preserves original Host header when forwarding.</td></tr>
+      <tr><td><strong>ProxyPass</strong></td><td>Forwards requests received at <span class="code-inline">/</span> to the backend.</td></tr>
+      <tr><td><strong>ProxyPassReverse</strong></td><td>Rewrites backend redirect headers so client uses public URL.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 12. Reverse Proxy Complete Flow -->
+  <div class="sticky-note">
+    <h3 class="subsec-heading" style="margin-top:0;">12. Complete Flow</h3>
+    <div class="flow-h" style="font-size:12px; justify-content:flex-start; gap:4px;">
+      <span class="flow-node">Public Internet</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">https://app...</span><span class="flow-arrow">→</span><span class="flow-node">Apache</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">127.0.0.1:3000</span><span class="flow-arrow">→</span><span class="flow-node">Node.js</span>
+    </div>
+    <p style="font-size:13px; margin:4px 0 0 0;">The client knows about <span class="code-inline">app.example.com</span> but not <span class="code-inline">127.0.0.1:3000</span>.</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 16 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 16</span>
+  </div>
+
+  <!-- 13 & 14 & 15. Load Balancing -->
+  <h2 class="sec-heading">Layer 7 Load Balancing (13 - 15)</h2>
+  <p>Load balancing distributes incoming client requests across multiple backend servers using modules like <span class="highlight">mod_proxy_balancer</span>.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Why Load Balance?</h3>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li><strong>Scalability:</strong> Add more servers</li>
+        <li><strong>Availability:</strong> Survive server failures</li>
+        <li><strong>Performance:</strong> Distribute the load</li>
+        <li><strong>Maintenance:</strong> Take nodes offline safely</li>
+      </ul>
+    </div>
+    <div class="ascii-tree" style="text-align: center; font-size:11px;">    Client Traffic
+          │
+          ▼
+ Apache Load Balancer
+          │
+  ┌───────┴───────┐
+  ▼               ▼
+Node 1          Node 2
+10.0.1.10       10.0.1.20</div>
+  </div>
+
+  <!-- 16 & 17. Load Balancer Configuration -->
+  <h2 class="sec-heading">16. Apache LB Config &nbsp;|&nbsp; 17. Directives</h2>
+  
+  <div class="code-block" style="font-size: 11.5px;">&lt;VirtualHost *:80&gt;
+    ServerName cluster.myexamplewebsite.xyz
+
+    &lt;Proxy "balancer://production_cluster"&gt;
+        BalancerMember http://10.0.1.10:80
+        BalancerMember http://10.0.1.20:80
+        ProxySet lbmethod=byrequests
+    &lt;/Proxy&gt;
+
+    ProxyPass / balancer://production_cluster/
+    ProxyPassReverse / balancer://production_cluster/
+&lt;/VirtualHost&gt;</div>
+
+  <p style="font-size:14px; margin-bottom:2px;"><strong>&lt;Proxy&gt;:</strong> Defines logical backend cluster.<br><strong>BalancerMember:</strong> Defines backend servers.<br><strong>ProxySet lbmethod:</strong> Load-balancing strategy.</p>
+
+  <!-- 18. LB Methods -->
+  <h2 class="sec-heading">18. Load Balancing Methods</h2>
+  <table class="hand-table" style="font-size:13px;">
+    <thead><tr><th>Method</th><th>Value</th><th>Idea</th></tr></thead>
+    <tbody>
+      <tr><td>Request-based</td><td><span class="code-inline">byrequests</span></td><td>Distributes requests among workers</td></tr>
+      <tr><td>Traffic-based</td><td><span class="code-inline">bytraffic</span></td><td>Considers transferred traffic size</td></tr>
+      <tr><td>Busy-based</td><td><span class="code-inline">bybusyness</span></td><td>Considers active worker connections</td></tr>
+      <tr><td>Heartbeat</td><td><span class="code-inline">heartbeat</span></td><td>Uses health/heartbeat information</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- =================== PAGE 17 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 17</span>
+  </div>
+
+  <!-- 20 & 21. Hardening & Authentication -->
+  <h2 class="sec-heading">20. Production Hardening &nbsp;|&nbsp; 21. HTTP Basic Auth</h2>
+  <p>Hardening improves Security, Reliability, Performance, Monitoring, and Access control.</p>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Basic Authentication</h3>
+    <p style="font-size:13px; margin:2px 0;">Protect restricted areas like <span class="code-inline">/admin</span>.</p>
+    <p style="font-size:13px; font-weight:700; margin:2px 0;">Step 1: Create Password File</p>
+    <span class="code-term" style="font-size:11px;">sudo htpasswd -c /etc/httpd/.htpasswd adminuser</span>
+    <p style="font-size:13px; font-weight:700; margin:4px 0 2px 0;">Step 2: Protect Directory in Config</p>
+    <div class="code-block" style="font-size:10px;">&lt;Directory "/var/www/site1.xyz/admin"&gt;
+    AuthType Basic
+    AuthName "Restricted Administration Portal"
+    AuthUserFile /etc/httpd/.htpasswd
+    Require valid-user
+&lt;/Directory&gt;</div>
+    <p style="font-size:12px; color:#be123c; margin-top:4px;"><strong>Security Note:</strong> Always use over HTTPS!</p>
+  </div>
+
+  <!-- 22. Connection Timeouts -->
+  <h2 class="sec-heading">22. Connection Timeouts</h2>
+  <p>Timeout settings control how long Apache waits for operations.</p>
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:700; margin-bottom:2px;">Global Timeout</p>
+      <span class="code-term">Timeout 60</span>
+      <p style="font-weight:700; margin:6px 0 2px 0;">Proxy Timeout</p>
+      <span class="code-term">ProxyTimeout 15</span>
+    </div>
+    <div>
+      <p style="font-size:13.5px;"><strong>Why important?</strong> Prevents resources from being tied up indefinitely by slow clients, unresponsive backends, or network problems.</p>
+    </div>
+  </div>
+
+  <!-- 23 & 24. Caching -->
+  <h2 class="sec-heading">23. Response Caching &nbsp;|&nbsp; 24. Benefits</h2>
+  <p>Caching reuses previously generated responses (via <span class="highlight">mod_cache</span>, <span class="highlight">mod_cache_disk</span>).</p>
+  <div class="two-col">
+    <ul style="font-size:13.5px; margin-top:0;">
+      <li>Reduce backend requests</li>
+      <li>Improve response times</li>
+      <li>Reduce server workload</li>
+      <li>Improve scalability</li>
+    </ul>
+    <div class="warn-box" style="margin-top:0;">
+      <p style="font-size:13px; margin:0;"><strong>Be Careful:</strong> Do not blindly cache sensitive/user-specific responses (e.g., auth, shopping cart).</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 18 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 18</span>
+  </div>
+
+  <!-- 25. Apache Debugging Commands -->
+  <h2 class="sec-heading">25. Apache Debugging Commands</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">1. Syntax Check</p>
+      <span class="code-term">sudo httpd -t</span>
+      <p style="font-weight:700; margin:6px 0 2px 0;">2. List Loaded Modules</p>
+      <span class="code-term">httpd -M</span>
+    </div>
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">3. Display VHosts</p>
+      <span class="code-term">httpd -S</span>
+      <p style="font-size:13px; margin-top:2px;">Inspects Server names, Ports, Config mapping.</p>
+    </div>
+  </div>
+
+  <!-- 32. Production Best Practices -->
+  <h2 class="sec-heading">32. Important Production Best Practices</h2>
+  <ul style="font-size:14px;">
+    <li><strong>Keep backend private:</strong> <span class="code-inline">127.0.0.1</span> or private IP. Don't expose <span class="code-inline">:3000</span> publicly.</li>
+    <li><strong>Use HTTPS:</strong> TLS everywhere for prod.</li>
+    <li><strong>Protect Admin endpoints:</strong> Use Auth for <span class="code-inline">/admin</span>.</li>
+    <li><strong>Monitor Logs:</strong> <span class="code-inline">access_log</span> and <span class="code-inline">error_log</span>.</li>
+    <li><strong>Validate config:</strong> <span class="code-inline">sudo httpd -t</span> before reload.</li>
+    <li><strong>Least Privilege:</strong> Only needed permissions.</li>
+    <li><strong>Protect Private Keys:</strong> NEVER expose <span class="code-inline">privkey.pem</span>.</li>
+  </ul>
+
+  <!-- 36. Final Architecture to Remember -->
+  <h2 class="sec-heading">⭐ Final Architecture to Remember</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 11px; line-height: 1.2;">                    USER / BROWSER
+                          │
+                          ▼
+                     DNS DOMAIN
+                          │
+                          ▼
+                 ┌─────────────────┐
+                 │   Apache HTTPD  │
+                 │                 │
+                 │  Virtual Hosts  │
+                 │       ↓         │
+                 │   HTTPS/TLS     │
+                 │       ↓         │
+                 │ Reverse Proxy   │
+                 │       ↓         │
+                 │ Load Balancer   │
+                 └────────┬────────┘
+                          │
+                 ┌────────┴────────┐
+                 ▼                 ▼
+            Backend 1          Backend 2
+                 │                 │
+                 └────────┬────────┘
+                          ▼
+                     Application</div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 16px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align:center;">
+      🔥 Core Formula
+    </div>
+    <p style="font-size: 13.5px; color: #881337; margin: 4px 0 0 0; font-weight: 700; text-align:center;">
+      Virtual Host + HTTPS/TLS + Reverse Proxy + Load Balancing + Authentication + Timeouts + Caching + Logging = Production-Ready Architecture
+    </p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 19 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 19</span>
+  </div>
+
+  <h2 class="sec-heading">🎯 Interview / Viva Questions (Part 2)</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is a Virtual Host?</div><div class="qa-a">Allows one Apache server to host multiple websites or domains with separate configurations.</div></div>
+      <div class="qa-block"><div class="qa-q">Q3. What is a Reverse Proxy?</div><div class="qa-a">Server that receives client requests and forwards them to backend application servers.</div></div>
+      <div class="qa-block"><div class="qa-q">Q4. What is ProxyPass?</div><div class="qa-a">Maps an incoming Apache URL path to a backend server.</div></div>
+      <div class="qa-block"><div class="qa-q">Q5. What is ProxyPassReverse?</div><div class="qa-a">Helps handle redirect headers from the backend so clients continue using the public URL.</div></div>
+    </div>
+    
+    <div>
+      <div class="qa-block"><div class="qa-q">Q7. What is load balancing?</div><div class="qa-a">Distributes requests across multiple backend servers.</div></div>
+      <div class="qa-block"><div class="qa-q">Q11. What does httpd -S do?</div><div class="qa-a">Displays parsed VirtualHost and server configuration.</div></div>
+      <div class="qa-block"><div class="qa-q">Q13. What is Basic Authentication?</div><div class="qa-a">HTTP mechanism requiring credentials before allowing access to protected resources.</div></div>
+      <div class="qa-block"><div class="qa-q">Q15. Why is caching useful?</div><div class="qa-a">Reduces repeated processing, lowers backend load, and improves response time.</div></div>
+    </div>
+  </div>
+
+  <h2 class="sec-heading">⚡ One-Minute Revision (Part 2)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <ul style="font-size:13px; margin:0; padding-left:16px;">
+        <li><strong>VHost:</strong> One server → Multiple sites</li>
+        <li><strong>DocumentRoot:</strong> Site's files</li>
+        <li><strong>Reverse Proxy:</strong> Client → Apache → Backend</li>
+        <li><strong>ProxyPass:</strong> Forwards to backend</li>
+        <li><strong>Load Balancer:</strong> Apache → Multiple backends</li>
+        <li><strong>byrequests:</strong> Distribute by request count</li>
+      </ul>
+    </div>
+    <div class="hand-box">
+      <ul style="font-size:13px; margin:0; padding-left:16px;">
+        <li><strong>Basic Auth:</strong> Protect directories</li>
+        <li><strong>Timeout:</strong> Wait limits</li>
+        <li><strong>Caching:</strong> Reuse responses</li>
+        <li><strong>httpd -S:</strong> Inspect VHosts</li>
+        <li><strong>access_log:</strong> Incoming traffic</li>
+        <li><strong>error_log:</strong> Troubleshooting</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

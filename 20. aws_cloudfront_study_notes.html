@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS CloudFront - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">☁️ Amazon CloudFront — Content Delivery Network (CDN)</div>
+
+  <!-- 1. Introduction -->
+  <h2 class="sec-heading">1. Introduction</h2>
+  <p>In the previous section, we worked with:</p>
+  <ul>
+    <li><strong>Amazon EC2</strong> — to host a website/application</li>
+    <li><strong>Amazon S3</strong> — to store website files and static content</li>
+    <li><strong>Amazon Route 53</strong> — for DNS and routing</li>
+  </ul>
+  <p>Now we take the concept one level further.</p>
+
+  <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">🎯 The Next Challenge</h3>
+    <p>Suppose your website is hosted in the Mumbai AWS Region.<br>If users from Europe access the website, their requests may need to travel a long distance to reach the Mumbai Region.</p>
+    <p style="font-weight:bold; margin-bottom:2px;">This can result in:</p>
+    <ul style="margin-top:0;">
+      <li>Higher latency</li>
+      <li>Longer loading time</li>
+      <li>Slower content delivery</li>
+      <li>Poorer user experience</li>
+    </ul>
+    <p>Therefore, the next challenge is: <em>How can we serve our website globally with low latency and better performance?</em></p>
+  </div>
+
+  <!-- 2. Two Approaches -->
+  <h2 class="sec-heading">2. Two Approaches to Global Website Delivery</h2>
+  <p>Suppose we want users around the world to access our website quickly.</p>
+
+  <h3 class="subsec-heading">Approach 1: Deploy Multiple EC2 Instances</h3>
+  <p>We could deploy: One EC2 instance in Mumbai, another EC2 instance in Stockholm/Europe, and more instances in other regions. Then users could be served from a geographically closer region.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center;">             Users
+        ┌──────┴──────┐
+        ↓             ↓
+     Europe         India
+        ↓             ↓
+   Stockholm        Mumbai
+      EC2             EC2</div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">❌ Problem</h3>
+      <p style="font-size:13.5px; margin-bottom:0;">The more EC2 instances and AWS Regions we use:</p>
+      <ul style="font-size:13.5px; margin-top:2px;">
+        <li>The more resources we have to manage</li>
+        <li>The higher the infrastructure cost</li>
+        <li>The more complex the architecture becomes</li>
+      </ul>
+      <p style="font-size:13.5px; font-weight:bold;">Therefore, we need a more efficient solution.</p>
+    </div>
+  </div>
+
+  <!-- 3. Solution: CloudFront -->
+  <h2 class="sec-heading">3. ⭐ Solution: Amazon CloudFront</h2>
+  <p>The solution is: <span class="highlight">Amazon CloudFront</span></p>
+  <p>Amazon CloudFront is a Content Delivery Network (CDN) provided by AWS.</p>
+  
+  <div class="sticky-note" style="padding:4px 8px;">
+    <span class="tag-badge badge-imp">Main Purpose</span>
+    <p style="margin:2px 0;">CloudFront helps: <strong>Deliver website content to users with lower latency and better performance.</strong></p>
+    <p style="margin:2px 0;">Instead of every user directly accessing the original server, CloudFront can cache content at locations that are geographically closer to users.</p>
+  </div>
+
+  <!-- 4. What is a CDN? -->
+  <h2 class="sec-heading">4. What is a CDN?</h2>
+  <p><strong>CDN = Content Delivery Network</strong></p>
+  <p>A CDN is a globally distributed network used to deliver content efficiently to users. Instead of serving every request from one central server, a CDN stores/caches frequently requested content at geographically distributed locations.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Without CDN:</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">User in Europe</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Internet</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Mumbai AWS Region</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">S3/EC2</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="border-color:#10b981; background:#ecfdf5;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#047857;">With CloudFront:</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">User in Europe</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Nearest CloudFront Edge Location</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5; padding:1px 4px;">Cached Content</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:4px;">This can significantly reduce the distance between the user and the content being served.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. How CloudFront Works -->
+  <h2 class="sec-heading">5. How CloudFront Works</h2>
+  <p>CloudFront works using caching. Suppose your website contains: HTML, CSS, JavaScript, Images, Videos, Other static files. CloudFront can cache suitable content at its distributed locations.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">First Request</h3>
+      <p style="font-size:13.5px;">Suppose a user in Europe requests your website for the first time.</p>
+      <div class="flow-v" style="gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 4px;">European User</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">CloudFront Edge Location</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8; padding:1px 4px;">Cache Miss</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Origin (S3/EC2)</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Content returned</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Edge Location caches content</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">User</span>
+      </div>
+      <p style="font-size:13px; font-weight:bold; margin-top:4px;">The first request may need to go back to the origin.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">6. Subsequent Requests</h3>
+      <p style="font-size:13.5px;">Now another user near the same CloudFront location requests the same cached content.</p>
+      <div class="flow-v" style="gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 4px;">Second User</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">CloudFront Edge Location</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7; padding:1px 4px;">Cache Hit</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Content delivered directly</span>
+      </div>
+      <p style="font-size:13px; font-weight:bold; margin-top:4px;">The request does not necessarily need to go all the way back to the original S3 bucket or EC2 server.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; text-align:center;">
+    <span class="tag-badge badge-imp">⭐ Result</span>
+    <p style="margin:2px 0;">Lower latency | Faster content delivery | Better user experience | Reduced load on the origin</p>
+  </div>
+
+  <!-- 7. Origin -->
+  <h2 class="sec-heading">7. Origin</h2>
+  <p>The origin is the original location from which CloudFront retrieves content. CloudFront can work with different types of origins.</p>
+  <p>Examples mentioned in the practical: Amazon S3, Elastic Load Balancer, API Gateway, Other supported origins.</p>
+  <div class="ascii-tree" style="text-align: center;">             CloudFront
+                  ↓
+             Origin
+          ┌───────┼────────┐
+          ↓       ↓        ↓
+         S3      EC2      ELB</div>
+
+  <!-- 8 & 9. Caching details -->
+  <h2 class="sec-heading">8. What Does CloudFront Cache? &nbsp;|&nbsp; 9. Dynamic Content</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Static Content</h3>
+      <p style="font-size:14px;">CloudFront can cache content such as: Images, CSS files, JavaScript files, HTML, Videos, Other static website assets.</p>
+      <p style="font-size:13.5px;">For example, instead of repeatedly downloading high-resolution images from the origin, CloudFront caches them closer to users.</p>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">9. Dynamic Content</h3>
+      <p style="font-size:13px;">CloudFront can cache certain dynamic content (HTML/API responses). However, sensitive, user-specific data and backend logic are generally not cached by default.</p>
+      <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Important</span>
+      <p style="font-size:13px; margin:2px 0;">Avoid caching data that is: User-specific, Sensitive, Private, or Frequently changing in a way that could cause incorrect data to be served.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 10. CloudFront Edge Locations -->
+  <h2 class="sec-heading">10. CloudFront Edge Locations</h2>
+  <p>One of the most important CloudFront concepts is: <span class="highlight">Edge Location</span>.</p>
+  <p>An Edge Location is a CloudFront location where content can be cached and served closer to users.</p>
+  
+  <p><strong>Example:</strong> Suppose users are located in India, Europe, North America, and Asia-Pacific. CloudFront has a globally distributed network of locations. Therefore, users can potentially receive content from a location closer to them.</p>
+
+  <!-- 11. Why Edge Locations Matter -->
+  <h2 class="sec-heading">11. Why Edge Locations Matter</h2>
+  <p>Imagine your origin is located in Mumbai.</p>
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:bold; margin-top:0;">Without CloudFront:</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">User</span><span class="flow-arrow">→</span><span class="flow-node">Mumbai Origin</span>
+      </div>
+    </div>
+    <div class="hand-box" style="border-color:#10b981; background:#ecfdf5;">
+      <p style="font-weight:bold; margin-top:0; color:#047857;">With CloudFront:</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">User</span><span class="flow-arrow">→</span><span class="flow-node">Nearest Edge Location</span><span class="flow-arrow">→</span><span class="flow-node">Cached Content</span>
+      </div>
+    </div>
+  </div>
+  <p>The physical/network distance can be reduced, improving delivery performance.</p>
+
+  <!-- 12. CloudFront vs Multiple EC2 -->
+  <h2 class="sec-heading">12. CloudFront vs Multiple EC2 Instances</h2>
+  <p>This is an important architectural comparison.</p>
+  <table class="hand-table" style="font-size:14px;">
+    <thead>
+      <tr>
+        <th>Multiple EC2 Instances</th>
+        <th>CloudFront</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Deploy servers in multiple regions</td>
+        <td>Distribute/cache content globally</td>
+      </tr>
+      <tr>
+        <td>More infrastructure</td>
+        <td>Less need for multiple origin servers for cached content</td>
+      </tr>
+      <tr>
+        <td>Higher management complexity</td>
+        <td>Managed CDN service</td>
+      </tr>
+      <tr>
+        <td>Can increase infrastructure cost</td>
+        <td>Cost primarily depends on usage and configuration</td>
+      </tr>
+      <tr>
+        <td>Useful for globally distributed application compute</td>
+        <td>Excellent for content delivery and caching</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-trick">⭐ Important</span> CloudFront does not simply replace multiple regional application servers in every situation. The correct solution depends on the application's architecture and requirements.
+  </div>
+
+  <!-- 13 & 14 & 15. Practical deployment -->
+  <h2 class="sec-heading">13. Practical — Website Deployment &nbsp;|&nbsp; 14 & 15</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;">The practical example uses a simple website containing <span class="code-inline">index.html</span>, images, etc. The website is first uploaded to an S3 bucket (e.g. <span class="code-inline">my-website-312024</span>).</p>
+      
+      <h3 class="subsec-heading" style="margin-top:8px;">14. Why Not Direct S3 Access?</h3>
+      <p style="font-size:13.5px;">The purpose is to make CloudFront the delivery layer. We want <span class="highlight">User → CloudFront → S3</span> instead of User → S3 directly.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. Create a Distribution</h3>
+      <p style="font-size:13.5px;">A distribution defines how CloudFront should deliver content.</p>
+      <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">Origin Domain:</p>
+      <p style="font-size:13.5px; margin-top:0;">Choose the origin from which CloudFront will retrieve content. For this practical: <strong>Amazon S3 Bucket</strong>.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 16, 17, 18, 19. Configuration -->
+  <h2 class="sec-heading">CloudFront Configuration (16 - 19)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. Origin Access</h3>
+      <p style="font-size:13.5px;">CloudFront needs permission to access the S3 origin. The practical uses the recommended config, allowing CloudFront → S3 while users access content via CloudFront.</p>
+      
+      <h3 class="subsec-heading">17. Cache Policy</h3>
+      <p style="font-size:13.5px;">Controls caching behavior: What can be cached, how requests are handled, how long content remains cached, and which request characteristics affect caching.</p>
+    </div>
+
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">18. Price Class</h3>
+      <p style="font-size:14px;">Controls which CloudFront edge locations are used.</p>
+      <ul style="font-size:13.5px;">
+        <li><strong>All Edge Locations:</strong> Broadest global coverage, best performance.</li>
+        <li><strong>Selected regions:</strong> Potentially lower cost, restricted usage.</li>
+      </ul>
+      
+      <h3 class="subsec-heading">19. Default Root Object</h3>
+      <p style="font-size:14px;">Specifies which object is served when the root of the distribution is requested. For a website, we commonly specify: <span class="code-inline">index.html</span></p>
+    </div>
+  </div>
+
+  <!-- 20 & 21. Create Distribution & Domain -->
+  <h2 class="sec-heading">20. Create the Distribution &nbsp;|&nbsp; 21. Domain Name</h2>
+  <div class="warn-box" style="margin:4px 0;">
+    <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Important</span> <span style="font-size:13.5px;">CloudFront is a global service, so it is not treated like a normal Region-specific resource. The distribution may take some time to become fully deployed.</span>
+  </div>
+
+  <p>Once the distribution is created, CloudFront provides a domain name similar to: <span class="code-term" style="display:inline; padding:0 4px;">xxxxxxxxxxxx.cloudfront.net</span>. This becomes the URL through which users can access the distribution.</p>
+  
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">User</span><span class="flow-arrow">→</span><span class="flow-node">CloudFront Domain Name</span><span class="flow-arrow">→</span><span class="flow-node">Edge Location</span><span class="flow-arrow">→</span><span class="flow-node">S3 Origin</span>
+  </div>
+
+  <!-- 22, 23. Testing -->
+  <h2 class="sec-heading">22. Testing the Website &nbsp;|&nbsp; 23. Performance Test</h2>
+  <p>Open the CloudFront distribution domain name in a browser. The website should load through CloudFront.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">First Request</h3>
+      <p style="font-size:13.5px;">May take longer because CloudFront may need to retrieve content from the origin (e.g. <span class="highlight">~640 ms</span>).</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Subsequent Requests</h3>
+      <p style="font-size:13.5px;">After content is cached, subsequent requests may be faster (e.g. <span class="highlight-green">~200 ms</span> or <span class="highlight-green">~195 ms</span>).</p>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; margin-top:2px;">
+    <span class="tag-badge badge-imp" style="font-size:12px;">Note</span> Actual performance depends on user location, edge location, network conditions, object size, cache status, and origin performance.
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 24. Cache Hit and Cache Miss -->
+  <h2 class="sec-heading">24. Cache Hit and Cache Miss</h2>
+  <p>These two terms are extremely important.</p>
+  
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">Cache Hit</h3>
+      <p style="font-size:13.5px;">A requested object is already available in the CloudFront cache.</p>
+      <div class="flow-v" style="font-size:11px; gap:2px; align-items:flex-start;">
+        <span class="flow-node">User</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Edge Location</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Object found</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">CACHE HIT</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Content delivered</span>
+      </div>
+      <p style="font-size:13px; font-weight:bold; margin-top:4px;">Result: Usually faster delivery.</p>
+    </div>
+    
+    <div class="hand-box" style="border-color:#ca8a04; background:#fefce8;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#a16207;">Cache Miss</h3>
+      <p style="font-size:13.5px;">The requested object is not currently available in the cache.</p>
+      <div class="flow-v" style="font-size:11px; gap:2px; align-items:flex-start;">
+        <span class="flow-node">User</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Edge Location</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Object not found</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="border-color:#b45309; background:#fef3c7;">CACHE MISS</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node">Origin → Content</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 25. Monitoring -->
+  <h2 class="sec-heading">25. CloudFront Monitoring &nbsp;|&nbsp; Cache Hit Ratio</h2>
+  <p>CloudFront provides monitoring and statistics: Requests, Cache hits, Cache misses, Errors, Traffic.</p>
+  <p><strong>Cache Hit Ratio:</strong> Represents how often requests can be served from cache instead of going to the origin. Generally: <span class="highlight">Higher cache hit ratio → less work for the origin and potentially faster content delivery.</span></p>
+
+  <!-- 26. CloudFront Architecture -->
+  <h2 class="sec-heading">26. CloudFront Architecture</h2>
+  <p>The complete architecture can be visualized as:</p>
+  <div class="ascii-tree" style="text-align: center; font-size: 13.5px;">                    GLOBAL USERS
+              ┌─────────┼─────────┐
+              ↓         ↓         ↓
+           Europe      India   America
+              │         │         │
+              └─────────┼─────────┘
+                        ↓
+             CloudFront Edge Locations
+                        ↓
+                 Cache / Delivery
+                        ↓
+                     Origin
+                  ┌─────┴─────┐
+                  ↓           ↓
+                 S3          EC2</div>
+  <p><strong>The key idea:</strong> Users are served through CloudFront, while CloudFront retrieves content from the origin when necessary.</p>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 27 & 28. Terminology -->
+  <h2 class="sec-heading">27 & 28. CloudFront Terminology &nbsp;|&nbsp; POPs</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">27.1 Edge Location</h3>
+      <p style="font-size:13.5px;">A location in the CloudFront network used to serve content closer to users.</p>
+      
+      <h3 class="subsec-heading">27.2 Regional Edge Cache</h3>
+      <p style="font-size:13.5px;">A larger intermediate caching layer. It can help reduce repeated trips to the origin when content is not available at a particular edge location.</p>
+      <div class="flow-h" style="font-size:11px; gap:2px; justify-content:flex-start;"><span class="flow-node" style="padding:1px 2px;">User</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Edge Location</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Regional Cache</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Origin</span></div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">27.3 Point of Presence (POP)</h3>
+      <p style="font-size:13.5px;">A network location used to provide connectivity and content delivery services.</p>
+      <h3 class="subsec-heading" style="margin-top:4px;">28. Embedded POPs</h3>
+      <p style="font-size:13.5px;">Can involve infrastructure associated with Internet Service Providers (ISPs) to improve network proximity/performance.</p>
+    </div>
+  </div>
+
+  <!-- 29. Browser Cache vs CloudFront Cache -->
+  <h2 class="sec-heading">29. Browser Cache vs CloudFront Cache</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Browser Cache</h3>
+      <p style="font-size:13.5px;">A browser can cache website content locally for an individual user.</p>
+      <p style="font-size:13px; font-weight:bold; margin-bottom:0;">Limitation:</p>
+      <p style="font-size:13px; margin-top:2px;">The cache is generally associated with that user's browser. If User B accesses the website, they still need to retrieve content.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">CloudFront Cache</h3>
+      <p style="font-size:13.5px;">CloudFront provides a shared, distributed caching layer.</p>
+      <div class="ascii-tree" style="font-size:11px; margin-top:2px;">User A ─┐
+        ├──→ CloudFront Edge Cache
+User B ─┤
+        │
+User C ─┘</div>
+      <p style="font-size:13px; margin-top:2px;">Allows cached content to be reused for multiple users.</p>
+    </div>
+  </div>
+
+  <!-- 30. Pricing -->
+  <h2 class="sec-heading">30. CloudFront Pricing Concept</h2>
+  <p>CloudFront pricing is primarily usage-based. The practical highlights that the edge locations themselves are not something you separately pay for simply because they exist.</p>
+  <p>Costs can depend on: Data transfer, Number of requests, Region/geography, Features used, Configuration. AWS also provides a CloudFront free-tier allowance (verify current pricing).</p>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 31. CloudFront vs Multi-Region Hosting -->
+  <h2 class="sec-heading">31. CloudFront vs Multi-Region Hosting</h2>
+  <p>A common question is: <em>Should I use CloudFront or deploy my application in multiple AWS Regions?</em> There is no single answer. It depends on the use case.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Use CloudFront when:</h3>
+      <ul style="font-size:13.5px; margin-bottom:0;">
+        <li>You need global content delivery</li>
+        <li>Website contains lots of static assets</li>
+        <li>You want caching</li>
+        <li>You want lower content-delivery latency</li>
+        <li>You want to reduce repeated requests to the origin</li>
+      </ul>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Multi-Region Architecture when:</h3>
+      <ul style="font-size:13.5px; margin-bottom:0;">
+        <li>Application compute must exist close to users</li>
+        <li>You need regional application redundancy</li>
+        <li>You need active-active or active-passive regional architectures</li>
+        <li>The application itself requires region-level distribution</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; margin-top:2px;">
+    <span class="tag-badge badge-trick">⭐ Best Concept</span> CloudFront and multi-region architecture are not necessarily alternatives. They can be used together!
+    <div class="ascii-tree" style="margin-top:4px; font-size:11px;">                    Users
+                      ↓
+                 CloudFront
+                /          \
+               ↓            ↓
+        Region 1          Region 2
+           ↓                 ↓
+        Application       Application</div>
+  </div>
+
+  <!-- 32. Request Flow & 33. Cleanup -->
+  <h2 class="sec-heading">32. Request Flow &nbsp;|&nbsp; 33. CloudFront Cleanup</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">First Request Flow</h3>
+      <p style="font-size:13px; font-weight:bold; margin-bottom:2px;">User requests website → Request reaches CloudFront → CloudFront checks edge cache → Object not found → Cache Miss → CloudFront requests object from origin → Origin returns object → CloudFront caches content → Delivered to user.</p>
+      
+      <h3 class="subsec-heading">Next Request</h3>
+      <p style="font-size:13px; font-weight:bold; margin-bottom:0;">User requests same content → CloudFront checks edge cache → Object found → Cache Hit → Delivered directly.</p>
+    </div>
+    
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">33. Cleanup Rules</h3>
+      <p style="font-size:13px;">After completing a practical, resources should be cleaned up.</p>
+      <p style="font-size:13px; font-weight:bold; margin-bottom:2px;">CloudFront Distribution:</p>
+      <div class="flow-h" style="font-size:11px; justify-content:flex-start; margin:0;"><span class="flow-node" style="padding:1px 2px;">Disable</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Wait</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Delete</span></div>
+      <p style="font-size:13px; font-weight:bold; margin-top:6px; margin-bottom:2px;">S3 Bucket:</p>
+      <div class="flow-h" style="font-size:11px; justify-content:flex-start; margin:0;"><span class="flow-node" style="padding:1px 2px;">Delete Objects</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Delete Bucket</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 34. Important Concepts & 35. Key Benefits -->
+  <h2 class="sec-heading">34. ⭐ Important Concepts to Remember</h2>
+  <table class="hand-table" style="font-size:13.5px;">
+    <thead>
+      <tr><th>Term</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>CloudFront</strong></td><td>AWS Content Delivery Network</td></tr>
+      <tr><td><strong>CDN</strong></td><td>Content Delivery Network</td></tr>
+      <tr><td><strong>Origin</strong></td><td>Original source of content</td></tr>
+      <tr><td><strong>Edge Location</strong></td><td>Location where CloudFront can cache/serve content</td></tr>
+      <tr><td><strong>Cache Hit</strong></td><td>Requested content is available in cache</td></tr>
+      <tr><td><strong>Cache Miss</strong></td><td>Requested content is not available in cache</td></tr>
+      <tr><td><strong>Regional Edge Cache</strong></td><td>Intermediate caching layer</td></tr>
+      <tr><td><strong>POP</strong></td><td>Point of Presence</td></tr>
+      <tr><td><strong>Distribution</strong></td><td>CloudFront configuration used to deliver content</td></tr>
+      <tr><td><strong>Default Root Object</strong></td><td>Object served for the distribution root, e.g. index.html</td></tr>
+      <tr><td><strong>Cache Policy</strong></td><td>Controls caching behavior</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec-heading">35. ⭐ Key Benefits of CloudFront</h2>
+  <div class="two-col" style="font-size:14px;">
+    <ul style="margin-left:0; list-style-type:none;">
+      <li><strong>1. Low Latency:</strong> Delivered from locations closer to users.</li>
+      <li><strong>2. Faster Website:</strong> Cached content without hitting origin.</li>
+      <li><strong>3. Global Delivery:</strong> Distributed delivery network.</li>
+    </ul>
+    <ul style="margin-left:0; list-style-type:none;">
+      <li><strong>4. Better UX:</strong> Faster loading improves experience.</li>
+      <li><strong>5. Reduced Origin Load:</strong> Cached requests save origin compute.</li>
+      <li><strong>6. Scalability:</strong> Efficiently handle large numbers of requests.</li>
+    </ul>
+  </div>
+
+  <!-- 36. Practical Points & 37. Revision -->
+  <h2 class="sec-heading">36. ⚠️ Important Practical Points</h2>
+  <div class="two-col" style="font-size: 13px;">
+    <ul style="margin-left: 0; list-style-type: none;">
+      <li>• CloudFront is a global AWS service.</li>
+      <li>• Original source is called the Origin (e.g. S3).</li>
+      <li>• EC2/app infra can also be behind CloudFront.</li>
+      <li>• Cache Hit = found in cache. Cache Miss = retrieve from origin.</li>
+    </ul>
+    <ul style="margin-left: 0; list-style-type: none;">
+      <li>• index.html can be the Default Root Object.</li>
+      <li>• The distribution may take time to deploy.</li>
+      <li>• Disable a distribution before deleting it.</li>
+      <li>• CF and multi-region hosting solve related but different problems.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec-heading" style="margin-top:6px;">37. 🧠 One-Minute Revision</h2>
+  <div class="hand-box" style="background:#faf5ff; border-color:#a855f7;">
+    <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">What is CloudFront?</p>
+    <p style="font-size:13.5px; margin:0 0 6px 0;">AWS's CDN that delivers content globally with lower latency by caching closer to users.</p>
+    <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">Origin vs Edge Location:</p>
+    <p style="font-size:13.5px; margin:0 0 6px 0;">Origin = Original source. Edge Location = Where content is cached and delivered.</p>
+    <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">Why use it?</p>
+    <p style="font-size:13.5px; margin:0;">To improve global delivery performance, reduce latency, and reduce repeated origin requests.</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 38. Interview Questions -->
+  <h2 class="sec-heading">38. 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is Amazon CloudFront?</div>
+        <div class="qa-a">An AWS CDN that distributes content through a global network to provide faster/lower-latency delivery.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q2. Why do we need a CDN?</div>
+        <div class="qa-a">To deliver content from locations closer to users, reducing latency and improving performance.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q3. What is an Edge Location?</div>
+        <div class="qa-a">A CloudFront location where content can be cached and served closer to users.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q4. What is an Origin?</div>
+        <div class="qa-a">The original source from which CloudFront retrieves content (e.g. S3 bucket or EC2 application).</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. What is a Cache Hit?</div>
+        <div class="qa-a">Occurs when the requested content is already available at the cache and can be served from there.</div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q6. What is a Cache Miss?</div>
+        <div class="qa-a">Occurs when the content is not available in the cache, requiring CloudFront to retrieve it from the origin.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. Can CloudFront use S3 as an origin?</div>
+        <div class="qa-a">Yes, Amazon S3 can be configured as a CloudFront origin.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q8. Can it work with an app on EC2?</div>
+        <div class="qa-a">Yes. CloudFront can be placed in front of application infra so suitable content is delivered via CDN.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q9. Purpose of Default Root Object?</div>
+        <div class="qa-a">Specifies the default object to return when a user requests the root (e.g. index.html).</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q10. CF or multiple EC2 Regions?</div>
+        <div class="qa-a">Depends. CF is a delivery/caching layer. Multi-region distributes app infra. They can be used together.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Architecture -->
+  <h2 class="sec-heading">🔥 Final Architecture to Remember</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 13px;">                     🌍 GLOBAL USERS
+                /        |        \
+               /         |         \
+          Europe       India      USA
+             \           |          /
+              \          |         /
+               ↓         ↓        ↓
+              ☁️ AMAZON CLOUDFRONT
+                       CDN
+                        ↓
+               Edge Locations
+                        ↓
+                  Cache Layer
+                        ↓
+                     Origin
+                  ┌─────┴─────┐
+                  ↓           ↓
+                 S3          EC2</div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 18px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      💡 The Core Idea
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 4px 0 2px 0; font-weight: 700;">
+      Without CloudFront: User → Origin<br>
+      With CloudFront: User → Nearest/appropriate CloudFront Edge → Cache → Origin when required
+    </p>
+    <div style="font-size: 16px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; margin-top:6px;">
+      ⭐ Remember This Line
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 2px 0 0 0; font-weight: 700;">
+      Amazon CloudFront is used to deliver content globally with low latency by caching suitable content closer to users.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

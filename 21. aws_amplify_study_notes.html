@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Amplify - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: inline-block;
+    margin: 2px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">🚀 AWS Amplify — Detailed Notes</div>
+
+  <!-- 1. Introduction -->
+  <h2 class="sec-heading">1. Introduction to AWS Amplify</h2>
+  <p>AWS Amplify is a development platform that helps developers build, deploy, and host web and mobile applications using AWS services.</p>
+  <p>It simplifies many tasks that would otherwise require configuring multiple AWS services manually.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Amplify can help with:</h3>
+      <ul style="font-size: 14px; margin-bottom: 0;">
+        <li>Building & Deploying apps</li>
+        <li>Hosting websites</li>
+        <li>Continuous deployment</li>
+        <li>Custom domains & SSL/TLS</li>
+        <li>Authentication (Cognito)</li>
+        <li>APIs & Databases (DynamoDB)</li>
+        <li>Storage & Backend resources</li>
+        <li>Local development & Cloud Sandbox</li>
+      </ul>
+    </div>
+    
+    <div class="sticky-note" style="margin-top: 0;">
+      <span class="tag-badge badge-imp">Simple Definition</span>
+      <p style="margin: 4px 0;">AWS Amplify simplifies the process of building, deploying, and hosting modern web and mobile applications on AWS.</p>
+    </div>
+  </div>
+
+  <!-- 3. Pricing & 4. Why Do We Need Amplify? -->
+  <h2 class="sec-heading">3. AWS Amplify Pricing &nbsp;|&nbsp; 4. Why Do We Need It?</h2>
+  <p>Amplify provides a Free Tier for build, deployment, data storage, and backend-related resources. <em>Always check current pricing docs!</em></p>
+
+  <h3 class="subsec-heading">Why Do We Need Amplify?</h3>
+  <p>Creating a website is only one part of the process. Doing everything manually requires configuring several AWS services. Amplify simplifies this workflow:</p>
+  
+  <div class="flow-h" style="font-size: 12px; gap: 4px;">
+    <span class="flow-node" style="padding:1px 4px;">Application</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Deployment</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Hosting</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Custom Domain</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">SSL</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">HTTPS</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Continuous Deployment</span>
+  </div>
+
+  <!-- 5 & 6. Deploying Static Website -->
+  <h2 class="sec-heading">5 & 6. Deploying a Static Website from GitHub</h2>
+  <div class="two-col">
+    <div>
+      <p>The first practical example uses a simple static website stored in GitHub.</p>
+      <div class="ascii-tree" style="font-size: 12px;">my-repository/
+│
+├── index.html
+└── styles.css</div>
+      <p>This website is simple and does not require a complex backend.</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Step-by-Step Deployment</h3>
+      <ol style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+        <li>Open AWS Amplify Console</li>
+        <li>Create/Deploy an application</li>
+        <li>Select Source (e.g., GitHub, GitLab, Bitbucket)</li>
+        <li>Authorize & Connect Repository</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">7. Connecting GitHub — Least Privilege</h3>
+    <p style="font-size: 14px; margin-bottom: 0;">When GitHub asks for authorization, it's recommended to grant access <strong>only to specific repositories</strong> rather than all available repositories. (Security best practice!)</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 8, 9, 10. Build and Deployment -->
+  <h2 class="sec-heading">8 & 9 & 10. Build and Deployment Flow</h2>
+  <p>After connecting GitHub, you select the repository and the branch. Give the app a name (e.g. <em>My Static Website</em>), then click <strong>Save and Deploy</strong>.</p>
+  
+  <div class="flow-v" style="gap:2px; font-size:13.5px;">
+    <span class="flow-node">GitHub Repository</span>
+    <span class="flow-arrow" style="font-size:12px;">↓</span>
+    <span class="flow-node">AWS Amplify</span>
+    <span class="flow-arrow" style="font-size:12px;">↓</span>
+    <span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Build</span>
+    <span class="flow-arrow" style="font-size:12px;">↓</span>
+    <span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Deploy</span>
+    <span class="flow-arrow" style="font-size:12px;">↓</span>
+    <span class="flow-node">Hosted Website URL</span>
+  </div>
+
+  <!-- 11 & 12. Continuous Deployment -->
+  <h2 class="sec-heading">11. Automatic Deployment &nbsp;|&nbsp; 12. Practical Example</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size: 14.5px;">One of the most useful features is <span class="highlight">continuous deployment</span>.</p>
+      <p style="font-size: 14.5px;">Suppose the website is deployed. You edit <span class="code-term">index.html</span> locally (e.g. changing text from V7 to V8) and push the commit to GitHub.</p>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">The Automation Flow</h3>
+      <div class="ascii-tree" style="font-size:11.5px;">Git Commit (V8)
+   ↓
+Amplify detects change
+   ↓
+Build triggered
+   ↓
+Automatic Deploy
+   ↓
+Website displays V8</div>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">⭐ Key Concept</span> Git commit → Amplify build → Automatic deployment → Updated website. You do not have to manually upload files again!
+  </div>
+
+  <!-- 13. Deployment History -->
+  <h2 class="sec-heading">13. Deployment History</h2>
+  <p>Amplify provides a clear view of deployment history. You can view: Deployment status, previous builds, commit information, and build details. This is vital for tracing when and why a deployment occurred.</p>
+
+  <!-- 14 & 15. Custom Domains & Route 53 -->
+  <h2 class="sec-heading">14 & 15. Custom Domains and Route 53</h2>
+  <p>A production website needs a custom domain (e.g. <span class="code-term">example.com</span>) instead of the default Amplify URL. In Amplify, go to <strong>Hosting → Custom domains</strong> to add it.</p>
+  
+  <div class="hand-box">
+    <p style="margin:2px 0; font-weight:700;">If using Amazon Route 53:</p>
+    <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+      <span class="flow-node">User</span><span class="flow-arrow">→</span><span class="flow-node">Custom Domain</span><span class="flow-arrow">→</span><span class="flow-node">Route 53 DNS</span><span class="flow-arrow">→</span><span class="flow-node">Amplify</span><span class="flow-arrow">→</span><span class="flow-node">Website</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 16 - 19. Domains & DNS Management -->
+  <h2 class="sec-heading">Domain Registration vs DNS Management (16 - 19)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. The Difference</h3>
+      <p style="font-size:13.5px;"><strong>Domain Registration:</strong> Buying/owning the domain name (<span class="code-term" style="padding:0 2px;">example.com</span>).</p>
+      <p style="font-size:13.5px;"><strong>DNS Management:</strong> Managing where the domain actually points to (e.g. pointing it to Amplify).</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">17 & 18. Hosted Zone & NS</h3>
+      <p style="font-size:13px;">A <strong>Hosted Zone</strong> contains DNS info (A, CNAME records). The zone provides <strong>Name Servers (NS)</strong>. You tell your registrar to use these Name Servers.</p>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top: 4px;">
+    <span class="tag-badge badge-imp">⭐ Key Point (19. External Providers)</span>
+    <p style="margin:2px 0;">A domain can be registered with one provider (e.g. Hostinger) while its DNS is managed through Route 53, provided the DNS delegation (Name Servers) is configured correctly.</p>
+  </div>
+
+  <!-- 20. SSL/TLS Certificate -->
+  <h2 class="sec-heading">20. SSL/TLS Certificate</h2>
+  <p>When adding a custom domain, Amplify can configure an SSL/TLS certificate for HTTPS automatically.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Custom Domain</span><span class="flow-arrow">→</span><span class="flow-node">SSL Creation</span><span class="flow-arrow">→</span><span class="flow-node">Configuration</span><span class="flow-arrow">→</span><span class="flow-node">Activation</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">HTTPS Website</span>
+  </div>
+
+  <!-- 21, 22, 23. Full-Stack Web Applications -->
+  <h2 class="sec-heading">Full-Stack Web Applications (21 - 23)</h2>
+  <p>Amplify is more than static hosting; it helps build <span class="highlight">full-stack web apps</span>.</p>
+  
+  <div class="two-col">
+    <div>
+      <ul style="font-size: 14px;">
+        <li><strong>Frontend:</strong> User interaction (React, Angular)</li>
+        <li><strong>Backend:</strong> App logic (Node.js, Java)</li>
+        <li><strong>Database:</strong> Data storage (DynamoDB)</li>
+        <li><strong>Authentication:</strong> Login/Security (Cognito)</li>
+        <li><strong>APIs:</strong> Communication paths</li>
+        <li><strong>Storage:</strong> Files (S3)</li>
+      </ul>
+    </div>
+    
+    <div class="ascii-tree" style="text-align: center; font-size: 11px;">                 User
+                   ↓
+              Frontend
+          (React / Angular)
+                   ↓
+                 API
+                   ↓
+              Backend
+                   ↓
+       ┌───────────┼───────────┐
+       ↓           ↓           ↓
+   Database    Authentication Storage
+  (DynamoDB)    (Cognito)      (S3)
+       ↑
+       |
+    (Lambda)</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 25. Why Managed Services & 26. React App -->
+  <h2 class="sec-heading">25. Why Use Managed AWS Services?</h2>
+  <p>Implementing auth, databases, and APIs manually from scratch is huge work (registration, passwords, security, infrastructure scaling). Amplify simplifies integration with managed services:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:8px;">
+    <span class="flow-node">Cognito (Auth)</span>
+    <span class="flow-node">DynamoDB (DB)</span>
+    <span class="flow-node">Lambda (Compute)</span>
+    <span class="flow-node">S3 (Storage)</span>
+  </div>
+
+  <!-- 26, 27, 28, 29. Deploying React App -->
+  <h2 class="sec-heading">Deploying a React Application (26 - 29)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size: 14px;">The practical uses a sample React To-Do List. Amplify provides sample templates that generate GitHub repos.</p>
+      <div class="hand-box" style="margin-top:4px;">
+        <h3 class="subsec-heading" style="margin-top:0;">29. Auto Build Detection</h3>
+        <p style="font-size:12.5px;">Amplify auto-detects frontend frameworks and configures build commands (e.g. <span class="code-term" style="padding:0 2px;">npm run build</span>).</p>
+      </div>
+    </div>
+    
+    <div class="ascii-tree" style="font-size: 11px;">React Source Code
+       ↓
+Amplify detects project
+       ↓
+npm run build
+       ↓
+Build output
+       ↓
+Deployment</div>
+  </div>
+
+  <!-- 30, 31, 32, 33. Backend Resources -->
+  <h2 class="sec-heading">Backend Resources & DynamoDB (30 - 33)</h2>
+  <p>After deployment, users can add tasks to the To-Do list. Where is the data stored? <span class="highlight">Amazon DynamoDB</span></p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">32. DynamoDB Flow</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">React App</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Amplify Backend</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5; padding:1px 4px;">DynamoDB (NoSQL)</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">To-Do Data</span>
+      </div>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">33. Managed Resources</h3>
+      <p style="font-size: 13.5px;">Amplify provisions and manages backend resources behind the scenes. This includes DynamoDB tables, Lambda functions, Cognito user pools, and IAM permissions.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 34 & 35. Cognito and Lambda -->
+  <h2 class="sec-heading">34. AWS Cognito &nbsp;|&nbsp; 35. AWS Lambda</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">AWS Cognito</h3>
+      <p style="font-size: 13.5px;">Used for authentication and user identity management (sign-up, login, logout, verification).</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">AWS Lambda</h3>
+      <p style="font-size: 13.5px;">Provides serverless compute. Executes backend business logic triggered by API calls from the frontend.</p>
+    </div>
+  </div>
+
+  <!-- 36 - 42. Local Development & Connecting Backend -->
+  <h2 class="sec-heading">Local Development (36 - 42)</h2>
+  <p>You can clone the GitHub repo locally to work on the app. Tools needed: <span class="highlight">Node.js, npm, Git, Code Editor</span>.</p>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">Basic flow:</p>
+      <span class="code-term" style="font-size:12px;">git clone &lt;repo&gt;<br>cd &lt;project&gt;<br>npm install<br>npm run dev</span>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">40. The Challenge</h3>
+      <p style="font-size:12.5px;">If the app runs locally on <span class="code-term" style="padding:0 2px;">localhost:5173</span>, how does it connect to AWS DynamoDB/Cognito?</p>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">The Solution: Amplify Output File</span>
+    <p style="margin:4px 0;">You download the Amplify output configuration file from the deployed AWS backend. This file tells your local React app exactly how to connect to the cloud resources.</p>
+    <div class="flow-h" style="font-size:12px; gap:2px; justify-content:flex-start;">
+      <span class="flow-node">Local App</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Output Config</span><span class="flow-arrow">→</span><span class="flow-node">AWS Backend (DB/Auth)</span>
+    </div>
+  </div>
+
+  <!-- 44 - 47. Authentication -->
+  <h2 class="sec-heading">Authentication Workflow (44 - 47)</h2>
+  <p>The practical adds an Authenticator component to the React app. Flow:</p>
+  <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12.5px;">
+    <span class="flow-node">Create Account</span><span class="flow-arrow">→</span><span class="flow-node">Email Verification Code</span><span class="flow-arrow">→</span><span class="flow-node">Account Verified</span><span class="flow-arrow">→</span><span class="flow-node">Sign In</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Use App</span>
+  </div>
+  <p style="font-size: 14px; margin-top: 6px;">Amplify + Cognito provides all the UI and backend functionality for this!</p>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 48 & 49. Continuous Deployment Git Flow -->
+  <h2 class="sec-heading">48 & 49. Continuous Deployment Git Flow</h2>
+  <p>When local changes (like adding Delete buttons or Auth) are ready, push to GitHub:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">git add/commit/push</span><span class="flow-arrow">→</span><span class="flow-node">GitHub</span><span class="flow-arrow">→</span><span class="flow-node">Amplify Detects</span><span class="flow-arrow">→</span><span class="flow-node">Auto Build</span><span class="flow-arrow">→</span><span class="flow-node">Deploy</span>
+  </div>
+
+  <!-- 50 & 51. Per-User Data & Authorization -->
+  <h2 class="sec-heading">50. Per-User Data &nbsp;|&nbsp; 51. Authorization</h2>
+  <p>If User A and User B use the app, they shouldn't see the same shared To-Do list.</p>
+  <div class="ascii-tree">User Login → User Identity → Authorization → Database Access → Only User's Data</div>
+  
+  <div class="warn-box" style="padding:4px 8px;">
+    <span class="tag-badge badge-imp">⭐ Critical Interview Concept</span>
+    <p style="margin:2px 0;"><strong>Authentication:</strong> Who are you? (Login)</p>
+    <p style="margin:2px 0;"><strong>Authorization:</strong> What are you allowed to access? (User A accesses only A's data)</p>
+  </div>
+
+  <!-- 52 to 57. Cloud Sandbox -->
+  <h2 class="sec-heading">Cloud Sandbox (52 - 57)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;"><strong>What is it?</strong> An isolated cloud development environment for testing backend changes.</p>
+      <p style="font-size:14px;"><strong>Why?</strong> You shouldn't modify the production/main backend while experimenting.</p>
+      <span class="code-term" style="font-size:12px;">Command: npx ampx sandbox</span>
+    </div>
+    
+    <div class="ascii-tree" style="text-align: center; font-size: 11px;">    Amplify Project
+          |
+  ┌───────┴───────┐
+  ↓               ↓
+ Main          Sandbox
+Backend        Backend
+ (Real)         (Test)</div>
+  </div>
+  <p>The Sandbox watches your local code for backend changes and updates the Sandbox cloud resources automatically.</p>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 59, 60. Frontend + Backend Relationship -->
+  <h2 class="sec-heading">60. Frontend + Backend Relationship</h2>
+  <p>A full-stack application works as a connected system. Changing only the frontend is often not enough.</p>
+  <div class="flow-v" style="gap:2px; font-size:12.5px;">
+    <span class="flow-node">Frontend</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Authentication (Cognito)</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">API / Backend (Lambda)</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Authorization Rules</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Database (DynamoDB)</span>
+  </div>
+
+  <!-- 61. Complete Amplify Architecture View -->
+  <h2 class="sec-heading">61. Amplify Architecture — Complete View</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 11.5px; line-height:1.2;">                      USER
+                       │
+                 React Frontend
+                       │
+                  AWS Amplify
+                       │
+          ┌────────────┼────────────┐
+          ↓            ↓            ↓
+      Cognito         API        Storage (S3)
+    (Authentication)   │
+                       ↓
+                    Lambda
+                       │
+                       ↓
+                   DynamoDB</div>
+                   
+  <div class="hand-box" style="margin-top: 10px;">
+    <h3 class="subsec-heading" style="margin-top:0;">For Hosting & Custom Domain:</h3>
+    <p style="font-size: 13px; margin: 4px 0;">GitHub → Amplify → Build → Deploy → Hosted App</p>
+    <p style="font-size: 13px; margin: 4px 0;">User → Custom Domain → Route 53 (DNS) → Amplify HTTPS</p>
+  </div>
+
+  <!-- 62. Complete Workflow Steps -->
+  <h2 class="sec-heading">62. Complete Development Workflow</h2>
+  <ol class="two-col" style="font-size:12.5px; margin:0; padding-left:18px;">
+    <div>
+      <li>Write App</li>
+      <li>Store in GitHub</li>
+      <li>Connect GitHub to Amplify</li>
+      <li>Configure Build & Deploy</li>
+      <li>Add Custom Domain & SSL</li>
+      <li>Develop Locally</li>
+      <li>Connect to Backend</li>
+    </div>
+    <div>
+      <li>Test Using Sandbox</li>
+      <li>Commit Changes</li>
+      <li>Push to GitHub</li>
+      <li>Amplify Auto Builds</li>
+      <li>Application Updates</li>
+    </div>
+  </ol>
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 63 & 64. Cleanup -->
+  <h2 class="sec-heading">63 & 64. Cleanup</h2>
+  <div class="warn-box">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">⚠️ Important Warning</h3>
+    <p style="font-size:14px; margin-bottom:0;">Deleting an Amplify application does not guarantee all resources are gone. Always manually verify services like DynamoDB, Cognito, Lambda, Route 53, and S3 are cleaned up to avoid charges!</p>
+  </div>
+
+  <!-- 65. Important Concepts Table -->
+  <h2 class="sec-heading">65. Important Concepts Quick Table</h2>
+  <table class="hand-table" style="font-size:12.5px;">
+    <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Amplify</strong></td><td>Platform for building, deploying, hosting apps</td></tr>
+      <tr><td><strong>CI/CD</strong></td><td>Automatically build/deploy on code changes</td></tr>
+      <tr><td><strong>Cognito</strong></td><td>Authentication and user identity</td></tr>
+      <tr><td><strong>DynamoDB</strong></td><td>Managed NoSQL database</td></tr>
+      <tr><td><strong>Lambda</strong></td><td>Serverless compute backend</td></tr>
+      <tr><td><strong>Sandbox</strong></td><td>Isolated cloud dev environment</td></tr>
+      <tr><td><strong>Route 53</strong></td><td>AWS DNS and domain service</td></tr>
+      <tr><td><strong>Hosted Zone</strong></td><td>DNS configuration container</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 67. Hosting vs Building & 69. Advantages -->
+  <div class="two-col" style="margin-top: 8px;">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">67. Hosting vs Building</h3>
+      <p style="font-size:13px; margin:2px 0;"><strong>Hosting:</strong> Making an already created app available (deploying static files).</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Building:</strong> Creating app functionality and integrating AWS backend services.</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">69. Top Advantages</h3>
+      <ul style="font-size:12px; margin-bottom:0;">
+        <li>Easy git deployment</li>
+        <li>Continuous deployment (CI/CD)</li>
+        <li>Custom domains & HTTPS</li>
+        <li>Seamless AWS Backend integration</li>
+        <li>Serverless architecture support</li>
+        <li>Local dev + Cloud Sandbox</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 71. Interview Questions -->
+  <h2 class="sec-heading">71. 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is AWS Amplify?</div>
+        <div class="qa-a">A development platform that simplifies building, deploying, and hosting web/mobile apps on AWS.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q3. What happens on a git push?</div>
+        <div class="qa-a">If continuous deployment is configured, Amplify detects the change, builds, and deploys automatically.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. Can an external domain be used?</div>
+        <div class="qa-a">Yes, by pointing the domain's DNS Name Servers to Route 53 / Amplify.</div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is Amazon Cognito for?</div>
+        <div class="qa-a">Authentication and user identity management (sign-up, login, verification).</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q10. What is Cloud Sandbox?</div>
+        <div class="qa-a">An isolated cloud dev environment for testing backend changes safely.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q11. Auth vs Authz?</div>
+        <div class="qa-a">Authentication: Who are you?<br>Authorization: What can you access?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Revision Architecture Tree -->
+  <h2 class="sec-heading">🔥 Final One-Page Revision</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 11px; line-height: 1.15; padding: 4px;">                         AWS AMPLIFY
+                              │
+          ┌───────────────────┼───────────────────┐
+          ↓                   ↓                   ↓
+       BUILD               DEPLOY              HOST
+          │                   │                   │
+     Full Stack            GitHub             Web App
+     Applications          CI/CD              Hosting
+          │                                       │
+          └───────────────┬───────────────────────┘
+                          ↓
+                   CUSTOM DOMAIN
+                          ↓
+                     ROUTE 53 / DNS
+                          ↓
+                     SSL / HTTPS
+
+                  FULL-STACK BACKEND
+                          │
+          ┌───────────────┼───────────────┐
+          ↓               ↓               ↓
+       Cognito          Lambda         DynamoDB
+    Authentication     Backend          Database</div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align:center;">
+      ⭐ The Most Important Line
+    </div>
+    <p style="font-size: 15px; color: #881337; margin: 4px 0 0 0; font-weight: 700; text-align:center;">
+      AWS Amplify simplifies the complete application lifecycle — from building and connecting backend services to deploying, hosting, authenticating users, managing custom domains, and testing backend changes in a cloud sandbox.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

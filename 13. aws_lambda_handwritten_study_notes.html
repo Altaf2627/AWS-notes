@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Lambda - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS Lambda — Detailed & Structured Notes</div>
+
+  <!-- 1. What is AWS Lambda? -->
+  <h2 class="sec-heading">1. What is AWS Lambda?</h2>
+  <p>AWS Lambda is a managed <span class="highlight">serverless compute service</span> provided by AWS.</p>
+  <p>It allows you to run your code in the cloud without managing the underlying servers yourself.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Normally</h3>
+      <p style="font-size:13.5px; margin:0;">If you want to execute some code, you need a machine/server.</p>
+      <div class="flow-v" style="font-size:12px; gap:2px; margin-top:2px;">
+        <span class="flow-node" style="padding:1px 4px;">Laptop / EC2 Instance</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Run Code</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="background:#f0fdf4; border-color:#16a34a;">
+      <h3 class="subsec-heading" style="margin-top:0;">With Lambda</h3>
+      <div class="flow-v" style="font-size:12px; gap:2px; margin-top:2px;">
+        <span class="flow-node" style="padding:1px 4px;">Your Code</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">AWS Lambda</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5; padding:1px 4px;">AWS manages infra</span>
+      </div>
+      <p style="font-size:13.5px; margin-bottom:0;">You mainly provide the code, while AWS handles the underlying compute infrastructure.</p>
+    </div>
+  </div>
+
+  <!-- 2. What Does "Serverless" Mean? -->
+  <h2 class="sec-heading">2. What Does "Serverless" Mean?</h2>
+  <p>A common misunderstanding is: <em>"Serverless means there are no servers."</em> That is not literally true.</p>
+  <p>Servers are still required to execute your code. <span class="highlight">Serverless means that AWS manages the servers and infrastructure for you.</span></p>
+  <p>You don't have to manually manage: Server provisioning, Operating system, Hardware, Server maintenance, Infrastructure scaling.</p>
+  
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Simple Definition</span>
+    <strong>Serverless = You focus on code; AWS manages the underlying infrastructure.</strong>
+  </div>
+
+  <!-- 3. Why Use AWS Lambda? & 4. Main Features -->
+  <h2 class="sec-heading">3. Why Use AWS Lambda? &nbsp;|&nbsp; 4. Main Features</h2>
+  <p>With traditional servers (like EC2), you manage CPU, Memory, Storage, OS, Scaling, and Maintenance.</p>
+  <p>This makes Lambda particularly useful for small, event-driven tasks.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Main Features of AWS Lambda</h3>
+    <ul style="font-size:14px; margin-bottom:0;">
+      <li><strong>1. No Server Management:</strong> AWS manages the infrastructure required to execute your functions.</li>
+      <li><strong>2. Upload Your Code:</strong> You can deploy your function code directly to Lambda.</li>
+      <li><strong>3. Automatic Scaling:</strong> Lambda can create multiple concurrent function executions when many events arrive.</li>
+      <li><strong>4. Event-Driven Execution:</strong> A Lambda function normally runs when it is invoked by an event or request.</li>
+      <li><strong>5. Pay for Usage:</strong> Usage-based pricing model. You generally pay according to execution/request usage.</li>
+      <li><strong>6. Suitable for Short Tasks:</strong> Designed for relatively short-lived workloads rather than continuously running applications.</li>
+    </ul>
+  </div>
+
+  <!-- 5. Supported Programming Languages -->
+  <h2 class="sec-heading">5. Supported Programming Languages</h2>
+  <p>Lambda supports multiple programming languages/runtimes. Common examples include:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px;">
+    <span class="flow-node">Python</span> <span class="flow-node">Java</span> <span class="flow-node">JavaScript / Node.js</span> <span class="flow-node">C#</span> <span class="flow-node">Go</span> <span class="flow-node">Ruby</span>
+  </div>
+  <p>AWS also provides mechanisms for using other languages through custom runtimes.</p>
+
+  <!-- 6. Creating a Lambda Function & 7. Lambda Function -->
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading">6. Creating a Lambda Function</h3>
+      <p style="font-size:13px;">Workflow: AWS Console → Search "Lambda" → Create Function.</p>
+      <p style="font-size:13px;"><strong>Option 1 — Scratch:</strong> Create completely new function.<br><strong>Option 2 — Blueprint:</strong> Use AWS templates.</p>
+      <p style="font-size:13px;"><em>Example:</em> Function Name: DemoFunction | Runtime: Python</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading">7. What is a Lambda Function?</h3>
+      <p style="font-size:13px;">A unit of code that AWS can execute.</p>
+      <span class="code-term" style="font-size:12px;">def hello():<br>    print("Hello")</span>
+      <div class="ascii-tree" style="margin-top:4px; font-size:11px;">Lambda Function
+  │
+  └── Code
+       │
+       └── Executes when invoked</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 8. Lambda Handler & 9. Testing -->
+  <h2 class="sec-heading">8. Lambda Handler &nbsp;|&nbsp; 9. Testing a Function</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">8. Lambda Handler</h3>
+      <p style="font-size:13.5px;">The main entry point for execution. The handler receives information about the event and executes the required logic.</p>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">Event</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Lambda Handler</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Your Code</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Response</span>
+      </div>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">9. Testing a Lambda Function</h3>
+      <p style="font-size:13.5px;">A Lambda function does not simply execute continuously. You can manually invoke it using the <strong>Test</strong> feature.</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 2px;">Function</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Create Test Event</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Invoke</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">View Response</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. What is an Event? & 11. Example Lambda -->
+  <h2 class="sec-heading">10. What is an Event? &nbsp;|&nbsp; 11. Example Function</h2>
+  <p>An event contains information that is passed to a Lambda function when it is invoked. <span class="code-term" style="display:inline; padding:0 4px;">{ "message": "Hello" }</span></p>
+  <div class="warn-box" style="margin: 4px 0;">
+    <span class="tag-badge badge-imp">Important Concept</span> Creating a function does not automatically mean that the code is constantly running. It executes when invoked.
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">11. Example Python Function</h3>
+    <span class="code-term">import json
+
+def lambda_handler(event, context):
+    print("Hello from Lambda")
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps("Hello")
+    }</span>
+    <ul style="font-size: 13.5px; margin-bottom:0;">
+      <li><strong>event</strong> → information about the invocation</li>
+      <li><strong>context</strong> → information about the Lambda execution environment</li>
+      <li><strong>lambda_handler</strong> → handler function</li>
+      <li><strong>return</strong> → response returned by the function</li>
+    </ul>
+  </div>
+
+  <!-- 12. Deploying & 13. Event-Driven -->
+  <h2 class="sec-heading">12. Deploying Code Changes &nbsp;|&nbsp; 13. Event-Driven Execution</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;">If you change code, it needs to be deployed so the updated version is used for subsequent invocations.</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Edit Code</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Deploy</span><span class="flow-arrow">→</span><span class="flow-node">Test New Code</span>
+      </div>
+      <p style="font-size:13px; font-weight:700;">Editing and deploying are separate concepts.</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">13. Event-Driven Architecture</h3>
+      <p style="font-size:14px;">The function executes in response to an event.</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Event</span><span class="flow-arrow">→</span><span class="flow-node">Lambda Trigger</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Lambda</span><span class="flow-arrow">→</span><span class="flow-node">Task</span>
+      </div>
+      <p style="font-size:13px;">The event can originate from another AWS service.</p>
+    </div>
+  </div>
+
+  <!-- 14, 15, 16. Examples -->
+  <h2 class="sec-heading">14 - 16. Architectural Examples</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. S3 + Lambda</h3>
+      <div class="ascii-tree" style="text-align:center;">    User
+     │
+     ▼
+ S3 Bucket
+     │
+File Upload
+     │
+     ▼
+  S3 Event
+     │
+     ▼
+  Lambda
+     │
+ ┌───┼───┐
+ ▼   ▼   ▼
+Resize  Process</div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. DynamoDB + Lambda</h3>
+      <p style="font-size:13.5px;">Lambda can perform tasks based on DB changes.</p>
+      <div class="ascii-tree">User Signup
+     ↓
+Application
+     ↓
+DynamoDB
+     ↓
+ New Data
+     ↓
+  Lambda
+     ↓
+Send Welcome Email</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 17 & 18 & 19. Integrations and S3 Triggers -->
+  <h2 class="sec-heading">17. Integrations &nbsp;|&nbsp; 18. Adding an S3 Trigger</h2>
+  <p>Lambda can work with many AWS services: <span class="highlight">S3, DynamoDB, API Gateway, CloudWatch, EventBridge, SQS, SNS</span>.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">18. Adding an S3 Trigger</h3>
+      <p style="font-size:13.5px;">Basic flow to configure a trigger:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Lambda → Add Trigger</span>
+        <span class="flow-arrow" style="font-size:14px; margin-left:20px;">↓</span>
+        <span class="flow-node" style="padding:1px 4px;">Select S3 & Bucket</span>
+        <span class="flow-arrow" style="font-size:14px; margin-left:20px;">↓</span>
+        <span class="flow-node" style="padding:1px 4px;">Select Event Type (e.g. All Object Create)</span>
+      </div>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">19 & 20. S3 Event Notification</h3>
+      <p style="font-size:13.5px;">Behind the scenes, the event notification connects the S3 event to the Lambda function. If you upload <span class="code-term" style="display:inline; padding:0 2px;">image.jpg</span> to the bucket, an Object Created Event fires, invoking the function.</p>
+    </div>
+  </div>
+
+  <!-- 21 to 24. Monitoring & Logs -->
+  <h2 class="sec-heading">Monitoring and Logs (21 - 24)</h2>
+  
+  <div class="two-col">
+    <div>
+      <p><strong>21. Monitoring:</strong> Provides metrics about function executions: Number of invocations, Duration, Errors, Performance.</p>
+      <p><strong>22. CloudWatch Logs:</strong> Lambda integrates with Amazon CloudWatch Logs. Output like <span class="code-term" style="display:inline; padding:0 2px;">print("Hello")</span> goes here.</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Execution</span><span class="flow-arrow">→</span><span class="flow-node">Logs</span><span class="flow-arrow">→</span><span class="flow-node">CloudWatch</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">24. Monitoring vs Logs</h3>
+      <p style="margin-bottom:0;"><strong>Monitoring → Metrics</strong><br>(Invocation count, duration, errors)</p>
+      <p style="margin-top:6px;"><strong>Logs → Detailed Information</strong><br>(Detailed execution output/print statements)</p>
+    </div>
+  </div>
+
+  <!-- 25 to 29. Permissions -->
+  <h2 class="sec-heading">Lambda Permissions & IAM Roles (25 - 29)</h2>
+  <p>Permissions are very important when Lambda interacts with other AWS services.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">26. Execution Role</h3>
+      <p style="font-size: 13.5px;">An IAM role that determines what AWS resources the function is allowed to access.</p>
+      <p style="font-size: 13px; font-weight:700;">What can the Lambda access?</p>
+      <div class="flow-v" style="font-size:11px; gap:2px;">
+        Lambda → Execution Role → S3 Read Perm → S3 Bucket
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">28. Resource-Based Policies</h3>
+      <p style="font-size: 13.5px;">Controls which AWS services or principals are allowed to invoke the Lambda function.</p>
+      <p style="font-size: 13px; font-weight:700;">Who can invoke the Lambda?</p>
+      <div class="flow-v" style="font-size:11px; gap:2px;">
+        S3 → Invoke Permission → Lambda Function
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">29. S3 to Lambda Permission Flow</span>
+    <p style="margin:2px 0;">S3 needs permission to <strong>invoke</strong> Lambda (Resource-based).</p>
+    <p style="margin:2px 0;">Lambda needs permission to <strong>access</strong> other resources (Execution Role).</p>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 30. Limitations -->
+  <h2 class="sec-heading">30. AWS Lambda Limitations</h2>
+  <p>Lambda is powerful, but not suitable for every workload.</p>
+  
+  <h3 class="subsec-heading">30.1 Execution Time Limit</h3>
+  <p>Lambda functions are designed for short-lived tasks. The maximum execution time is <span class="highlight">15 minutes</span>.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 8px;">
+    <div class="flow-node" style="border-color:#16a34a; background:#f0fdf4;">Short Task → Lambda</div>
+    <div class="flow-node" style="border-color:#dc2626; background:#fef2f2;">Long-Running App → EC2 / ECS</div>
+  </div>
+
+  <!-- 31. Not for Full Websites & 32. Stateless -->
+  <h2 class="sec-heading">31. Hosting &nbsp;|&nbsp; 32. Stateless Nature</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;"><strong>31. Not an always-running server:</strong> Lambda is not designed to host an entire traditional website (24/7 continuous server). Combine with API Gateway + DB for a serverless backend.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">32. Stateless Nature</h3>
+      <p style="font-size:13.5px;">Functions are treated as stateless. Do not depend on in-memory info from a previous invocation.</p>
+      <p style="font-size:13.5px; margin-bottom:0;">Use external services for persistent state: <span class="highlight">DynamoDB, S3, RDS</span>.</p>
+    </div>
+  </div>
+
+  <!-- 33 & 34. Cold Starts -->
+  <h2 class="sec-heading">33. Cold Start &nbsp;|&nbsp; 34. Warm vs Cold Execution</h2>
+  <p>If a function hasn't been invoked recently, an initialization delay can occur. This is a <strong>Cold Start</strong>.</p>
+  
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#3b82f6;">
+      <h3 class="subsec-heading" style="margin-top:0;">Cold Start</h3>
+      <div class="ascii-tree">Request
+ ↓
+Initialize environment
+ ↓
+Run function</div>
+    </div>
+    <div class="hand-box" style="border-color:#16a34a;">
+      <h3 class="subsec-heading" style="margin-top:0;">Warm Execution</h3>
+      <div class="ascii-tree">Request
+ ↓
+Existing environment
+ ↓
+Run function</div>
+    </div>
+  </div>
+
+  <!-- 35 to 39. Use Cases -->
+  <h2 class="sec-heading">Use Cases (35 - 39)</h2>
+  <p>Lambda is excellent for short, event-driven, automatically scalable tasks.</p>
+  
+  <div class="two-col">
+    <ul style="font-size: 14.5px;">
+      <li><strong>1. Image Processing:</strong> User uploads image to S3 → Lambda resizes, compresses, generates thumbnails.</li>
+      <li><strong>2. Data Processing:</strong> Data enters DB → Lambda validates, cleans, transforms.</li>
+    </ul>
+    <ul style="font-size: 14.5px;">
+      <li><strong>3. Real-Time Notifications:</strong> User signs up → Event fires → Lambda sends welcome email.</li>
+      <li><strong>4. API Backend:</strong> Combined with API Gateway to create serverless backends connecting to databases.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 40 & 41. Automatic Scaling -->
+  <h2 class="sec-heading">40. Automatic Scaling</h2>
+  <p>Lambda can automatically scale the number of concurrent executions according to incoming demand.</p>
+  <div class="ascii-tree" style="text-align:center;">                  Requests
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+   Lambda         Lambda         Lambda
+   Execution      Execution      Execution
+      #1             #2             #3</div>
+  <p><strong>41. Why it's useful:</strong> If 100 users sign up simultaneously, instead of manually creating 100 servers, Lambda creates concurrent execution environments as needed.</p>
+
+  <!-- 42. Pricing & 43. EC2 Comparison & 44. Containers -->
+  <h2 class="sec-heading">42. Pay-As-You-Go &nbsp;|&nbsp; 43. Lambda vs EC2</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;"><strong>42. Pricing:</strong> Usage-based model. You pay for executions, not continuous server uptime.</p>
+      <p style="font-size:14px; margin-top:8px;"><strong>44. Vs Containers:</strong> Containers host long-running processes. Lambda executes a function and completes.</p>
+    </div>
+    <table class="hand-table" style="font-size:12.5px; margin-top:0;">
+      <thead><tr><th>EC2</th><th>Lambda</th></tr></thead>
+      <tbody>
+        <tr><td>Virtual server</td><td>Serverless compute</td></tr>
+        <tr><td>You manage instance</td><td>AWS manages infra</td></tr>
+        <tr><td>Runs continuously</td><td>Event/request driven</td></tr>
+        <tr><td>Requires config for scale</td><td>Automatic scaling</td></tr>
+        <tr><td>Pay for running resource</td><td>Usage-based pay</td></tr>
+        <tr><td>Long-running workloads</td><td>Short/event workloads</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 45, 46, 47, 48. ZIP Deployment & Layers -->
+  <h2 class="sec-heading">Deployment (45 - 48)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">45. ZIP Deployment</h3>
+      <p style="font-size:13.5px;">If code exists locally, package it into a ZIP file and upload. The ZIP can contain application code, dependencies, and supporting files.</p>
+      <p style="font-size:13.5px; margin-bottom:0;"><strong>47. Dependencies:</strong> Required because external libraries aren't automatically in the runtime.</p>
+    </div>
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">48. Lambda Layers</h3>
+      <p style="font-size:13.5px;">Allows libraries/reusable components to be packaged separately from function code.</p>
+      <div class="ascii-tree" style="margin-top:2px;">Lambda Function
+      +
+Lambda Layer
+      ↓
+Execution Environment</div>
+    </div>
+  </div>
+
+  <!-- 49 & 50 & 51. Architectures & Lifecycle -->
+  <h2 class="sec-heading">49 & 50. Architecture &nbsp;|&nbsp; 51. Lifecycle</h2>
+  <div class="two-col">
+    <div class="ascii-tree" style="font-size:11.5px; text-align:center;">      User
+       │
+       ▼
+   S3 Bucket
+       │
+ Object Created
+       │
+       ▼
+  AWS Lambda
+       │
+  ┌────┴────┐
+  ▼         ▼
+Execute   Log Output
+            │
+            ▼
+        CloudWatch</div>
+        
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0; font-size:14px;">51. Execution Lifecycle</h3>
+      <ol style="font-size:12px; margin:0; padding-left:18px;">
+        <li>Event/request arrives</li>
+        <li>Lambda invocation</li>
+        <li>Environment available/created (Cold start possible here)</li>
+        <li>Function code runs</li>
+        <li>Function returns</li>
+        <li>Logs/metrics recorded</li>
+      </ol>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 52 & 53 & 54 & 55. Concepts, Pros, Cons -->
+  <h2 class="sec-heading">52. Important Concepts</h2>
+  <div class="two-col" style="font-size: 13.5px;">
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>Serverless:</strong> AWS manages servers.</li>
+      <li><strong>Function:</strong> Unit of code executed.</li>
+      <li><strong>Event:</strong> Input that causes execution.</li>
+      <li><strong>Trigger:</strong> Mechanism invoking Lambda.</li>
+      <li><strong>Handler:</strong> Function entry point.</li>
+    </ul>
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>Execution Role:</strong> IAM permissions.</li>
+      <li><strong>CloudWatch:</strong> Monitoring & logs.</li>
+      <li><strong>Cold Start:</strong> Init delay.</li>
+      <li><strong>Stateless:</strong> No persistent local memory.</li>
+    </ul>
+  </div>
+
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">53. Advantages</h3>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li>No server management</li>
+        <li>Automatic scaling</li>
+        <li>Event-driven workflow</li>
+        <li>Usage-based pricing</li>
+        <li>Fast development & Integration</li>
+      </ul>
+    </div>
+    
+    <div class="hand-box" style="border-color:#dc2626; background:#fef2f2;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#b91c1c;">54 & 55. Limitations</h3>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li>15-minute max duration</li>
+        <li>Stateless design</li>
+        <li>Cold starts</li>
+        <li>Not for continuous workloads</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 56. Interview Questions -->
+  <h2 class="sec-heading">56. Lambda Interview Questions</h2>
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is AWS Lambda?</div><div class="qa-a">Fully managed serverless compute service executing code in response to events.</div></div>
+      <div class="qa-block"><div class="qa-q">Q2. What does serverless mean?</div><div class="qa-a">AWS manages the underlying infrastructure.</div></div>
+      <div class="qa-block"><div class="qa-q">Q6. Can S3 trigger Lambda?</div><div class="qa-a">Yes, via S3 object creation events.</div></div>
+      <div class="qa-block"><div class="qa-q">Q7. What is an Execution Role?</div><div class="qa-a">IAM role defining what AWS resources the function can access.</div></div>
+    </div>
+    <div>
+      <div class="qa-block"><div class="qa-q">Q8. Max execution duration?</div><div class="qa-a">15 minutes per invocation.</div></div>
+      <div class="qa-block"><div class="qa-q">Q9. What is a cold start?</div><div class="qa-a">Initialization overhead when a new execution environment is created.</div></div>
+      <div class="qa-block"><div class="qa-q">Q10. Is Lambda stateful?</div><div class="qa-a">No, generally designed as stateless.</div></div>
+      <div class="qa-block"><div class="qa-q">Q12. How does Lambda scale?</div><div class="qa-a">Automatically creates concurrent executions in response to events.</div></div>
+    </div>
+  </div>
+
+  <!-- 57, 58, 59, 60. Final Revisions -->
+  <div class="two-col" style="margin-top: 8px;">
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">57. Quick Revision</h2>
+      <div class="ascii-tree" style="font-size: 10px; line-height: 1.15; padding: 4px;">AWS LAMBDA
+│
+├── Serverless Compute
+├── Fully Managed
+├── Function-Based
+├── Event-Driven
+├── Automatic Scaling
+├── Usage-Based Pricing
+├── Triggers (S3, DynamoDB, API GW)
+├── IAM Execution Role
+├── Monitoring (CloudWatch)
+└── Limitations
+     ├── 15-Minute Max
+     ├── Stateless
+     └── Cold Starts</div>
+     
+      <div class="hand-box" style="background:#faf5ff; border-color:#a855f7; margin-top:6px;">
+        <h3 class="subsec-heading" style="margin-top:0; color:#7e22ce;">58. Memory Trick</h3>
+        <p style="font-weight:700; font-size:13px; margin:2px 0;">CODE → EVENT → FUNCTION → SCALE → PAY</p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">59. Top Architectures</h2>
+      <div class="ascii-tree" style="font-size: 11px; padding: 4px;">S3 + Lambda
+S3 → Event → Lambda → Process → Logs
+
+DynamoDB + Lambda
+DynamoDB → Event → Lambda → Notify
+
+API Gateway + Lambda
+Client → API GW → Lambda → DB</div>
+
+      <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+        <div style="font-size: 16px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+          ⭐ Final Takeaway
+        </div>
+        <p style="font-size: 13.5px; color: #881337; margin: 2px 0; font-weight: 700;">
+          Lambda is a serverless, event-driven compute service best for short tasks.
+        </p>
+        <ol style="font-size: 12.5px; color: #881337; margin: 4px 0 0 16px; font-weight: 700;">
+          <li>Serverless → AWS manages servers</li>
+          <li>Event-driven → Runs when invoked</li>
+          <li>Auto-scaling → Handles concurrency</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

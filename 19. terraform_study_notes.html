@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terraform - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a;
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">Terraform — Infrastructure as Code (IaC)</div>
+
+  <!-- 1. Introduction to Terraform -->
+  <h2 class="sec-heading">1. Introduction to Terraform</h2>
+  <p>Terraform is an open-source <span class="highlight">Infrastructure as Code (IaC)</span> tool developed by HashiCorp.</p>
+
+  <h3 class="subsec-heading">What is Infrastructure as Code?</h3>
+  <p>Infrastructure as Code means using code and configuration files to create, manage, modify, and delete cloud infrastructure.</p>
+  <p>Instead of manually creating resources through a cloud provider's console, you define the desired infrastructure in a configuration file and let Terraform handle the infrastructure creation process.</p>
+
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">Manual Example</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">AWS Console</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">EC2 Dashboard</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Launch Instance</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Select AMI</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Select Instance Type</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Configure Settings</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Launch</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">Terraform Example</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">Terraform Configuration</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Terraform Commands</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Cloud Provider</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">EC2 Instance Created</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:6px;">Terraform allows you to define the desired EC2 infrastructure in code.</p>
+    </div>
+  </div>
+
+  <!-- 2. Multi-Cloud Support -->
+  <h2 class="sec-heading">2. Multi-Cloud Support</h2>
+  <p>One of Terraform's major advantages is that it supports <span class="highlight">multiple cloud providers</span> and infrastructure providers.</p>
+  <p>Examples mentioned in the course include:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px;">
+    <span class="flow-node">AWS</span> <span class="flow-node">Google Cloud Platform (GCP)</span> <span class="flow-node">Microsoft Azure</span>
+  </div>
+  <p>Therefore, Terraform can act as a common IaC tool across different cloud platforms.</p>
+  
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Key Point</span>
+    Terraform is not limited to a single cloud provider. This makes it useful when organizations work with multiple cloud environments.
+  </div>
+
+  <!-- 3. Configuration Files & 4. HCL -->
+  <h2 class="sec-heading">3. Configuration Files &nbsp;|&nbsp; 4. HCL</h2>
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom:2px;"><strong>3. Configuration Files</strong></p>
+      <p style="font-size:14px; margin-top:0;">Terraform configuration files generally use the <span class="code-term" style="display:inline; padding:0 4px;">.tf</span> file extension.</p>
+      <div class="ascii-tree" style="margin-top:4px;">Provider
+   ↓
+Region / Location
+   ↓
+Resource Type
+   ↓
+Resource Configuration</div>
+    </div>
+    
+    <div>
+      <p style="margin-bottom:2px;"><strong>4. HCL (HashiCorp Configuration Language)</strong></p>
+      <p style="font-size:14px; margin-top:0;">Terraform configurations are written using HCL. It is designed to make infrastructure configuration relatively easy to read and write.</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Terraform</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">HCL</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">.tf files</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Declarative Approach -->
+  <h2 class="sec-heading">5. Declarative Approach</h2>
+  <p>Terraform follows a <span class="highlight">declarative approach</span>.</p>
+  
+  <h3 class="subsec-heading">What does declarative mean?</h3>
+  <p>You specify the desired result, rather than manually specifying every step required to achieve that result.</p>
+  <p>For example:</p>
+  <div class="code-term">"I want an AWS EC2 instance using this AMI and this instance type."</div>
+  <p>Terraform determines the necessary actions to create that infrastructure.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Imperative Approach</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Step 1 → Do this</span>
+        <span class="flow-node" style="padding:1px 4px;">Step 2 → Do this</span>
+        <span class="flow-node" style="padding:1px 4px;">Step 3 → Do this</span>
+        <span class="flow-node" style="padding:1px 4px;">Step 4 → Do this</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Declarative Approach</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">Desired State</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Terraform determines required actions</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Infrastructure</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Key Point</span>
+    You describe <strong>WHAT</strong> you want; Terraform handles <strong>HOW</strong> to achieve it.
+  </div>
+
+  <!-- 6. Basic Terraform Workflow -->
+  <h2 class="sec-heading">6. Basic Terraform Workflow</h2>
+  <p>Terraform's basic workflow can be remembered using three main stages:</p>
+  <div class="flow-h" style="font-size:13px;">
+    <span class="flow-node">Configuration</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">init</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">plan</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">apply</span><span class="flow-arrow">→</span><span class="flow-node">Infrastructure Ready</span>
+  </div>
+  <p>For cleanup: <span class="code-term" style="display:inline; padding:0 4px;">terraform destroy</span></p>
+
+  <!-- 7, 8, 9. Init, Plan, Apply -->
+  <h2 class="sec-heading">7 - 9. Core Commands</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">7. terraform init</h3>
+      <p style="font-size:14px;">The first command generally used in a Terraform project. It initializes the Terraform working directory and prepares the project for Terraform operations.</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">8. terraform plan</h3>
+      <p style="font-size:14px;">Shows the changes Terraform intends to make. It allows you to review the proposed infrastructure changes before actually applying them. Helps you understand what will be created, modified, or removed.</p>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">9. terraform apply</h3>
+    <p style="font-size:14px; margin-bottom:2px;">Applies the Terraform configuration and creates or modifies the required infrastructure.</p>
+    <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+      <span class="flow-node" style="padding:1px 4px;">terraform apply</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Review</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Confirm (yes)</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Resources Created/Modified</span>
+    </div>
+  </div>
+
+  <!-- 10. Example — Creating an EC2 Instance -->
+  <h2 class="sec-heading">10. Example — Creating an EC2 Instance</h2>
+  <p>Suppose the Terraform configuration defines an AWS EC2 instance. The workflow is:</p>
+  <div class="ascii-tree">.tf Configuration File
+        ↓
+terraform init
+        ↓
+terraform plan
+        ↓
+Review Changes
+        ↓
+terraform apply
+        ↓
+EC2 Instance Created</div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 11. Modifying Infrastructure -->
+  <h2 class="sec-heading">11. Modifying Infrastructure</h2>
+  <p>Terraform is not only used to create resources. It can also modify existing infrastructure.</p>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <p style="font-size:14px; margin-bottom:2px;">Suppose your EC2 instance initially has the tag: <span class="code-term" style="display:inline; padding:0 4px;">Name = My Server</span>. You change it in your Terraform configuration to: <span class="code-term" style="display:inline; padding:0 4px;">Name = My Web Server</span>.</p>
+    <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+      <span class="flow-node" style="padding:1px 4px;">Modify .tf File</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">terraform apply</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Terraform Detects Change</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Resource Modified</span>
+    </div>
+    <p style="font-size:13.5px; margin-top:4px;">Terraform identifies the required modification and updates the resource. The EC2 instance can remain running while the applicable property is changed.</p>
+  </div>
+
+  <!-- 12. terraform destroy -->
+  <h2 class="sec-heading">12. terraform destroy</h2>
+  <p>After testing or when the infrastructure is no longer required, you can remove resources using: <span class="code-term" style="display:inline; padding:0 4px;">terraform destroy</span></p>
+  <p>Terraform shows what it intends to destroy and asks for confirmation.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="font-size:12px; margin-top:0;">terraform destroy
+       ↓
+Review Resources
+       ↓
+Confirm
+       ↓
+Resources Destroyed</div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Important Use Case</h3>
+      <p style="font-size:13.5px;">This is particularly useful for temporary environments such as:</p>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li>Testing</li>
+        <li>Development</li>
+        <li>Experiments</li>
+        <li>Training environments</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 13, 14, 15, 16. Benefits -->
+  <h2 class="sec-heading">Terraform's Major Benefits (13 - 16)</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">13. Consistency</h3>
+      <p style="font-size:13.5px;">Terraform allows infrastructure to be defined in configuration files. The same configuration can be reused multiple times.</p>
+      <div class="ascii-tree" style="font-size:11px; margin-top:2px;">Same Configuration
+       ↓
+Environment 1
+Environment 2
+Environment 3</div>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">14. Automation</h3>
+      <p style="font-size:13.5px;">Terraform is command-based, which makes it suitable for automation and scripting.</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:2px; font-size:11px; margin-top:2px;">
+        <span class="flow-node" style="padding:1px 2px;">Script</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Terraform</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Cloud Provider</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. Cost Saving</h3>
+      <p style="font-size:13.5px;">Terraform can help with cost control when infrastructure is temporary.</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:2px; font-size:11px; margin-top:2px;">
+        <span class="flow-node" style="padding:1px 2px;">Create Infra</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Use</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Destroy Infra</span>
+      </div>
+      <p style="font-size:12px; margin-bottom:0;"><em>Note: Terraform itself does not automatically guarantee cost savings. It depends on your automation.</em></p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. Repeatable Infrastructure</h3>
+      <p style="font-size:13.5px;">Terraform makes it easier to reproduce an environment.</p>
+      <div class="ascii-tree" style="font-size:11px; margin-top:2px;">Testing Configuration
+        ↓
+Reusable Terraform Code
+        ↓
+Production-like Environment</div>
+      <p style="font-size:12px; margin-bottom:0;">Reduces the need to manually recreate infrastructure.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 17 & 18. State Management -->
+  <h2 class="sec-heading">17. Terraform State Management</h2>
+  <p>One of Terraform's important concepts is state management. Terraform maintains information about the infrastructure it manages in a state file.</p>
+  <p>A commonly used local state file is: <span class="highlight">terraform.tfstate</span></p>
+
+  <h3 class="subsec-heading">Why is state important?</h3>
+  <p>Terraform uses state information to understand the relationship between Terraform Configuration and Managed Resources.</p>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">18. Example of State Management</h3>
+    <p style="font-size:13.5px; margin-bottom:2px;">Suppose Terraform created an EC2 Instance with <span class="code-term" style="display:inline; padding:0 4px;">Name = My Server</span>. Later you change the configuration to <span class="code-term" style="display:inline; padding:0 4px;">Name = My Web Server</span>.</p>
+    <div class="ascii-tree" style="font-size:12px; margin-top:4px;">Terraform Configuration
+          ↓
+       State
+          ↓
+Actual Infrastructure
+          ↓
+Determine Difference
+          ↓
+Apply Required Change</div>
+  </div>
+
+  <!-- 19. Local and Remote State -->
+  <h2 class="sec-heading">19. Local and Remote State</h2>
+  <p>State can initially be maintained locally. However, Terraform also supports remote state storage.</p>
+  <p>This becomes particularly useful when Terraform is used by teams or in shared environments.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:8px;">
+    <span class="flow-node">Local State</span> <span style="font-weight:700;">OR</span> <span class="flow-node" style="border-color:#047857; background:#d1fae5;">Remote State</span>
+  </div>
+
+  <!-- 20. Variables, 21. Functions, 22. Loops -->
+  <h2 class="sec-heading">Terraform Features (20 - 22)</h2>
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">20. Variables</h3>
+      <p style="font-size:13.5px;">Variables allow configurations to become more flexible and reusable. Instead of hard-coding every value, you can define values separately.</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:2px; font-size:11px; margin-top:2px;">
+        <span class="flow-node" style="padding:1px 2px;">Variable</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Configuration</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 2px;">Different Values</span>
+      </div>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">21. Functions</h3>
+      <p style="font-size:13.5px;">Terraform provides functions that can be used to process and manipulate values within configurations. Functions help make configurations more dynamic.</p>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">22. Loops in Terraform</h3>
+    <p style="font-size:13.5px;">Terraform supports concepts that allow you to work with multiple similar resources. For example, if you need to create multiple user accounts, iteration features reduce repetitive configuration.</p>
+    <div class="ascii-tree" style="font-size:11px; margin-top:2px;">Input List
+    ↓
+Terraform Iteration
+    ↓
+Resource 1
+Resource 2
+Resource 3</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 23 & 24. Modules -->
+  <h2 class="sec-heading">23. Terraform Modules &nbsp;|&nbsp; 24. Benefits</h2>
+  <p>A Terraform module is a <span class="highlight">reusable collection of Terraform configuration</span>.</p>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Why use modules?</h3>
+      <p style="font-size:13.5px;">Suppose you create a complete configuration for a particular infrastructure component. Instead of copying the same code into multiple projects, you can package it as a module and reuse it.</p>
+      <div class="ascii-tree" style="font-size:11px; margin-top:2px;">Terraform Code
+      ↓
+    Module
+      ↓
+Reuse in Multiple Projects</div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">24. Benefits of Modules</h3>
+      <ul style="font-size:13.5px; margin-bottom:0;">
+        <li>Reusability</li>
+        <li>Better organization</li>
+        <li>Less code duplication</li>
+        <li>Easier maintenance</li>
+        <li>Standardized infrastructure</li>
+      </ul>
+      <div class="sticky-note" style="padding:2px 6px; margin-top:4px;">
+        <strong>Key Idea:</strong> Write once → Package as a module → Reuse wherever required.
+      </div>
+    </div>
+  </div>
+
+  <!-- 25. Workspaces -->
+  <h2 class="sec-heading">25. Terraform Workspaces</h2>
+  <p>Workspaces can be used when you want to work with separate Terraform states for different environments while using the same basic configuration.</p>
+  <div class="ascii-tree">Terraform Configuration
+        │
+        ├── Dev Workspace
+        ├── Test Workspace
+        └── Production Workspace</div>
+
+  <!-- 26. Terraform Cloud -->
+  <h2 class="sec-heading">26. Terraform Cloud</h2>
+  <p>Terraform Cloud is a managed service from HashiCorp that can make Terraform workflows easier to manage.</p>
+  
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">Local Setup</h3>
+      <div class="flow-v" style="gap:2px; font-size:11px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Developer</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Local Terraform</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Local Configuration</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Local State</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">Terraform Cloud</h3>
+      <div class="flow-v" style="gap:2px; font-size:11px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Developer / Team</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Terraform Cloud</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Terraform Operations</span><span class="flow-arrow" style="font-size:12px; margin-left:15px;">↓</span><span class="flow-node" style="padding:1px 4px;">Cloud Infrastructure</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 27. Version Control -->
+  <h2 class="sec-heading">27. Terraform and Version Control</h2>
+  <p>Terraform configuration files can be stored in version-control systems such as Git repositories.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px;">
+    <span class="flow-node">.tf Files</span><span class="flow-arrow">→</span><span class="flow-node">Git Repository</span><span class="flow-arrow">→</span><span class="flow-node">Team Collaboration</span>
+  </div>
+  <p style="font-size:14px; margin-top:4px;">This provides benefits such as: Version history, Collaboration, Change tracking, Review of infrastructure changes.</p>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 28. Terraform vs Manual -->
+  <h2 class="sec-heading">28. Terraform vs Manual Cloud Management</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Manual Cloud Console</th>
+        <th>Terraform</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Resources created manually</td><td>Resources defined as code</td></tr>
+      <tr><td>Repetitive</td><td>Reusable</td></tr>
+      <tr><td>More manual work</td><td>Automated workflow</td></tr>
+      <tr><td>Harder to reproduce exactly</td><td>Easier to reproduce</td></tr>
+      <tr><td>Configuration can vary</td><td>Configuration can be standardized</td></tr>
+      <tr><td>Manual cleanup</td><td><span class="code-term" style="display:inline; padding:0 2px;">terraform destroy</span></td></tr>
+      <tr><td>Difficult to automate</td><td>Easy to script/automate</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 29. Terraform vs CloudFormation -->
+  <h2 class="sec-heading">29. Terraform vs AWS CloudFormation</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Terraform</th>
+        <th>AWS CloudFormation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Open-source IaC tool</td><td>AWS-native IaC service</td></tr>
+      <tr><td>Developed by HashiCorp</td><td>Developed by AWS</td></tr>
+      <tr><td>Supports multiple providers</td><td>Primarily designed for AWS</td></tr>
+      <tr><td>Uses HCL</td><td>Uses YAML/JSON</td></tr>
+      <tr><td>Uses .tf files</td><td>Uses CloudFormation templates</td></tr>
+      <tr><td>Uses Terraform state</td><td>Uses CloudFormation stack management</td></tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-trick">Simple Memory Trick</span>
+    Terraform → Multi-provider IaC | CloudFormation → AWS-native IaC
+  </div>
+
+  <!-- 30. Resource Lifecycle & 31. Complete Workflow -->
+  <h2 class="sec-heading">30. Resource Lifecycle &nbsp;|&nbsp; 31. Complete Workflow</h2>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center;">             Terraform
+                 │
+        ┌────────┼────────┐
+        ↓        ↓        ↓
+      Create   Modify   Destroy
+        │        │        │
+        ↓        ↓        ↓
+    apply      apply    destroy</div>
+    
+    <div class="ascii-tree" style="font-size:11px; line-height:1.2;">Write Config (.tf)
+       ↓
+terraform init
+       ↓
+terraform plan (Review)
+       ↓
+terraform apply (Create/Modify)
+       ↓
+Cloud Infrastructure
+       ↓
+Testing / Usage
+       ↓
+terraform destroy</div>
+  </div>
+
+  <!-- 32. Important Commands & 33. Concepts -->
+  <h2 class="sec-heading">32. Commands &nbsp;|&nbsp; 33. Important Concepts</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <ul style="font-size:13.5px; margin-bottom:0;">
+        <li><span class="code-term" style="display:inline; padding:0 2px;">init</span> Initialize project</li>
+        <li><span class="code-term" style="display:inline; padding:0 2px;">plan</span> Preview changes</li>
+        <li><span class="code-term" style="display:inline; padding:0 2px;">apply</span> Apply config</li>
+        <li><span class="code-term" style="display:inline; padding:0 2px;">destroy</span> Destroy infra</li>
+      </ul>
+      <p style="font-size:13.5px; font-weight:bold; margin-top:4px; text-align:center;">INIT → PLAN → APPLY → DESTROY</p>
+    </div>
+    
+    <div>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li><strong>IaC:</strong> Infrastructure as Code.</li>
+        <li><strong>HCL:</strong> HashiCorp Configuration Language.</li>
+        <li><strong>Declarative:</strong> Define desired state.</li>
+        <li><strong>Provider:</strong> Connects to cloud platform.</li>
+        <li><strong>State:</strong> Information tracking resources.</li>
+        <li><strong>Module:</strong> Reusable configuration.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>INFRASTRUCTURE AUTOMATION // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- Interview Questions -->
+  <h2 class="sec-heading">🎯 Interview-Friendly Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is Terraform?</div>
+        <div class="qa-a">Terraform is an open-source Infrastructure as Code tool developed by HashiCorp. It allows infrastructure to be defined, created, modified, and managed using configuration files.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q2. What is IaC?</div>
+        <div class="qa-a">IaC stands for Infrastructure as Code. It means managing infrastructure through code/configuration rather than manually creating resources through a cloud console.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q3. What language does Terraform use?</div>
+        <div class="qa-a">Terraform primarily uses HashiCorp Configuration Language (HCL).</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q4. What is the Terraform file extension?</div>
+        <div class="qa-a">Terraform configuration files commonly use the <span class="code-term" style="display:inline; padding:0 2px;">.tf</span> extension.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. What is terraform plan?</div>
+        <div class="qa-a">It previews the changes Terraform intends to make before those changes are applied.</div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q6. What is terraform apply?</div>
+        <div class="qa-a">It applies the Terraform configuration and creates or modifies the required infrastructure.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is terraform destroy?</div>
+        <div class="qa-a">It destroys infrastructure managed by the Terraform configuration.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q8. What is Terraform state?</div>
+        <div class="qa-a">Terraform state contains information Terraform uses to track and manage infrastructure resources.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q9. What are Terraform modules?</div>
+        <div class="qa-a">Modules are reusable collections of Terraform configuration that help organize and standardize infrastructure code.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q10. Why is Terraform useful?</div>
+        <div class="qa-a">Terraform provides automation, consistency, repeatability, reusable infrastructure definitions, state management, and support for multiple infrastructure providers.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final One-Page Revision -->
+  <h2 class="sec-heading">🔥 Final One-Page Revision</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 13px; line-height: 1.35;">                 TERRAFORM
+                     │
+          Infrastructure as Code
+                     │
+              HashiCorp Tool
+                     │
+                    HCL
+                     │
+                  .tf files
+                     │
+              Declarative IaC
+                     │
+          ┌──────────┴──────────┐
+          ↓                     ↓
+      Configuration          State
+          │                     │
+          └──────────┬──────────┘
+                     ↓
+              terraform init
+                     ↓
+              terraform plan
+                     ↓
+             Review Changes
+                     ↓
+             terraform apply
+                     ↓
+             Infrastructure
+                     │
+              Modify if needed
+                     │
+             terraform apply
+                     │
+              Testing Complete
+                     ↓
+             terraform destroy</div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ The Core Idea
+    </div>
+    <p style="font-size: 15.5px; color: #881337; margin: 4px 0; font-weight: 700;">
+      Terraform = Write infrastructure as code → Preview changes → Apply them → Manage the infrastructure → Destroy it when no longer needed.<br><br>
+      Terraform's biggest strengths are IaC, automation, consistency, repeatability, state management, reusable modules, and multi-provider support.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

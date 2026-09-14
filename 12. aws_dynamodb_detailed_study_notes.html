@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS DynamoDB - Detailed & Structured Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 15px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS DynamoDB — Detailed & Structured Notes</div>
+
+  <!-- 1. What is Amazon DynamoDB? -->
+  <h2 class="sec-heading">1. What is Amazon DynamoDB?</h2>
+  <p><strong>Amazon DynamoDB</strong> is a fully managed <span class="highlight">NoSQL database</span> service provided by AWS.</p>
+  <p>In the previous section, we studied Amazon RDS, which is mainly used for relational data.<br>
+  DynamoDB is different because it is a NoSQL database designed for flexible, non-tabular data and highly scalable applications.</p>
+
+  <h3 class="subsec-heading">RDS vs DynamoDB</h3>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>RDS</th>
+        <th>DynamoDB</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Relational database</td>
+        <td>NoSQL database</td>
+      </tr>
+      <tr>
+        <td>Structured/tabular data</td>
+        <td>Flexible, non-tabular data</td>
+      </tr>
+      <tr>
+        <td>Uses rows and columns</td>
+        <td>Uses items and attributes</td>
+      </tr>
+      <tr>
+        <td>SQL-based</td>
+        <td>NoSQL API-based</td>
+      </tr>
+      <tr>
+        <td>Schema is generally more structured</td>
+        <td>Flexible schema</td>
+      </tr>
+      <tr>
+        <td>Example: MySQL, PostgreSQL</td>
+        <td>DynamoDB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 2. What is NoSQL? -->
+  <h2 class="sec-heading">2. What is NoSQL?</h2>
+  <p><span class="highlight-pink">NoSQL = Not Only SQL</span></p>
+  <p>NoSQL databases are generally designed for data that does not need to follow a rigid table structure.<br>
+  A common representation is similar to JSON.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+      <span class="code-term">{
+  "name": "Raju",
+  "email": "raju@example.com",
+  "age": 30
+}</span>
+      <p style="margin-top: 4px; font-size: 13.5px;">Here:<br>
+      <span class="code-term" style="display:inline; padding:0 4px;">name</span> → key/attribute &nbsp;|&nbsp; <span class="code-term" style="display:inline; padding:0 4px;">Raju</span> → value<br>
+      <span class="code-term" style="display:inline; padding:0 4px;">email</span> → key/attribute &nbsp;|&nbsp; <span class="code-term" style="display:inline; padding:0 4px;">raju@...</span> → value<br>
+      <span class="code-term" style="display:inline; padding:0 4px;">age</span> → key/attribute &nbsp;|&nbsp; <span class="code-term" style="display:inline; padding:0 4px;">30</span> → value<br>
+      This entire object can be treated as a document/item.</p>
+    </div>
+    
+    <div class="sticky-note">
+      <span class="tag-badge badge-imp">Important Point</span>
+      <p>Different items in DynamoDB do not necessarily need to contain exactly the same attributes.</p>
+      <p style="margin-bottom:0;">For example:</p>
+      <div style="font-size:13px; font-family:monospace; background:rgba(255,255,255,0.5); padding:4px;">Item 1:<br>ID = 01<br>Username = Raju<br><br>Item 2:<br>ID = 02<br>Username = Shyam<br>Age = 30</div>
+      <p style="font-size:13px; margin-top:2px;">The second item contains Age, while the first item does not. This demonstrates DynamoDB's flexible schema.</p>
+    </div>
+  </div>
+
+  <!-- 3. Basic DynamoDB Terminology -->
+  <h2 class="sec-heading">3. Basic DynamoDB Terminology</h2>
+  <p>The most important terms are:</p>
+  
+  <p><strong>Table:</strong> A table is a collection where DynamoDB stores items. Example: <span class="code-term" style="display:inline; padding:0 4px;">Contacts</span></p>
+  <p><strong>Item:</strong> An item is an individual record inside a DynamoDB table. Example: <span class="code-term" style="display:inline; padding:0 4px;">{"id": "01", "username": "Raju"}</span></p>
+  <p><strong>Attribute:</strong> An attribute is a piece of information inside an item. Example: <span class="code-term" style="display:inline; padding:0 4px;">id</span>, <span class="code-term" style="display:inline; padding:0 4px;">username</span>, <span class="code-term" style="display:inline; padding:0 4px;">age</span>, <span class="code-term" style="display:inline; padding:0 4px;">email</span></p>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Simple Structure</h3>
+    <div class="ascii-tree" style="margin-top:2px;">DynamoDB
+   │
+   └── Table
+         │
+         ├── Item 1
+         │     ├── id
+         │     └── username
+         │
+         ├── Item 2
+         │     ├── id
+         │     ├── username
+         │     └── age
+         │
+         └── Item 3
+               ├── id
+               └── email</div>
+  </div>
+
+  <!-- 4. Real-World Users & 5. Pricing -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading">4. Real-World Users of DynamoDB</h2>
+      <p>Large companies use DynamoDB for different workloads. Examples mentioned in the course include: <strong>Jam</strong>, <strong>Dropbox</strong>.</p>
+      <p>DynamoDB is particularly useful when applications need:</p>
+      <ul style="font-size:14.5px;">
+        <li>High scalability</li>
+        <li>Very low latency</li>
+        <li>Flexible data models</li>
+        <li>Large numbers of requests</li>
+        <li>Automatic scaling</li>
+      </ul>
+    </div>
+    
+    <div class="warn-box" style="margin-top: 10px;">
+      <h2 class="sec-heading" style="margin-top:0;">5. DynamoDB Free Tier / Pricing Concept</h2>
+      <p style="font-size:14px;">The course demonstrates DynamoDB's free usage options and explains that it can handle a large number of requests. However, AWS Free Tier limits and pricing can change over time, so the exact values shown in the practical should be treated as course/demo values, not permanent limits.</p>
+      <p style="font-size:14px;"><strong>Important Pricing Concept:</strong> DynamoDB can use an <span class="highlight">on-demand pricing model</span>, where you pay based on actual request activity rather than continuously provisioning a fixed amount of database capacity. This can be particularly useful for applications with unpredictable or fluctuating traffic.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 6. Creating a Table & 7. Partition Key -->
+  <h2 class="sec-heading">6. Creating a DynamoDB Table</h2>
+  <p>The basic process is:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">AWS Console</div><span class="flow-arrow">↓</span><div class="flow-node">Search DynamoDB</div><span class="flow-arrow">↓</span><div class="flow-node">DynamoDB Dashboard</div><span class="flow-arrow">↓</span><div class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Create Table</div>
+  </div>
+  <p>In the practical, the table name is: <span class="highlight">Contacts</span></p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h2 class="sec-heading" style="margin-top:0;">7. Partition Key</h2>
+      <p>When creating the table, a partition key needs to be defined. Example:</p>
+      <span class="code-term">Partition Key: id<br>Type: String</span>
+      <h3 class="subsec-heading">What is a Partition Key?</h3>
+      <p style="font-size: 13.5px;">The partition key is used to uniquely identify items and determine how DynamoDB distributes data internally. For the simple example: <span class="code-term" style="display:inline; padding:0 2px;">id = 01</span>, <span class="code-term" style="display:inline; padding:0 2px;">id = 02</span>, <span class="code-term" style="display:inline; padding:0 2px;">id = 03</span>. Each item can be identified using its key.</p>
+      <h3 class="subsec-heading">SQL Comparison</h3>
+      <p style="font-size: 13px;">Conceptually, the partition key can be compared with the role of a primary key in a relational database, although DynamoDB's key design and data distribution work differently.</p>
+    </div>
+    
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">8. Creating Items Manually</h2>
+      <p>After creating the table:</p>
+      <div class="flow-v" style="gap:2px; font-size:13px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 6px;">Contacts</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 6px;">Explore Table Items</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 6px;">Create Item</span>
+      </div>
+      <p>Initially, the table contains no data. Example item:</p>
+      <span class="code-term">id = 01<br>username = Raju</span>
+      <p>Another item:</p>
+      <span class="code-term">id = 02<br>username = Shyam</span>
+      <p>You can also add different attributes: <span class="code-term" style="display:inline; padding:0 4px;">id = 02</span>, <span class="code-term" style="display:inline; padding:0 4px;">username = Shyam</span>, <span class="code-term" style="display:inline; padding:0 4px;">age = 30</span>. The important concept is that the items can have different attributes.</p>
+    </div>
+  </div>
+
+  <!-- 9. Flexible Data Model -->
+  <h2 class="sec-heading">9. Flexible Data Model</h2>
+  <p>This is one of DynamoDB's major characteristics. Consider:</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Item 1</h3>
+      <span class="code-term">{
+  "id": "01",
+  "username": "Raju"
+}</span>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Item 2</h3>
+      <span class="code-term">{
+  "id": "02",
+  "username": "Shyam",
+  "age": 30
+}</span>
+    </div>
+  </div>
+  <p>The two items don't have exactly the same set of attributes. This is different from a traditional relational table where columns are normally defined as part of the table schema.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Key Concept</span>
+    DynamoDB provides a flexible schema at the item/attribute level. However, the key schema still matters and must be designed properly.
+  </div>
+
+  <!-- 10. Why DynamoDB is Serverless -->
+  <h2 class="sec-heading">10. Why DynamoDB is Serverless</h2>
+  <p>DynamoDB is a fully managed <span class="highlight">serverless</span> database service.</p>
+  <p>With a traditional database server, you may need to think about: Server instances, CPU, Memory, Storage, Operating system, Patching, Database infrastructure.</p>
+  <p>With DynamoDB, AWS manages the underlying infrastructure. You don't need to manually provision a database server in the same way as a traditional database deployment.</p>
+
+  <h3 class="subsec-heading">Simple Comparison</h3>
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2; text-align:center;">
+      <p style="font-weight:700; color:#991b1b; margin-top:0;">Traditional Database</p>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">Server</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">CPU</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Memory</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Storage</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Database</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4; text-align:center;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">DynamoDB</p>
+      <div class="flow-v" style="gap:6px; font-size:13px; margin-top:10px;">
+        <span class="flow-node">Application</span><span class="flow-arrow">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">DynamoDB</span><span class="flow-arrow">↓</span><span class="flow-node">AWS-managed infrastructure</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Auto Scaling & 12. Zero-Server -->
+  <h2 class="sec-heading">11. Automatic Scaling &nbsp;|&nbsp; 12. Zero-Server Management</h2>
+  <div class="two-col">
+    <div>
+      <p><strong>11. Automatic Scaling:</strong> DynamoDB is designed to handle changing workloads. Suppose your application normally receives <span class="highlight">100 requests</span> but suddenly receives <span class="highlight">10,000 requests</span>. DynamoDB can scale according to the selected capacity mode and workload.</p>
+      <p style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">Scaling Concept:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <div class="flow-h" style="gap:4px; margin:0;"><span class="flow-node" style="padding:1px 4px;">Low Traffic</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Lower Capacity</span></div>
+        <div class="flow-h" style="gap:4px; margin:0;"><span class="flow-node" style="padding:1px 4px;">Traffic increases</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">More Capacity</span></div>
+        <div class="flow-h" style="gap:4px; margin:0;"><span class="flow-node" style="padding:1px 4px;">Traffic decreases</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Capacity decreases</span></div>
+      </div>
+      <p style="font-size:13px;">This is especially useful for fluctuating workloads.</p>
+    </div>
+    
+    <div>
+      <p><strong>12. Zero-Server Management:</strong> One major advantage is that you don't have to manage database servers yourself. You don't need to manually manage:</p>
+      <ul style="font-size:14px;">
+        <li>Database server provisioning</li>
+        <li>Operating system maintenance</li>
+        <li>Hardware</li>
+        <li>Database infrastructure scaling</li>
+      </ul>
+      <p style="font-weight:700; color:#15803d;">AWS manages the underlying service infrastructure.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 13. Provisioned vs On-Demand -->
+  <h2 class="sec-heading">13. Provisioned Capacity vs 14. On-Demand Capacity</h2>
+  <p>DynamoDB provides different capacity approaches.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">A. Provisioned Capacity</h3>
+      <p>You specify the expected capacity. For example:</p>
+      <span class="code-term" style="font-size:12px;">Read Capacity:<br>Minimum → X | Maximum → Y<br><br>Write Capacity:<br>Minimum → X | Maximum → Y</span>
+      <p style="font-size:13px; margin-top:4px;">You can configure auto scaling so capacity can increase or decrease according to demand. <strong>Concept:</strong> Low traffic → Lower provisioned capacity. High traffic → Higher provisioned capacity. This can be useful when workload patterns are relatively predictable.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">B. On-Demand Capacity</h3>
+      <p style="font-size:14px;">With on-demand capacity, you don't have to manage a fixed provisioned capacity in the same way. The service is designed to handle requests automatically and billing is based on request usage.</p>
+      <p style="font-size:13px; margin-bottom:2px;"><strong>Best suited for:</strong></p>
+      <ul style="font-size:13px; margin-top:0;">
+        <li>Unpredictable traffic</li>
+        <li>New applications</li>
+        <li>Spiky workloads</li>
+        <li>Applications where traffic patterns are difficult to estimate</li>
+      </ul>
+      <p style="font-size:12px; margin-bottom:0;"><strong>Example:</strong> Normal traffic → Low request activity. Sudden traffic spike → Higher request activity. Traffic falls → Lower activity.</p>
+    </div>
+  </div>
+
+  <!-- 15. Read and Write Capacity -->
+  <h2 class="sec-heading">15. Read Capacity and Write Capacity</h2>
+  <p>Two important concepts are:</p>
+  <p><strong>Read Capacity:</strong> Represents capacity for read operations.<br>
+  <strong>Write Capacity:</strong> Represents capacity for write operations.</p>
+  <div class="ascii-tree">Application
+    │
+    ├── Read Request
+    │       ↓
+    │   Read Capacity
+    │
+    └── Write Request
+            ↓
+        Write Capacity</div>
+  <p>These concepts are particularly relevant when using provisioned capacity.</p>
+
+  <!-- 16. Auto Scaling & 17. Max Throughput & 18. Monitoring -->
+  <h2 class="sec-heading">16. Auto Scaling</h2>
+  <p>DynamoDB can use auto scaling with provisioned capacity. You can configure: Minimum capacity, Maximum capacity, Target utilization.</p>
+  <div class="hand-box">
+    <p style="margin:2px 0;"><strong>For example:</strong> Minimum Capacity → 1 &nbsp;|&nbsp; Maximum Capacity → 10 &nbsp;|&nbsp; Target Utilization → 70%</p>
+    <p style="font-size:12px; margin:2px 0;">These values are only examples from the practical concept; actual settings should be chosen according to the application's workload.</p>
+    <p style="font-weight:700; margin:4px 0 2px 0;">Auto Scaling Flow:</p>
+    <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+      <span class="flow-node">Traffic decreases</span><span class="flow-arrow">→</span><span class="flow-node">Capacity decreases</span><span class="flow-arrow">→</span><span class="flow-node">Lower resource usage</span>
+    </div>
+    <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+      <span class="flow-node">Traffic increases</span><span class="flow-arrow">→</span><span class="flow-node">Capacity increases</span><span class="flow-arrow">→</span><span class="flow-node">More requests can be handled</span>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading">17. Maximum Table Throughput</h3>
+      <p>The course also demonstrates configuring maximum read/write throughput. The exact limits depend on the DynamoDB configuration and current AWS service limits.</p>
+      <div class="sticky-note" style="padding:4px 8px; margin:2px 0;">
+        <span class="tag-badge badge-imp">Concept</span> You can control and monitor the capacity available to your DynamoDB workload.
+      </div>
+    </div>
+    <div>
+      <h3 class="subsec-heading">18. Monitoring Auto Scaling</h3>
+      <p>DynamoDB provides monitoring information about capacity and scaling activity. You can inspect:</p>
+      <ul style="font-size:13.5px;">
+        <li>Current capacity</li>
+        <li>Read activity</li>
+        <li>Write activity</li>
+        <li>Scaling changes</li>
+        <li>Table metrics</li>
+      </ul>
+      <p style="font-size:13px;">This allows you to understand how the database is responding to application traffic.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 19. DynamoDB Indexes -->
+  <h2 class="sec-heading">19. DynamoDB Indexes</h2>
+  <p>Indexes are used to improve the efficiency of queries based on attributes other than the primary key. Suppose your application frequently searches using: <span class="highlight">username</span>. You can create an appropriate index so that queries based on that attribute can be handled efficiently.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Concept</h3>
+      <p style="font-size:13px; font-weight:bold; margin-bottom:2px;">Without suitable indexing:</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; margin:0;"><span class="flow-node" style="padding:1px 4px; font-size:12px;">Query</span><span class="flow-arrow" style="font-size:14px;">→</span><span class="flow-node" style="padding:1px 4px; font-size:12px;">Find matching data</span></div>
+      <p style="font-size:13px; font-weight:bold; margin:6px 0 2px 0;">With an appropriate index:</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; margin:0;"><span class="flow-node" style="padding:1px 4px; font-size:12px;">Query</span><span class="flow-arrow" style="font-size:14px;">→</span><span class="flow-node" style="padding:1px 4px; font-size:12px;">Index</span><span class="flow-arrow" style="font-size:14px;">→</span><span class="flow-node" style="padding:1px 4px; font-size:12px;">Matching items</span></div>
+    </div>
+    
+    <div class="warn-box" style="margin-top:0;">
+      <span class="tag-badge badge-imp">Important</span>
+      <p style="margin: 2px 0;">DynamoDB has concepts such as:</p>
+      <ul style="margin: 2px 0; font-size: 13.5px;">
+        <li>Primary key</li>
+        <li>Local Secondary Index (LSI)</li>
+        <li>Global Secondary Index (GSI)</li>
+      </ul>
+      <p style="margin: 2px 0; font-size: 13px;">Index design should be based on the application's access patterns.</p>
+    </div>
+  </div>
+
+  <!-- 20. Backup and Point-in-Time Recovery -->
+  <h2 class="sec-heading">20. Backup and Point-in-Time Recovery</h2>
+  <p>Backup is extremely important for databases. DynamoDB supports backup and recovery capabilities.</p>
+  
+  <h3 class="subsec-heading">Point-in-Time Recovery (PITR)</h3>
+  <p>Point-in-Time Recovery allows you to restore table data to a point in time within the supported recovery window.</p>
+  <p><strong>Example:</strong> Suppose:</p>
+  <ul style="font-size: 14px; list-style-type: none; margin-left: 0;">
+    <li><span class="highlight-green">10:00 → Database is correct</span></li>
+    <li><span class="highlight-pink">10:30 → Data accidentally changed</span></li>
+    <li><span class="highlight-pink">11:00 → Problem discovered</span></li>
+  </ul>
+  <p>With appropriate point-in-time recovery configuration, you can recover the table to an earlier point in time.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Concept</h3>
+    <div class="ascii-tree">Past
+ │
+ ├── 10:00
+ ├── 10:15
+ ├── 10:30
+ ├── 10:45
+ └── 11:00
+          ↓
+   Choose recovery point</div>
+    <p style="font-size:13px; margin:2px 0;">This is useful for accidental changes or deletions.</p>
+  </div>
+
+  <!-- 21, 22, 23, 24. Backups, Protection, TTL, Encryption -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading">21. On-Demand Backups</h2>
+      <p style="font-size: 14px;">You can also create an on-demand backup. This can be useful when you want to explicitly preserve a table's data before performing an important operation.</p>
+      <div class="ascii-tree" style="font-size:11px;">DynamoDB Table
+      │
+      ├── Point-in-Time Recovery
+      │
+      └── On-Demand Backup</div>
+      
+      <h2 class="sec-heading">22. Delete Protection</h2>
+      <p style="font-size: 14px;">DynamoDB provides deletion protection. When enabled, it helps protect a table from accidental deletion.</p>
+      <div class="warn-box" style="padding:4px; font-size:12px;"><strong>Without protection:</strong> Accidental delete → Table deleted → Data loss</div>
+      <div class="hand-box" style="padding:4px; font-size:12px; border-color:#16a34a; background:#f0fdf4;"><strong>With protection:</strong> Delete attempt → Protection enabled → Additional protection against deletion</div>
+      <p style="font-size: 12px; color: #15803d; font-weight: bold;">Useful for important production tables.</p>
+    </div>
+
+    <div>
+      <h2 class="sec-heading">23. Time to Live (TTL)</h2>
+      <p style="font-size: 14px;">DynamoDB supports Time to Live (TTL). TTL allows expired items to be automatically removed after a specified expiration time.</p>
+      <div class="hand-box">
+        <h3 class="subsec-heading" style="margin-top:0; font-size: 14px;">Example</h3>
+        <p style="font-size:12.5px; margin:0;">Suppose you store temporary data:</p>
+        <span class="code-term" style="font-size: 11.5px;">{
+  "id": "101",
+  "session": "ABC",
+  "expiresAt": 1750000000
+}</span>
+        <p style="font-size:12.5px; margin:2px 0;">Once the item reaches its expiration condition, DynamoDB can automatically remove it.</p>
+      </div>
+      <p style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">Useful for:</p>
+      <ul style="font-size: 12px; margin-top: 0;">
+        <li>Temporary data / Sessions</li>
+        <li>Cache-like information</li>
+        <li>Expiring records / Temp state</li>
+      </ul>
+      
+      <h2 class="sec-heading" style="margin-top:4px;">24. Encryption</h2>
+      <p style="font-size: 13px;">DynamoDB supports encryption of data at rest. Encryption helps protect stored database data. For production systems, encryption should be part of the overall security design.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 25. Practical Architecture -->
+  <h2 class="sec-heading">25. Practical Architecture — Node.js + DynamoDB</h2>
+  <p>The course demonstrates a practical application using: <strong>Amazon EC2</strong>, <strong>Docker</strong>, <strong>Node.js application</strong>, <strong>DynamoDB</strong>.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">                 User
+                  │
+                  ▼
+              Web Browser
+                  │
+                  ▼
+          ┌─────────────────┐
+          │      EC2        │
+          │                 │
+          │ Docker          │
+          │ Node.js App     │
+          └────────┬────────┘
+                   │
+                   ▼
+             DynamoDB Table
+                Contacts</div>
+    
+    <div>
+      <p>The Node.js application communicates with DynamoDB using the AWS SDK.</p>
+      
+      <h2 class="sec-heading" style="margin-top: 10px;">26. AWS SDK &nbsp;|&nbsp; 27. Node.js</h2>
+      <p style="font-size: 14px;">Applications can interact with AWS services programmatically using the AWS SDK. For Node.js applications, AWS provides an SDK that can be installed through the Node package ecosystem (npm).</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px;">
+        <span class="flow-node">Node.js App</span><span class="flow-arrow">→</span><span class="flow-node">AWS SDK</span><span class="flow-arrow">→</span><span class="flow-node">DynamoDB</span>
+      </div>
+      <p style="font-size: 14px;">The SDK provides APIs that allow the application to: Create/read/update/delete data, Access AWS services, Send requests to DynamoDB, Work with DynamoDB tables and items.</p>
+    </div>
+  </div>
+
+  <!-- 28. Creating EC2 & 29. Docker & 30. Running Node.js -->
+  <h2 class="sec-heading">28 - 30. Practical Setup (EC2 & Docker)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">28. Creating EC2</h3>
+      <p style="font-size: 13.5px;">The practical creates an EC2 instance. Example name: <strong>My Web Server</strong>. Process: AWS Console → EC2 → Launch Instance → Configure instance → Allow HTTP traffic → Launch.</p>
+      <p style="font-size: 13.5px;">For a web application, HTTP access needs to be allowed through the appropriate security configuration.</p>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">29. Docker & 30. Running Node.js</h3>
+      <p style="font-size: 13px;">After connecting to the EC2 instance, Docker is installed. Conceptually: <span class="code-term" style="display:inline; padding:0 2px;">sudo yum install docker -y</span>. Then start service: <span class="code-term" style="display:inline; padding:0 2px;">sudo systemctl start docker</span>, and check status.</p>
+      <p style="font-size: 13px;">The course uses a pre-built Docker image for the Node.js DynamoDB demo application. Workflow:</p>
+      <div class="flow-h" style="font-size: 11px; gap: 2px;">
+        <span class="flow-node" style="padding:1px 2px;">Registry</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">docker pull</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">EC2</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Container</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Node.js</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">DynamoDB</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 31. Environment Variables & 32. IAM Role & 33. Create Role -->
+  <h2 class="sec-heading">31. Env Variables &nbsp;|&nbsp; 32. IAM Role for EC2 &nbsp;|&nbsp; 33. Creating Role</h2>
+  <p>The container needs AWS configuration to communicate with DynamoDB. The course demonstrates environment variables such as <span class="code-term" style="display:inline; padding:0 2px;">AWS_REGION</span>, <span class="code-term" style="display:inline; padding:0 2px;">AWS_ACCESS_KEY_ID</span>, <span class="code-term" style="display:inline; padding:0 2px;">AWS_SECRET_ACCESS_KEY</span>.</p>
+
+  <div class="two-col">
+    <div class="warn-box" style="margin-top: 0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Important Security Note</h3>
+      <p style="font-size: 13.5px;">Do not hard-code or expose access keys in application commands, source code, screenshots, or public repositories. For an EC2 application, the preferred approach is usually: <span class="highlight-pink">EC2 → IAM Role → DynamoDB permissions</span>. This avoids manually managing long-lived access keys.</p>
+    </div>
+
+    <div>
+      <p style="font-weight: 700; margin-bottom: 2px;">Instead of giving an EC2 instance permanent access keys, attach an IAM role.</p>
+      <div class="ascii-tree" style="margin-top: 0; font-size:11px; padding: 4px;">EC2
+ │
+ ▼
+IAM Role
+ │
+ ▼
+DynamoDB Permissions
+ │
+ ▼
+DynamoDB</div>
+      <p style="font-size: 13.5px;"><strong>33. Creating an IAM Role:</strong> IAM → Roles → Create Role → AWS Service → EC2. Then permissions are assigned. <strong>Principle of Least Privilege:</strong> Instead of "DynamoDB Full Access", prefer only what's needed (GetItem, PutItem, UpdateItem, DeleteItem, Query).</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 34 to 38. Docker Secrets & Running Container & Testing -->
+  <h2 class="sec-heading">Docker Operations (34 - 38)</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size: 14px;"><strong>34. Docker Secrets:</strong> The course mentions Docker secrets as another way of handling sensitive info. The main idea is: Sensitive configuration should be managed securely rather than exposed directly. For AWS, IAM roles are often preferable.</p>
+      
+      <p style="font-size: 14px;"><strong>35. Running the Container:</strong> The Docker container maps: <span class="highlight">EC2 Port 80 → Container Port 3000</span> because the Node.js application is listening on port 3000. Conceptually: Browser → EC2 :80 → Docker Container :3000 → Node.js → DynamoDB.</p>
+      
+      <p style="font-size: 14px;"><strong>36. Checking Container:</strong> Use <span class="code-term" style="display:inline; padding:0 2px;">docker ps</span>. Shows Container ID, Image, Status, Port mapping, Name.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">37. Accessing App & 38. Testing</h3>
+      <p style="font-size: 13.5px;">After the container is running: EC2 Public IP → Web Browser → Node.js App. The app can add contacts, view contacts, display data.</p>
+      <p style="font-size: 13.5px;"><strong>Testing Integration:</strong> Suppose the application adds <span class="code-term" style="display:inline; padding:0 2px;">baburao@example.com</span>. The app sends the data to DynamoDB. Open DynamoDB console → Tables → Contacts → Explore Items. The newly inserted item should appear.</p>
+      <p style="font-weight: 700; font-size: 13px; margin: 4px 0 2px 0;">Data Flow proving connection:</p>
+      <div class="flow-v" style="font-size: 11px; gap:2px;">
+        User → Browser → Node.js → AWS SDK → DynamoDB → Contacts Table
+      </div>
+    </div>
+  </div>
+
+  <!-- 39. Global Tables & 40. DAX -->
+  <h2 class="sec-heading">39. DynamoDB Global Tables &nbsp;|&nbsp; 40. DynamoDB Accelerator (DAX)</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">39. Global Tables</h3>
+      <p style="font-size: 13.5px;">DynamoDB Global Tables allow a table to be replicated across multiple AWS Regions. This is useful for globally distributed applications (e.g. users in USA, Europe, Asia).</p>
+      <div class="ascii-tree" style="font-size: 11px; text-align: center; margin-top:2px;">                Global Application
+                       │
+       ┌───────────────┼───────────────┐
+       ↓               ↓               ↓
+    USA Region     Europe Region    Asia Region
+       │               │               │
+       └───────────────┼───────────────┘
+                 Global Table</div>
+      <p style="font-size: 12.5px;">Helps provide: Multi-Region availability, Lower latency, Disaster recovery, Global app support.</p>
+    </div>
+
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">40. DAX & 41. Caching</h3>
+      <p style="font-size: 13.5px;"><strong>DynamoDB Accelerator (DAX)</strong> is a fully managed, in-memory cache designed specifically for DynamoDB. It is used when applications require extremely fast access to frequently requested data.</p>
+      <p style="font-size: 13px; font-weight: bold; margin: 4px 0 2px 0;">Normal vs DAX Flow:</p>
+      <div class="flow-h" style="font-size: 12px; justify-content:flex-start; margin:0;"><span class="flow-node" style="padding:1px 4px;">App</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">DynamoDB</span></div>
+      <div class="flow-h" style="font-size: 12px; justify-content:flex-start; margin:2px 0;"><span class="flow-node" style="padding:1px 4px;">App</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8; padding:1px 4px;">DAX</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">DynamoDB</span></div>
+      <p style="font-size: 13px;"><strong>41. Caching:</strong> If app repeatedly requests "Product A", DAX returns cached result instead of hitting DynamoDB every time, reducing latency and DB reads.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 42. DAX vs ElastiCache & 43. DAX Perf & 44. Use Cases & 45. DAX Arch -->
+  <h2 class="sec-heading">42. DAX vs ElastiCache &nbsp;|&nbsp; 43 & 44. Performance & Use Cases</h2>
+  <p>Both involve caching, but they are designed for different use cases.</p>
+  
+  <div class="two-col">
+    <table class="hand-table" style="font-size: 12px; margin-top: 0;">
+      <thead>
+        <tr><th>DAX</th><th>ElastiCache</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Designed specifically for DynamoDB</td><td>General-purpose managed cache</td></tr>
+        <tr><td>Integrates directly with DynamoDB workloads</td><td>Supports caching technologies such as Redis</td></tr>
+        <tr><td>In-memory caching</td><td>In-memory caching</td></tr>
+        <tr><td>Useful for DynamoDB-heavy applications</td><td>Useful across many application architectures</td></tr>
+      </tbody>
+    </table>
+    
+    <div>
+      <p style="font-size: 13.5px; margin-top:0;"><strong>43. Performance:</strong> DynamoDB provides single-digit millisecond latency. DAX provides microsecond-level latency for cached workloads. <em>DynamoDB → Very low latency | DAX → Even lower latency.</em></p>
+      <p style="font-size: 13.5px;"><strong>44. When is DAX Useful?</strong> Financial apps, High-traffic apps, Gaming, Mobile apps, Apps requiring very fast reads, Read-heavy DynamoDB workloads.</p>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">45. DAX Architecture</h3>
+    <div class="ascii-tree" style="text-align:center; font-size:12px;">                    Users
+                      │
+                      ▼
+                Application
+                      │
+                      ▼
+                    DAX
+                 ┌────┴────┐
+                 │         │
+            Cache Hit   Cache Miss
+                 │         │
+                 ▼         ▼
+              Response  DynamoDB
+                           │
+                           ▼
+                       Data Store</div>
+  </div>
+
+  <!-- 46. DynamoDB vs RDS & 47. High-Level Arch -->
+  <h2 class="sec-heading">46. DynamoDB vs RDS &nbsp;|&nbsp; 47. High-Level Architecture</h2>
+  <p>This is one of the most important interview concepts.</p>
+  
+  <table class="hand-table">
+    <thead>
+      <tr><th>Feature</th><th>RDS</th><th>DynamoDB</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Database type</td><td>Relational</td><td>NoSQL</td></tr>
+      <tr><td>Data model</td><td>Tables/rows/columns</td><td>Tables/items/attributes</td></tr>
+      <tr><td>Schema</td><td>Structured</td><td>Flexible item attributes</td></tr>
+      <tr><td>Query style</td><td>SQL</td><td>DynamoDB APIs/expressions</td></tr>
+      <tr><td>Scaling</td><td>Instance/storage-based + replicas</td><td>Managed/serverless capacity</td></tr>
+      <tr><td>Best for</td><td>Relational workloads</td><td>High-scale NoSQL workloads</td></tr>
+      <tr><td>Joins</td><td>Supported by relational engines</td><td>Not relational joins</td></tr>
+      <tr><td>Typical use</td><td>Business apps, ERP, relational systems</td><td>Web, mobile, gaming, IoT, high-scale apps</td></tr>
+    </tbody>
+  </table>
+
+  <div class="ascii-tree" style="text-align:center; font-size:11px;">                    Users
+                      │
+                      ▼
+               Load Balancer
+                      │
+                      ▼
+              Application / EC2
+                      │
+                      ▼
+                AWS SDK/API
+                      │
+                      ▼
+              ┌──────────────┐
+              │  DynamoDB    │
+              │    Table     │
+              └──────┬───────┘
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+       DAX Cache          Global Tables</div>
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 48. Use Cases & 49. Key Advantages -->
+  <h2 class="sec-heading">48. DynamoDB Use Cases &nbsp;|&nbsp; 49. Key Advantages</h2>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom: 2px;">48. Use Cases</p>
+      <p style="font-size:13.5px; margin-top:0;">DynamoDB is particularly useful for workloads such as:</p>
+      <ol style="font-size:13px; padding-left: 20px; margin-top: 2px;">
+        <li><strong>Web Applications:</strong> High-traffic web apps requiring scalable data storage.</li>
+        <li><strong>Mobile Applications:</strong> Large numbers of users and requests.</li>
+        <li><strong>Gaming:</strong> Fast reads/writes, high scalability, large concurrent users.</li>
+        <li><strong>IoT:</strong> Generating huge numbers of events and records.</li>
+        <li><strong>Advertising Technology:</strong> Extremely high request rates and low latency.</li>
+        <li><strong>Real-Time Applications:</strong> Where fast data access is important.</li>
+      </ol>
+    </div>
+
+    <div>
+      <p style="font-weight:700; margin-bottom: 2px;">49. Key Advantages</p>
+      <ul style="font-size:13px; padding-left: 20px; margin-top: 2px;">
+        <li><strong>Fully Managed & Serverless:</strong> AWS manages infra; no servers to manage directly.</li>
+        <li><strong>Automatic Scaling:</strong> Designed to handle changing traffic.</li>
+        <li><strong>Flexible Data Model:</strong> Items can contain different attributes.</li>
+        <li><strong>High Performance:</strong> Designed for low-latency DB operations.</li>
+        <li><strong>High Availability:</strong> Managed infra for HA.</li>
+        <li><strong>Backup & Recovery:</strong> Backup and PITR capabilities.</li>
+        <li><strong>Global Tables:</strong> Multi-Region architectures.</li>
+        <li><strong>DAX:</strong> In-memory caching option.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 50. Security Best Practices & 51. Cleanup -->
+  <h2 class="sec-heading">50. Important Security Best Practices &nbsp;|&nbsp; 51. Cleanup</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">When implementing DynamoDB:</p>
+      <ul style="font-size: 13px; margin-bottom:0;">
+        <li><strong>1. Prefer IAM Roles:</strong> For EC2: <span class="highlight">EC2 → IAM Role → DynamoDB</span>. Avoid long-lived access keys in code.</li>
+        <li><strong>2. Use Least Privilege:</strong> Give only needed permissions.</li>
+        <li><strong>3. Protect Credentials:</strong> Never expose AWS Access Key or Secret Access Key in GitHub, Docker images, code, or screenshots.</li>
+        <li><strong>4. Enable Encryption:</strong> Use appropriate AWS encryption.</li>
+        <li><strong>5. Enable Recovery Features:</strong> Backup and PITR for prod.</li>
+        <li><strong>6. Enable Delete Protection:</strong> Protect critical tables.</li>
+      </ul>
+    </div>
+    
+    <div class="warn-box">
+      <p style="font-weight:700; color:#e11d48; margin-top:0;">51. Practical Cleanup</p>
+      <p style="font-size: 13px;">After completing the lab, remove resources to avoid charges:</p>
+      <div class="flow-v" style="font-size: 12px; gap:2px;">
+        <span class="flow-node">DynamoDB Table → Delete</span>
+        <span class="flow-node">EC2 Instance → Terminate</span>
+        <span class="flow-node">IAM Access Keys → Deactivate/Delete</span>
+      </div>
+      <p style="font-size: 12px; margin-bottom:0; font-weight:bold;">Always check AWS Billing / Cost Management after practicals.</p>
+    </div>
+  </div>
+
+  <!-- 52. Important Concepts to Remember -->
+  <h2 class="sec-heading">52. Important Concepts to Remember</h2>
+  <div class="two-col" style="font-size: 13px;">
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>DynamoDB:</strong> Managed NoSQL database</li>
+      <li><strong>Table:</strong> Collection of items.</li>
+      <li><strong>Item:</strong> Individual record/document.</li>
+      <li><strong>Attribute:</strong> Property inside an item.</li>
+      <li><strong>Partition Key:</strong> Key used to identify/distribute items.</li>
+      <li><strong>Provisioned Capacity:</strong> Capacity configured in advance.</li>
+      <li><strong>On-Demand Capacity:</strong> Pay based on actual request usage.</li>
+    </ul>
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>Auto Scaling:</strong> Automatically adjusts provisioned capacity.</li>
+      <li><strong>GSI:</strong> Global Secondary Index.</li>
+      <li><strong>LSI:</strong> Local Secondary Index.</li>
+      <li><strong>PITR:</strong> Point-in-Time Recovery.</li>
+      <li><strong>TTL:</strong> Automatically expires/removes items.</li>
+      <li><strong>DAX:</strong> DynamoDB Accelerator — in-memory cache.</li>
+      <li><strong>Global Tables:</strong> Multi-Region DynamoDB replication.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 53. Interview Questions -->
+  <h2 class="sec-heading">53. Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is DynamoDB?</div>
+        <div class="qa-a">A fully managed, serverless NoSQL database service provided by AWS, designed for highly scalable and low-latency applications.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q2. Difference between RDS and DynamoDB?</div>
+        <div class="qa-a">RDS is a managed relational database service, while DynamoDB is a managed NoSQL database service.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q3. What is an item?</div>
+        <div class="qa-a">An individual record stored inside a DynamoDB table.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q4. What is an attribute?</div>
+        <div class="qa-a">A property or piece of data belonging to an item.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. What is a partition key?</div>
+        <div class="qa-a">A key attribute used to identify items and determine how DynamoDB distributes data.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q6. Is DynamoDB serverless?</div>
+        <div class="qa-a">Yes. Fully managed serverless database service; users don't provision or manage servers directly.</div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is auto scaling?</div>
+        <div class="qa-a">Adjusts provisioned read/write capacity according to workload demand.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q8. What is on-demand capacity?</div>
+        <div class="qa-a">Handles request traffic without requiring a fixed provisioned capacity, billing based on request usage.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q9. What is DAX?</div>
+        <div class="qa-a">DynamoDB Accelerator, a fully managed in-memory caching service specifically for DynamoDB.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q10. What are Global Tables?</div>
+        <div class="qa-a">Allow DynamoDB data to be replicated across multiple AWS Regions for globally distributed apps.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q11. What is Point-in-Time Recovery?</div>
+        <div class="qa-a">PITR allows a table to be restored to a selected point in time within the supported recovery period.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q12. What is TTL?</div>
+        <div class="qa-a">Time to Live automatically expires items based on an expiration attribute.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 54. Quick Revision & 55. Memory Trick & 56. Final Arch -->
+  <div class="two-col" style="margin-top: 8px;">
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">54. Quick Revision</h2>
+      <div class="ascii-tree" style="font-size: 10px; line-height: 1.15; padding: 4px;">DynamoDB
+│
+├── NoSQL | Fully Managed | Serverless
+├── Table → Items → Attributes
+├── Partition Key
+├── Capacity (Provisioned vs On-Demand)
+├── Auto Scaling
+├── Indexes (GSI, LSI)
+├── Backup (On-Demand, PITR)
+├── TTL | Delete Protection | Encryption
+├── DAX (In-Memory Cache)
+├── Global Tables (Multi-Region)
+└── AWS SDK (Application Integration)</div>
+      
+      <div class="hand-box" style="background:#faf5ff; border-color:#a855f7; margin-top:6px;">
+        <h3 class="subsec-heading" style="margin-top:0; color:#7e22ce;">55. One-Minute Memory Trick</h3>
+        <p style="font-weight:700; font-size:13px; margin:2px 0;">“Serverless + NoSQL + Fast + Flexible + Scalable”</p>
+        <p style="font-size:12px; margin:2px 0;">Major components: <strong>T → P → C → I → B → D → G</strong></p>
+        <ul style="font-size:11px; margin-bottom:0; margin-top:2px;">
+          <li><strong>T</strong> → Table & Items | <strong>P</strong> → Partition Key</li>
+          <li><strong>C</strong> → Capacity & Auto Scaling | <strong>I</strong> → Indexes</li>
+          <li><strong>B</strong> → Backup & PITR | <strong>D</strong> → DAX</li>
+          <li><strong>G</strong> → Global Tables</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">56. Final Architecture</h2>
+      <div class="ascii-tree" style="font-size: 11px; text-align: center; padding: 4px;">                         GLOBAL USERS
+                              │
+                              ▼
+                       Web / Mobile App
+                              │
+                              ▼
+                       EC2 / Application
+                              │
+                         AWS SDK / API
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │    DynamoDB      │
+                    │                  │
+                    │    Contacts      │
+                    └────────┬─────────┘
+                             │
+                ┌────────────┴────────────┐
+                ▼                         ▼
+             DAX Cache              Global Tables
+          (Fast Cached Reads)       (Multi-Region)</div>
+
+      <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+        <div style="font-size: 16px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+          ⭐ Final Takeaway
+        </div>
+        <p style="font-size: 13.5px; color: #881337; margin: 2px 0; font-weight: 700;">
+          Amazon DynamoDB is a serverless, fully managed NoSQL database designed for flexible data models, very low latency, automatic scalability, and high availability.
+        </p>
+        <p style="font-size: 12.5px; color: #881337; margin: 4px 0 0 0; font-weight: 700;">
+          Typical App: EC2 → AWS SDK → DynamoDB → Table → Items<br>
+          Advanced: App → DAX → DynamoDB → Global Tables
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

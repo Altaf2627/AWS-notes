@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker - Detailed & Structured Handwritten Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 29px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .subtitle {
+    font-family: 'Caveat', cursive;
+    color: #047857;
+    font-size: 20px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 17.5px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .badge-note {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1.5px solid #6366f1;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .code-inline {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 0 4px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">🐳 Docker — Detailed & Structured Notes</div>
+
+  <!-- 1. What is Docker? -->
+  <h2 class="sec-heading">1. What is Docker?</h2>
+  <p>Docker is a <span class="highlight">containerization platform/tool</span> used to create, manage, package, and run applications inside containers.</p>
+  <p>It is especially useful for developers because it simplifies the complete application lifecycle, including:</p>
+  <div class="two-col">
+    <ul>
+      <li>Application development</li>
+      <li>Packaging</li>
+      <li>Testing</li>
+    </ul>
+    <ul>
+      <li>Shipping</li>
+      <li>Deployment</li>
+      <li>Running applications</li>
+    </ul>
+  </div>
+  <p>Docker is very popular because it allows applications to run in an isolated and consistent environment.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Simple Definition</h3>
+    <p style="font-size:14px; margin-top:2px;">Docker packages an application together with the dependencies and configuration it needs so that it can run consistently in different environments.</p>
+  </div>
+
+  <!-- 2. Why Do We Need Docker? -->
+  <h2 class="sec-heading">2. Why Do We Need Docker?</h2>
+  <p>One of the most common problems in software development is:</p>
+  <div class="sticky-note" style="border-left-color: #ef4444; background: #fef2f2; text-align:center;">
+    <p style="font-weight:700; color:#b91c1c; font-size:16px; margin:4px 0;">“It works on my machine, but it doesn't work on yours.”</p>
+  </div>
+
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose a developer creates an application. The application depends on: <span class="highlight-pink">Node.js</span>, <span class="highlight-pink">Python</span>, <span class="highlight-pink">Database</span>, <span class="highlight-pink">Libraries</span>, <span class="highlight-pink">Dependencies</span>, <span class="highlight-pink">Configuration files</span>, <span class="highlight-pink">Environment variables</span>, <span class="highlight-pink">External services</span>, and <span class="highlight-pink">Specific software versions</span>.</p>
+  <p>The developer successfully runs the application on their computer. Everything works perfectly. Now the testing team receives the application and tries to run it. But the application does not work.</p>
+  <p>The developer says: <em>“The application is working fine on my machine.”</em></p>
+
+  <h3 class="subsec-heading">Why does this happen?</h3>
+  <p>Because the developer's and tester's environments may be different. For example:</p>
+  <table class="hand-table" style="font-size: 13.5px;">
+    <thead>
+      <tr><th>Developer Environment</th><th>Tester Environment</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Node.js v14</td><td>Node.js v16</td></tr>
+      <tr><td>Required library installed</td><td>Library missing</td></tr>
+      <tr><td>Correct configuration</td><td>Different configuration</td></tr>
+      <tr><td>Required environment variables</td><td>Missing variables</td></tr>
+      <tr><td>Required dependency version</td><td>Different dependency version</td></tr>
+      <tr><td>Required service version</td><td>Different service version</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 14px; margin-top: 4px;">These differences can create compatibility issues.</p>
+
+  <!-- 3. Docker as a Solution -->
+  <h2 class="sec-heading">3. Docker as a Solution</h2>
+  <p>Docker solves this problem by allowing the developer to package the application together with everything required to run it.</p>
+  <p>The package can contain: <span class="code-inline">Application code</span>, <span class="code-inline">Dependencies</span>, <span class="code-inline">Libraries</span>, <span class="code-inline">Required tools</span>, <span class="code-inline">Configuration</span>, <span class="code-inline">Required runtime</span>, <span class="code-inline">Other necessary components</span>.</p>
+  <p>The developer can then provide this package to the testing team. The tester only needs a Docker environment to run the package.</p>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 3 continued -->
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Result</h3>
+    <p style="font-size:14px; margin-top:2px;">Instead of manually configuring everything again:</p>
+    <div class="flow-h" style="font-size:12px; gap:4px; justify-content:flex-start;">
+      <span class="flow-node" style="padding:1px 4px;">Developer</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px; border-color:#16a34a; background:#dcfce7;">Package app + dependencies</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">Tester</span>
+    </div>
+    <p style="font-size:14px; margin-top:4px;">The same packaged environment can be used across different machines.</p>
+  </div>
+
+  <div class="warn-box" style="border-color:#ca8a04; background:#fefce8; padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-trick" style="background:#fef3c7; color:#b45309; border-color:#f59e0b;">⭐ Main Idea</span>
+    <p style="margin:2px 0;">Docker helps create a consistent environment for: <span class="highlight">Development → Testing → Deployment → Production</span></p>
+  </div>
+
+  <!-- 4. What is a Container? -->
+  <h2 class="sec-heading">4. What is a Container?</h2>
+  <p>A container is an <span class="highlight">isolated environment</span> in which an application runs together with the dependencies it needs.</p>
+  <p>Think about a real-world shipping container. A shipping container: Holds goods, Keeps them together, Makes transportation easier, Can be moved from one place to another, Is isolated from other containers.</p>
+  <p>Docker containers work on a similar concept. A Docker container packages an application and the components required to run it.</p>
+
+  <!-- 5. Real-Life Container Analogy -->
+  <h2 class="sec-heading">5. Real-Life Container Analogy</h2>
+  <p>Imagine that you need to transport something that must remain in a very cold environment.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:8px;">
+    <span class="flow-node">Required item</span> <span class="flow-arrow">+</span> <span class="flow-node">Temperature control</span> <span class="flow-arrow">+</span> <span class="flow-node">Facilities</span>
+  </div>
+  <p>The container maintains the required environment while the item is transported. Similarly, a Docker container provides an isolated environment for an application.</p>
+
+  <h3 class="subsec-heading">Multiple Containers</h3>
+  <p>You can have multiple containers on the same system:</p>
+  <div class="ascii-tree" style="text-align:center;">+-------------------+   +-------------------+   +-------------------+
+|   Container 1     |   |   Container 2     |   |   Container 3     |
+|   Application A   |   |   Application B   |   |   Application C   |
++-------------------+   +-------------------+   +-------------------+</div>
+  <p>Each container provides isolation for its application.</p>
+
+  <!-- 6. Definition of Container -->
+  <div class="hand-box">
+    <h2 class="sec-heading" style="margin-top:0;">6. Definition of Container</h2>
+    <p style="font-size:14px; font-weight:700;">A container can be understood as:</p>
+    <p style="font-size:14px; margin-top:2px;">A lightweight, isolated runtime environment that packages an application together with the dependencies and configuration required to run it.</p>
+    <p style="font-size:14px; font-weight:700; margin-top:6px;">Benefits of Containers:</p>
+    <ul style="font-size:13.5px; margin-top:2px; margin-bottom:0;">
+      <li>Isolation</li>
+      <li>Portability</li>
+      <li>Consistency</li>
+      <li>Easy deployment</li>
+      <li>Easy sharing</li>
+      <li>Efficient resource usage</li>
+      <li>Faster application delivery</li>
+    </ul>
+  </div>
+
+  <!-- 7. Docker Architecture -->
+  <h2 class="sec-heading">7. Docker Architecture</h2>
+  <p>A simplified Docker environment can be represented as:</p>
+  <div class="ascii-tree" style="text-align: center;">+--------------------------------------+
+|              Hardware                |
+|  Server / Desktop / Laptop / Cloud   |
++--------------------------------------+
+                  ↓
++--------------------------------------+
+|          Operating System            |
+|       Linux / Windows etc.           |
++--------------------------------------+
+                  ↓
++--------------------------------------+
+|            Docker Engine             |
+|       Manages Docker Containers      |
++--------------------------------------+
+                  ↓
+      +-----------+-----------+
+      ↓           ↓           ↓
++-----------+ +-----------+ +-----------+
+|Container 1| |Container 2| |Container 3|
+|   App 1   | |   App 2   | |   App 3   |
++-----------+ +-----------+ +-----------+</div>
+
+  <h3 class="subsec-heading">Docker Engine</h3>
+  <p>Docker Engine is the core technology responsible for creating and managing containers. It allows us to: <span class="code-inline">Create containers</span>, <span class="code-inline">Run containers</span>, <span class="code-inline">Stop containers</span>, <span class="code-inline">Manage containers</span>, <span class="code-inline">Work with Docker images</span>.</p>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 8. How Containers Reduce Compatibility Problems -->
+  <h2 class="sec-heading">8. How Containers Reduce Compatibility Problems</h2>
+  <p>Suppose an application requires: <span class="code-inline">Application</span> + <span class="code-inline">Node.js 14</span> + <span class="code-inline">Libraries</span> + <span class="code-inline">Dependencies</span> + <span class="code-inline">Configuration</span>.</p>
+  <p>All of these requirements can be packaged into a Docker image and used to create a container. Therefore, when the application is moved to another environment, the required components travel with it.</p>
+
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">Without Docker</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">Application</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Different Environment</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#ef4444; background:#fee2e2;">Compatibility Problems</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#ef4444; background:#fee2e2;">Application may fail</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">With Docker</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">App + Dependencies + Config</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">Docker Image</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Container</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">Run Application</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Running Multiple Versions on the Same Machine -->
+  <h2 class="sec-heading">9. Running Multiple Versions on the Same Machine</h2>
+  <p>Another important benefit of containers is that multiple versions of software can be used independently.</p>
+  
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose one application requires: <span class="highlight">Node.js 14</span> and another application requires: <span class="highlight">Node.js 16</span>. Without isolation, managing different versions can become difficult. With Docker:</p>
+  <div class="ascii-tree">Machine
+│
+├── Container 1
+│     ├── Application 1
+│     └── Node.js 14
+│
+└── Container 2
+      ├── Application 2
+      └── Node.js 16</div>
+  <p>The applications can run in separate containers with their required environments.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">⭐ Important</span> Containers provide isolation, so applications can have different dependencies or runtime versions without directly interfering with each other.
+  </div>
+
+  <!-- 10. Docker vs Virtual Machines -->
+  <h2 class="sec-heading">10. Docker vs Virtual Machines</h2>
+  <p>Docker containers and Virtual Machines (VMs) both provide isolation, but they work differently.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Docker Containers</h3>
+      <p style="font-size:13.5px;">Containers generally share the host operating system's kernel and isolate application processes. They package: Application, Dependencies, Required runtime/environment. They <strong>do not generally package a complete guest operating system</strong> for every application.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Virtual Machines</h3>
+      <p style="font-size:13.5px;">A VM virtualizes a complete machine and normally includes: Virtual hardware, Guest operating system, Libraries, Applications.</p>
+    </div>
+  </div>
+
+  <h3 class="subsec-heading">Simplified Comparison</h3>
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center; font-size:11px;">Virtual Machines
+
+Hardware
+   ↓
+Host OS
+   ↓
+Hypervisor
+   ↓
++-------------+  +-------------+
+| VM 1        |  | VM 2        |
+| Guest OS    |  | Guest OS    |
+| Application |  | Application |
++-------------+  +-------------+</div>
+    
+    <div class="ascii-tree" style="text-align: center; font-size:11px;">Docker
+
+Hardware
+   ↓
+Operating System
+   ↓
+Docker Engine
+   ↓
++-----------+ +-----------+ +-----------+
+|Container 1| |Container 2| |Container 3|
+|Application| |Application| |Application|
++-----------+ +-----------+ +-----------+</div>
+  </div>
+
+  <h3 class="subsec-heading" style="margin-top:6px;">Key Differences</h3>
+  <table class="hand-table" style="font-size:12.5px;">
+    <thead>
+      <tr><th>Feature</th><th>Docker Container</th><th>Virtual Machine</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Isolation</strong></td><td>Process/application level</td><td>Full machine/OS level</td></tr>
+      <tr><td><strong>Guest OS per instance</strong></td><td>Usually no</td><td>Yes</td></tr>
+      <tr><td><strong>Resource usage</strong></td><td>Generally lower</td><td>Generally higher</td></tr>
+      <tr><td><strong>Startup</strong></td><td>Generally faster</td><td>Generally slower</td></tr>
+      <tr><td><strong>Portability</strong></td><td>High</td><td>High</td></tr>
+      <tr><td><strong>Packaging</strong></td><td>App + dependencies</td><td>Full OS + app</td></tr>
+      <tr><td><strong>Multiple versions</strong></td><td>Easy</td><td>Possible but heavier</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 13.5px; font-weight:700; color:#b91c1c; text-align:center; margin-top:4px;">⭐ Key Point: Containers are generally more lightweight because they don't require a complete guest operating system for every application.</p>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 11. Main Components of Docker -->
+  <h2 class="sec-heading">11. Main Components of Docker</h2>
+  <div class="two-col">
+    <div>
+      <p>The important Docker terms are:</p>
+      <ul>
+        <li>Dockerfile</li>
+        <li>Docker Image</li>
+        <li>Docker Container</li>
+        <li>Docker Registry</li>
+        <li>Docker Hub</li>
+        <li>Docker Repository</li>
+      </ul>
+    </div>
+    
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">The basic relationship is:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Dockerfile</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓ Build</span><span class="flow-node" style="padding:1px 4px; border-color:#ca8a04; background:#fefce8;">Docker Image</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓ Run</span><span class="flow-node" style="padding:1px 4px; border-color:#16a34a; background:#dcfce7;">Docker Container</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Application</span>
+      </div>
+    </div>
+  </div>
+  <p style="font-weight:700; margin-top:6px; margin-bottom:2px;">For sharing images:</p>
+  <div class="flow-h" style="font-size:12px; justify-content:flex-start; gap:4px;">
+    <span class="flow-node">Docker Image</span><span class="flow-arrow">→</span><span class="flow-node">Push</span><span class="flow-arrow">→</span><span class="flow-node">Docker Registry</span><span class="flow-arrow">→</span><span class="flow-node">Pull</span><span class="flow-arrow">→</span><span class="flow-node">Another Server</span>
+  </div>
+
+  <!-- 12. What is a Dockerfile? -->
+  <h2 class="sec-heading">12. What is a Dockerfile?</h2>
+  <p>A Dockerfile is a text file containing instructions used to build a Docker image. It describes things such as: Base image, Working directory, Files to copy, Dependencies to install, Ports to expose, Commands to execute, Application startup command.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Example Dockerfile</h3>
+      <span class="code-term" style="font-size:12px; white-space:pre;">FROM node:20
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "start"]</span>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Explanation</h3>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>FROM:</strong> Specifies the base image (e.g. Node.js environment).</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>WORKDIR:</strong> Sets the working directory.</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>COPY:</strong> Copies files from the project into the image.</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>RUN:</strong> Executes a command while building the image.</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>EXPOSE:</strong> Documents the port the app uses.</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>CMD:</strong> Default command to run when container starts.</p>
+    </div>
+  </div>
+
+  <!-- 13. Docker Image & 14. Image vs Container -->
+  <h2 class="sec-heading">13. Docker Image &nbsp;|&nbsp; 14. Image vs Container</h2>
+  <p>A Docker image is a packaged, immutable template containing the application and the components required to create and run a container. It can contain: Application code, Runtime, Libraries, Dependencies, Configuration required by the image, Other required files.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px; margin-bottom:8px;">
+    <span class="flow-node">Dockerfile</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">docker build</span><span class="flow-arrow">→</span><span class="flow-node">Docker Image</span>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">14. Image vs Container (Very Important)</h3>
+    <div class="two-col" style="align-items:center;">
+      <div>
+        <p style="font-size:13.5px; font-weight:700; margin-bottom:2px;">Docker Image</p>
+        <p style="font-size:13.5px; margin-top:0;">An image is a template/package.</p>
+        <p style="font-size:13.5px; font-weight:700; margin-bottom:2px; margin-top:6px;">Docker Container</p>
+        <p style="font-size:13.5px; margin-top:0;">A container is a running instance of an image.</p>
+      </div>
+      <div class="ascii-tree" style="margin:0; font-size:11px;">Docker Image
+     │
+     ├──── Run → Container 1
+     │
+     ├──── Run → Container 2
+     │
+     └──── Run → Container 3</div>
+    </div>
+    <div class="sticky-note" style="padding:2px 6px; margin-top:4px;">
+      <span class="tag-badge badge-trick" style="font-size:11px;">Easy Analogy</span> <strong>Image</strong> = Blueprint | <strong>Container</strong> = Actual running building created from that blueprint
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 15. Docker Registry & 16. Docker Hub -->
+  <h2 class="sec-heading">15. Docker Registry &nbsp;|&nbsp; 16. Docker Hub</h2>
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">15. Docker Registry</h3>
+      <p style="font-size:14px;">A Docker Registry is a storage and distribution system for Docker images. It allows images to be: Stored, Shared, Uploaded, Downloaded, Distributed. There can be public registries and private registries.</p>
+      <div class="flow-h" style="justify-content:flex-start; font-size:11px; gap:4px; margin-top:6px;">
+        <span class="flow-node" style="padding:1px 2px;">Developer</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Build</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Push</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Registry</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Pull</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Another Dev/Server</span>
+      </div>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">16. Docker Hub</h3>
+      <p style="font-size:13px;">Docker Hub is a popular public Docker registry provided by Docker. It contains many publicly available container images. (e.g. Node.js, Python, MongoDB, Nginx, Redis, Ubuntu, MySQL).</p>
+      <p style="font-size:13px; font-weight:700; margin-bottom:2px;">Instead of creating from scratch:</p>
+      <span class="code-term" style="font-size:12px;">docker pull node</span>
+      <p style="font-size:12px; margin-top:2px;">This downloads a Node image from a registry such as Docker Hub.</p>
+    </div>
+  </div>
+
+  <!-- 17. Public vs Private Registries & 18. Registry vs Repository -->
+  <h2 class="sec-heading">17. Public vs Private &nbsp;|&nbsp; 18. Registry vs Repository</h2>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">17. Public vs Private Registries</p>
+      <p style="font-size:13.5px; margin:2px 0;"><strong>Public Registry:</strong> Images are available publicly, subject to access rules (e.g. Docker Hub). Useful for sharing with the wider community.</p>
+      <p style="font-size:13.5px; margin:4px 0 2px 0;"><strong>Private Registry:</strong> Used to store images that should not be publicly accessible (e.g. Proprietary applications, Internal services, Private code).</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">18. Registry vs Repository</h3>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>Registry:</strong> The larger image storage/distribution service (e.g. Docker Hub).</p>
+      <p style="font-size:12.5px; margin:2px 0;"><strong>Repository:</strong> A collection of related images, commonly organized around an image/app name and its versions or tags.</p>
+      <div class="ascii-tree" style="margin:4px 0; font-size:10px;">Docker Hub (Registry)
+│
+├── node (Repository)
+│    ├── node:18
+│    └── node:20
+│
+└── nginx (Repository)
+     └── nginx:latest</div>
+      <p style="font-size:11px; font-weight:700; color:#b91c1c; text-align:center; margin-bottom:0;">Registry = Library | Repo = Section | Tag = Edition</p>
+    </div>
+  </div>
+
+  <!-- 19. Important Docker Commands -->
+  <h2 class="sec-heading">19. Important Docker Commands</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:13px; margin:2px 0;"><strong>19.1 docker pull</strong><br>Used to download an image from a registry. <span class="code-inline">docker pull node:20</span></p>
+      <p style="font-size:13px; margin:6px 0 2px 0;"><strong>19.2 docker run</strong><br>Used to create and start a container from an image. <span class="code-inline">docker run node</span></p>
+      <p style="font-size:13px; margin:6px 0 2px 0;"><strong>19.3 docker build</strong><br>Used to build an image from a Dockerfile. <span class="code-inline">docker build -t my-image .</span><br><em>(-t names the image, . uses current directory)</em></p>
+    </div>
+    <div>
+      <p style="font-size:13px; margin:2px 0;"><strong>19.4 docker ps</strong><br>Shows running containers. <span class="code-inline">docker ps</span> (Add <span class="code-inline">-a</span> to see stopped ones too).</p>
+      <p style="font-size:13px; margin:6px 0 2px 0;"><strong>19.5 docker stop</strong><br>Stops a running container. <span class="code-inline">docker stop my-container</span></p>
+      <p style="font-size:13px; margin:6px 0 2px 0;"><strong>19.6 docker images</strong><br>Lists Docker images available locally. <span class="code-inline">docker images</span></p>
+    </div>
+  </div>
+
+  <!-- 20 & 21. Complete Workflow & Relationship -->
+  <h2 class="sec-heading">20. Complete Workflow &nbsp;|&nbsp; 21. Dockerfile → Image → Container</h2>
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center; font-size:12px;">Developer writes application
+             ↓
+        Dockerfile
+             ↓
+      docker build
+             ↓
+       Docker Image
+             ↓
+      docker run
+             ↓
+     Docker Container
+             ↓
+      Application runs</div>
+      
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">21. The Crucial Relationship</h3>
+      <p style="font-size:13px; margin:2px 0;"><strong>Step 1:</strong> Dockerfile (Contains instructions)</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Step 2:</strong> docker build (Docker reads Dockerfile)</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Step 3:</strong> Image (The Docker image is created)</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Step 4:</strong> docker run (Run the image)</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Step 5:</strong> Container (A running instance is created)</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 22 & 23. Multiple Containers & Benefits -->
+  <h2 class="sec-heading">22. Multiple Containers &nbsp;|&nbsp; 23. Important Benefits</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">22. Multiple Containers from One Image</p>
+      <div class="ascii-tree" style="text-align:center; font-size:11px;">                 Docker Image
+                      │
+          ┌───────────┼───────────┐
+          ↓           ↓           ↓
+     Container 1  Container 2  Container 3</div>
+      <p style="font-size:13px; margin-top:2px;">The same application image could be used to start multiple instances of an application to handle more workload.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">23. Important Benefits of Docker</h3>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li><strong>Consistency:</strong> Dev → Test → Prod</li>
+        <li><strong>Portability:</strong> Move between environments</li>
+        <li><strong>Isolation:</strong> Apps run isolated</li>
+        <li><strong>Efficient:</strong> More lightweight than VMs</li>
+        <li><strong>Easy Deployment & Sharing:</strong> Package once, share via registries</li>
+        <li><strong>Dependency Mgmt:</strong> Packaged with app</li>
+        <li><strong>Multiple Versions:</strong> Different containers can use different dependency versions safely</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 24 & 25 & 26. Compatibility, SDLC, VM vs Docker -->
+  <h2 class="sec-heading">24. Compatibility &nbsp;|&nbsp; 25. SDLC &nbsp;|&nbsp; 26. VM vs Docker Revision</h2>
+  <p style="font-size:14px; margin-bottom:2px;"><strong>24. Compatibility:</strong> Docker packages the Application + Dependencies into a Docker Image. The tester machine runs the exact same packaged environment, significantly reducing environment-related compatibility problems.</p>
+  <p style="font-size:14px; margin-bottom:4px;"><strong>25. Software Development Lifecycle (SDLC):</strong> Docker maintains consistency across: Development → Build → Package → Testing → Deployment → Production.</p>
+  
+  <table class="hand-table" style="font-size:13px; margin-top:0;">
+    <thead>
+      <tr><th>Docker</th><th>VM</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Container-based</td><td>Machine virtualization</td></tr>
+      <tr><td>Lightweight</td><td>Comparatively heavier</td></tr>
+      <tr><td>Shares host OS kernel</td><td>Includes complete guest OS per instance</td></tr>
+      <tr><td>Packages app + dependencies</td><td>Packages full OS + app</td></tr>
+      <tr><td>Generally faster startup</td><td>Generally slower startup</td></tr>
+      <tr><td>Efficient resource utilization</td><td>Higher resource requirements</td></tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding:2px 6px; margin:2px 0;">
+    <span class="tag-badge badge-trick">🧠 Remember</span> VM → Full machine environment | Container → Application environment
+  </div>
+
+  <!-- 27. Terminology & 28. One-Line Definitions -->
+  <h2 class="sec-heading">27 & 28. Terminology & One-Line Definitions</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-size:13px; margin:2px 0;"><strong>Docker:</strong> Platform/toolset for containerized application development and management.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Container:</strong> Isolated runtime environment containing an app and its required dependencies.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Dockerfile:</strong> Text file containing instructions to build a Docker image.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Docker Image:</strong> Packaged template containing the app and its required runtime components, used to create containers.</p>
+    </div>
+    <div class="hand-box">
+      <p style="font-size:13px; margin:2px 0;"><strong>Docker Engine:</strong> Core technology that manages containers and images.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Docker Registry:</strong> Storage/distribution system for container images.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Docker Hub:</strong> Popular public Docker registry.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Repository:</strong> Collection of related container images (e.g. node, python).</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Tag:</strong> Identifier distinguishing image variants/versions.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>DOCKER & CONTAINERIZATION // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 29 & 30. Quick Revision & Most Important Points -->
+  <h2 class="sec-heading">29. 🧠 Quick Revision — Docker in 60 Seconds</h2>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center; font-size:12px;">DOCKERFILE
+    │
+    │ docker build
+    ↓
+DOCKER IMAGE
+    │
+    │ docker run
+    ↓
+DOCKER CONTAINER
+    │
+    ↓
+APPLICATION</div>
+    <div class="ascii-tree" style="text-align:center; font-size:12px;">For sharing:
+
+IMAGE
+  │
+  │ docker push
+  ↓
+REGISTRY
+  │
+  │ docker pull
+  ↓
+OTHER MACHINE</div>
+  </div>
+
+  <div class="hand-box" style="background:#faf5ff; border-color:#a855f7;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#7e22ce;">30. ⭐ Most Important Points</h3>
+    <ul style="font-size:13.5px; margin-bottom:0;">
+      <li>Docker is used for containerization. Containers provide isolated environments.</li>
+      <li>Docker helps reduce environment and compatibility problems.</li>
+      <li>A Dockerfile contains instructions to build an image.</li>
+      <li>A Docker image is used to create containers. A container is a running instance of an image.</li>
+      <li>One image can be used to create multiple containers.</li>
+      <li>Docker containers are generally more lightweight than VMs.</li>
+      <li>Docker images can be stored and distributed through registries (e.g. Docker Hub).</li>
+      <li>A repository contains related images/tags.</li>
+      <li><span class="code-inline">docker build</span> → builds an image. <span class="code-inline">docker run</span> → creates/starts a container.</li>
+    </ul>
+  </div>
+
+  <!-- 31. Interview Questions -->
+  <h2 class="sec-heading">31. 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is Docker?</div><div class="qa-a">Docker is a containerization platform used to package, deploy, and run applications in isolated environments.</div></div>
+      <div class="qa-block"><div class="qa-q">Q2. Why is Docker used?</div><div class="qa-a">To provide consistent application environments, reduce compatibility problems, simplify deployment, and improve portability.</div></div>
+      <div class="qa-block"><div class="qa-q">Q3. What is a container?</div><div class="qa-a">An isolated runtime environment in which an application runs with its required dependencies.</div></div>
+      <div class="qa-block"><div class="qa-q">Q4. What is a Dockerfile?</div><div class="qa-a">A text file containing instructions used to build a Docker image.</div></div>
+      <div class="qa-block"><div class="qa-q">Q5. What is a Docker image?</div><div class="qa-a">A packaged template containing the application and components required to create and run containers.</div></div>
+      <div class="qa-block"><div class="qa-q">Q6. Image vs Container?</div><div class="qa-a">An image is a template/package, while a container is a running instance created from that image.</div></div>
+    </div>
+    
+    <div>
+      <div class="qa-block"><div class="qa-q">Q7. Can one image create multiple containers?</div><div class="qa-a">Yes. The same image can be used to create multiple container instances.</div></div>
+      <div class="qa-block"><div class="qa-q">Q8. What is Docker Hub?</div><div class="qa-a">A popular public registry for storing and distributing container images.</div></div>
+      <div class="qa-block"><div class="qa-q">Q9. What is a Docker registry?</div><div class="qa-a">A system for storing and distributing container images.</div></div>
+      <div class="qa-block"><div class="qa-q">Q10. Registry vs Repository?</div><div class="qa-a">A registry is the broader image storage/distribution service, while a repository is a collection of related images/tags within a registry.</div></div>
+      <div class="qa-block"><div class="qa-q">Q11. Docker vs VM?</div><div class="qa-a">Docker containers generally share the host OS kernel and package the application environment, while a VM normally includes a complete guest operating system.</div></div>
+    </div>
+  </div>
+
+  <!-- Final Cheat Sheet -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align:center;">
+      📌 Final Cheat Sheet
+    </div>
+    <div class="two-col" style="font-size:12px; margin-top:4px;">
+      <div class="ascii-tree" style="background:transparent; border:none; padding:0; margin:0; text-align:center;">                 DOCKER
+                    │
+           Containerization
+                    │
+          ┌─────────┴─────────┐
+          │                   │
+      Dockerfile          Docker Engine
+          │                   │
+     docker build             │
+          ↓                   │
+     Docker Image             │
+          │                   │
+     docker run               │
+          ↓                   │
+     Docker Container ←───────┘
+          │
+          ↓
+      Application</div>
+      <div class="ascii-tree" style="background:transparent; border:none; padding:0; margin:0; text-align:center;">Image Distribution
+Developer
+    │
+    ↓
+Docker Image
+    │
+    │ push
+    ↓
+Registry
+    │
+    │ pull
+    ↓
+Other Developer / Server
+    │
+    ↓
+Container</div>
+    </div>
+    <p style="font-size: 15px; color: #881337; margin: 4px 0 0 0; font-weight: 700; text-align:center;">
+      The easiest way to remember:<br>
+      Dockerfile builds the Image → Image creates the Container → Container runs the Application.<br>
+      Registry stores/distributes Images → Docker Hub is a popular public Registry.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

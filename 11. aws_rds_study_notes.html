@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS RDS - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d; /* Blue ink */
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 22px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .code-inline {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 0 4px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 15px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS RDS (Relational Database Service)</div>
+
+  <!-- 1. What is AWS RDS? -->
+  <h2 class="sec-heading">1. What is AWS RDS?</h2>
+  <p><strong>Amazon RDS (Relational Database Service)</strong> is a <span class="highlight">managed relational database service</span> provided by AWS.</p>
+  <p>It allows you to create, operate, scale, monitor, back up, and maintain relational databases without managing the underlying database infrastructure manually.</p>
+
+  <h3 class="subsec-heading">Relational Data</h3>
+  <p>Relational data is generally organized into: <strong>Tables</strong>, <strong>Rows</strong>, <strong>Columns</strong>.</p>
+  <p>Example:</p>
+  <table class="hand-table" style="width: 80%; margin: 4px auto;">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Raju</td><td>raju@email.com</td></tr>
+      <tr><td>2</td><td>Sham</td><td>sham@email.com</td></tr>
+    </tbody>
+  </table>
+
+  <p>Popular relational database systems include:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px;">
+    <span class="flow-node" style="font-size:12px;">MySQL</span>
+    <span class="flow-node" style="font-size:12px;">PostgreSQL</span>
+    <span class="flow-node" style="font-size:12px;">Oracle</span>
+    <span class="flow-node" style="font-size:12px;">Microsoft SQL Server</span>
+    <span class="flow-node" style="font-size:12px;">MariaDB</span>
+  </div>
+  <p>AWS RDS supports several popular relational database engines.</p>
+
+  <!-- 2. Why Use RDS? -->
+  <h2 class="sec-heading">2. Why Use RDS?</h2>
+  <p>Normally, if you install MySQL yourself on a server, you are responsible for many administrative tasks. With RDS, AWS manages much of the underlying database infrastructure.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Important RDS Benefits</h3>
+      <ul style="font-size: 13.5px; margin-bottom: 0;">
+        <li>Automated maintenance</li>
+        <li>Monitoring & Backups</li>
+        <li>Scaling options</li>
+        <li>High Availability & Fault tolerance</li>
+        <li>Read replicas & Recovery options</li>
+        <li>Security controls</li>
+        <li>Easier database administration</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Simple Example</h3>
+      <p style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">Without RDS:</p>
+      <div class="flow-h" style="font-size: 11px; gap: 2px; justify-content: flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">EC2</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Install MySQL</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Configure MySQL</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Patch</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Monitor</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Backup</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Maintain</span>
+      </div>
+      <p style="font-size: 13px; font-weight: bold; margin-top: 6px; margin-bottom: 2px;">With RDS:</p>
+      <div class="flow-h" style="font-size: 12px; gap: 4px; justify-content: flex-start;">
+        <span class="flow-node">Application</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">RDS</span>
+      </div>
+      <p style="font-size: 12px;">AWS handles many of the infrastructure-management tasks for you.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">Key Concept</span>
+    RDS is a <strong>managed database service</strong>, not simply a database installed manually on an EC2 instance.
+  </div>
+
+  <!-- 3. RDS Practical Use Case -->
+  <h2 class="sec-heading">3. RDS Practical Use Case</h2>
+  <p>A common architecture is:</p>
+  <div class="flow-v">
+    <div class="flow-node">User</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Browser</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">EC2 / Application</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#eff6ff;">RDS (MySQL)</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Relational Data</div>
+  </div>
+  
+  <p>In this example: <strong>EC2</strong> hosts the frontend/application. <strong>Docker</strong> runs the Node.js application. <strong>RDS</strong> hosts the MySQL database. User data is stored in RDS.</p>
+
+  <h3 class="subsec-heading">Example Application</h3>
+  <p>A simple contact-management application can allow users to: 1. Enter an email address. 2. Click <strong>Add</strong>. 3. Store the email in MySQL. 4. Display stored contacts. 5. Delete contacts.</p>
+
+  <!-- 4. Technologies Used in the Practical -->
+  <h2 class="sec-heading">4. Technologies Used in the Practical</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">AWS Services</h3>
+      <ul>
+        <li><strong>EC2</strong> – application server</li>
+        <li><strong>RDS</strong> – database service</li>
+      </ul>
+      <h3 class="subsec-heading">App Technologies</h3>
+      <ul>
+        <li>Node.js</li>
+        <li>Docker</li>
+        <li>MySQL</li>
+      </ul>
+    </div>
+    <div class="ascii-tree" style="margin-top:0; padding:4px 10px;">Architecture
+Browser
+   |
+   ↓
+EC2
+   |
+Docker Container
+   |
+Node.js Application
+   |
+   ↓
+RDS
+   |
+MySQL
+   |
+Database</div>
+  </div>
+  <p>This is a useful real-world example because it demonstrates how different cloud components work together.</p>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Creating an RDS Database -->
+  <h2 class="sec-heading">5. Creating an RDS Database</h2>
+  <p>Go to the AWS Console and search for: <span class="highlight">RDS → Relational Database Service</span><br>Then: <span class="highlight">Databases → Create database</span></p>
+  <p>AWS provides different creation approaches.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Easy Create</h3>
+      <p>Designed to make database creation simpler and faster. AWS automatically chooses many configuration options based on the selected use case.</p>
+      <p style="margin-bottom:0;">Typical choices include:</p>
+      <ul style="margin-top:2px;"><li>Production</li><li>Test</li><li>Free Tier</li></ul>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Standard Create</h3>
+      <p>Gives you much greater control over database configuration.</p>
+      <p>For learning and practical purposes, <strong>Standard Create</strong> is useful because you can understand individual configuration options.</p>
+    </div>
+  </div>
+
+  <!-- 6. Selecting the Database Engine -->
+  <h2 class="sec-heading">6. Selecting the Database Engine</h2>
+  <p>For the practical, MySQL is selected. RDS supports multiple database engines, such as:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px;">
+    <span class="flow-node">MySQL</span> <span class="flow-node">PostgreSQL</span> <span class="flow-node">MariaDB</span> <span class="flow-node">Oracle</span> <span class="flow-node">Microsoft SQL Server</span>
+  </div>
+  <p>The database engine should be selected according to the application's requirements.</p>
+
+  <!-- 7. Templates -->
+  <h2 class="sec-heading">7. Templates</h2>
+  <p>RDS provides templates based on the intended workload. Typical options include:</p>
+  
+  <ul style="list-style-type: none; margin-left: 0;">
+    <li><strong>Free Tier:</strong> Useful for learning, practice, testing, small experiments.</li>
+    <li><strong>Production:</strong> Designed for production workloads where requirements such as High Availability, Performance, Reliability, Fault tolerance are more important.</li>
+    <li><strong>Test/Development:</strong> Useful for development and testing environments.</li>
+  </ul>
+
+  <!-- 8. High Availability in RDS -->
+  <h2 class="sec-heading">8. High Availability in RDS</h2>
+  <p>For production environments, RDS can be configured across multiple <strong>Availability Zones (AZs)</strong>.</p>
+  
+  <div class="ascii-tree" style="text-align: center;">             AWS Region
+                 |
+       -----------------------
+       |          |          |
+      AZ-1       AZ-2       AZ-3
+       |          |          |
+      DB-1       DB-2       DB-3</div>
+  <p>The exact architecture depends on the selected RDS configuration.</p>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">Important Point</span>
+    High Availability helps protect the application from failures affecting a single Availability Zone.
+  </div>
+
+  <!-- 9. RDS Instance vs RDS Cluster -->
+  <h2 class="sec-heading">9. RDS Instance vs RDS Cluster</h2>
+  <p>The transcript distinguishes between database <strong>instances</strong> and <strong>clusters</strong>.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Instance-based setup</h3>
+      <p>A primary database instance handles database operations while another instance can remain available for failover depending on the configuration.</p>
+      <div class="flow-v" style="gap:2px;">
+        <span class="flow-node">Primary DB</span>
+        <span style="font-size: 13px; font-weight:bold; color:#ef4444;">↓ Replication ↓</span>
+        <span class="flow-node">Standby DB</span>
+      </div>
+      <p style="font-size: 12px; margin-bottom: 0;">If primary fails, AWS performs failover.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Cluster-based setup</h3>
+      <p>A cluster can provide multiple database instances with capabilities designed for higher availability and/or read scalability, depending on the selected RDS database technology.</p>
+    </div>
+  </div>
+
+  <!-- 10. Storage -->
+  <h2 class="sec-heading">10. Storage & Auto Scaling</h2>
+  <p>RDS provides storage options such as SSD-based storage. Storage configuration can include: Allocated storage, Storage type, Storage scaling, Performance-related settings.</p>
+  
+  <h3 class="subsec-heading">Storage Auto Scaling</h3>
+  <p>Storage Auto Scaling can automatically increase allocated database storage when the database approaches its storage capacity.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Capacity Limit</span><span class="flow-arrow">→</span><span class="flow-node">Usage Increases</span><span class="flow-arrow">→</span><span class="flow-node">Threshold Reached</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Storage Automatically Increases</span>
+  </div>
+  <p>This helps reduce the risk of the database running out of storage.</p>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 11. Database Credentials -->
+  <h2 class="sec-heading">11. Database Credentials</h2>
+  <p>When creating an RDS database, you configure credentials for accessing the database. Common credentials include Master username and Master password.</p>
+  <span class="code-term">Username: admin<br>Password: ********</span>
+  
+  <div class="warn-box" style="padding: 6px 10px; margin: 6px 0;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Security Reminder</h3>
+    <ul style="font-size: 13.5px; margin-bottom: 0;">
+      <li>Do not use simple passwords.</li>
+      <li>Do not expose database credentials publicly.</li>
+      <li>Do not hard-code passwords into application source code.</li>
+      <li>Use secure secret-management practices.</li>
+    </ul>
+  </div>
+
+  <!-- 12. Connectivity -->
+  <h2 class="sec-heading">12. Connectivity</h2>
+  <p>One important RDS configuration is deciding <strong>how the database will be accessed</strong>. The database may need to communicate with: EC2, Application servers, Other AWS resources, External systems (depending on the architecture).</p>
+  <p>The networking configuration includes: VPC, Subnets, Security Groups, Public/private accessibility.</p>
+
+  <!-- 13. Public Access -->
+  <h2 class="sec-heading">13. Public Access</h2>
+  <p>The practical demonstrates a database configured for public access so that it can be accessed during testing. However:</p>
+  <div class="warn-box" style="border-style: solid; background: #fff5f5;">
+    <p style="margin:2px 0; font-weight:700;">Publicly accessible databases are generally not recommended for production unless there is a specific security requirement and the network access is tightly controlled.</p>
+  </div>
+  
+  <p>A better production architecture is usually:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size: 13px;">
+    <span class="flow-node">Internet</span><span class="flow-arrow">→</span><span class="flow-node">Load Balancer</span><span class="flow-arrow">→</span><span class="flow-node">Application / EC2</span><span class="flow-arrow">→</span><span class="flow-node" style="background:#ecfdf5; border-color:#10b981;">Private RDS</span>
+  </div>
+  <p>The database should generally be protected from direct public Internet access.</p>
+
+  <!-- 14. RDS Security Groups -->
+  <h2 class="sec-heading">14. RDS Security Groups</h2>
+  <p>A Security Group acts as a virtual firewall controlling network traffic to the RDS instance. For MySQL, the standard port is: <strong>TCP 3306</strong>.</p>
+  <span class="code-term">Source → Allowed<br>Port   → 3306<br>Protocol → TCP</span>
+  
+  <h3 class="subsec-heading">Practical Setup vs Production</h3>
+  <p>The transcript opens MySQL port <strong>3306</strong> to a broad source for testing. However, this is <strong>not recommended for production</strong>. A more secure approach is:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px;">
+    <div class="flow-node">EC2 Security Group</div>
+    <span class="flow-arrow">→ TCP 3306 →</span>
+    <div class="flow-node">RDS Security Group</div>
+  </div>
+  <p>This allows the database to accept connections specifically from the application server rather than from the entire Internet.</p>
+
+  <!-- 15 to 18. EC2 & Docker -->
+  <h2 class="sec-heading">15 - 18. Application Setup (EC2 & Docker)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. EC2 App Server</h3>
+      <p>After creating RDS, an EC2 instance is prepared for the Node.js application (Example name: <strong>Node App</strong>). The EC2 instance hosts the application.</p>
+      
+      <h3 class="subsec-heading">16. Installing Docker</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 6px;">Install Docker</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Start Service</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Check Status</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Pull Image</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Run Container</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">17. Docker Image</h3>
+      <p>The practical uses a pre-built Docker image containing the Node.js application pulled from a registry.</p>
+      <div class="flow-h" style="gap:2px; font-size:12px;"><span class="flow-node">Docker Registry</span><span class="flow-arrow">→</span><span class="flow-node">docker pull</span><span class="flow-arrow">→</span><span class="flow-node">EC2 Image</span></div>
+      
+      <h3 class="subsec-heading">18. Port Mapping</h3>
+      <p>The Node.js application listens on port <strong>3000</strong>. HTTP port exposed to users is <strong>80</strong>.</p>
+      <div class="flow-h" style="gap:2px; font-size:12px;"><span class="flow-node">EC2 Port 80</span><span class="flow-arrow">→</span><span class="flow-node">Container Port 3000</span></div>
+      <p style="font-size: 11px; margin-bottom: 0;">Users access via HTTP (80), container listens internally on 3000.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 19 & 20. Connecting Node.js & Env Vars -->
+  <h2 class="sec-heading">19. Connecting Node.js to RDS &nbsp;|&nbsp; 20. Env Variables</h2>
+  <p>The Node.js application needs database connection information. The RDS endpoint acts as the database host. The practical uses environment variables to provide this info.</p>
+  
+  <div class="two-col">
+    <span class="code-term">DB_HOST = RDS Endpoint
+DB_USER = admin
+DB_PASSWORD = ********
+DB_NAME = myapp
+DB_PORT = 3306</span>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Why Env Variables?</h3>
+      <p style="font-size: 13px;">They help separate configuration from application code. Instead of writing credentials directly into source code (<span class="code-inline">password = "..."</span>), the application can read them from its environment. For production, use secure secret-management.</p>
+    </div>
+  </div>
+
+  <!-- 21 & 22. Testing & CRUD -->
+  <h2 class="sec-heading">21. Testing &nbsp;|&nbsp; 22. Application CRUD Operations</h2>
+  <p>Once the Docker container is running: Get EC2 public IP → Open browser → Enter IP → Access application.</p>
+  <div class="flow-h" style="justify-content:flex-start; font-size:12px; gap:4px;"><span class="flow-node">Browser</span><span class="flow-arrow">→</span><span class="flow-node">EC2 IP (Port 80)</span><span class="flow-arrow">→</span><span class="flow-node">Docker</span><span class="flow-arrow">→</span><span class="flow-node">Node.js</span><span class="flow-arrow">→</span><span class="flow-node">RDS MySQL</span></div>
+  
+  <p>The practical demonstrates basic database operations (CRUD):</p>
+  <table class="hand-table" style="width: 50%;">
+    <thead><tr><th>CRUD</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>C</td><td>Create (Add email)</td></tr>
+      <tr><td>R</td><td>Read (Display contacts)</td></tr>
+      <tr><td>U</td><td>Update</td></tr>
+      <tr><td>D</td><td>Delete (Remove contact)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 23 & 24. Accessing RDS from Terminal & SQL -->
+  <h2 class="sec-heading">23. Accessing RDS from Terminal &nbsp;|&nbsp; 24. Useful SQL</h2>
+  <p>RDS can also be accessed using a MySQL client. The practical uses a Docker-based MySQL client from the EC2 server.</p>
+  <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;"><span class="flow-node">EC2 Terminal</span><span class="flow-arrow">→</span><span class="flow-node">MySQL Client</span><span class="flow-arrow">→</span><span class="flow-node">RDS Endpoint</span><span class="flow-arrow">→</span><span class="flow-node">Database</span></div>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Useful MySQL Queries</h3>
+      <span class="code-term">SHOW DATABASES;</span>
+      <span class="code-term">USE myapp;</span>
+      <span class="code-term">SHOW TABLES;</span>
+      <span class="code-term">SELECT * FROM contacts;</span>
+    </div>
+    <div class="hand-box">
+      <p style="font-size:13.5px; margin-top:0;">The transcript demonstrates that when a new email is added through the application, it becomes visible when querying the database directly. This shows the complete data flow.</p>
+    </div>
+  </div>
+
+  <!-- 25 to 28. Monitoring, Logs, Maintenance -->
+  <h2 class="sec-heading">RDS Operations (25 - 28)</h2>
+  <div class="two-col">
+    <div>
+      <p><strong>25. Monitoring:</strong> RDS provides monitoring capabilities. Important metrics include: CPU utilization, Database connections, Storage usage, Database activity, Performance-related metrics.</p>
+      <p><strong>26. Current Activity:</strong> The RDS dashboard can show information about active database connections (e.g. Connection 1 → App, Connection 2 → Terminal). This helps identify how many clients are connected.</p>
+    </div>
+    <div>
+      <p><strong>27. Logs and Events:</strong> RDS provides info about logs, events, and operational activities (creation, restart, shutdown, maintenance). Useful for troubleshooting.</p>
+      <div class="warn-box" style="margin-top: 0;">
+        <p style="margin:2px 0;"><strong>28. Maintenance:</strong> AWS performs maintenance (engine updates, patches). RDS provides a <em>maintenance window</em>. <strong>Key Point:</strong> Managed service does <em>not</em> mean zero maintenance. AWS handles infrastructure, but DB still has requirements.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 29 to 32. Backups and Snapshots -->
+  <h2 class="sec-heading">29 - 32. Automated Backups & Snapshots</h2>
+  <p><strong>29. Automated Backups:</strong> Supports data recovery, point-in-time recovery, protection against accidental changes, and disaster recovery. Retention depends on config.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">30. RDS Snapshots</h3>
+      <p>A <strong>DB snapshot</strong> is a point-in-time backup of an RDS database. It can later be used to restore a database.</p>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">RDS Database</span><span class="flow-arrow" style="font-size:14px;">↓</span><span class="flow-node">Snapshot</span><span class="flow-arrow" style="font-size:14px;">↓</span><span class="flow-node">Stored State</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">31. Restoring & 32. Manual</h3>
+      <p style="font-size: 13px; margin-bottom: 2px;">If database is deleted, but snapshot exists:</p>
+      <div class="flow-h" style="gap:2px; font-size:12px; margin-top:2px;">
+        <span class="flow-node">Snapshot</span><span class="flow-arrow">→</span><span class="flow-node">Restore</span><span class="flow-arrow">→</span><span class="flow-node">New DB</span>
+      </div>
+      <p style="font-size: 13px;"><strong>Manual Snapshot:</strong> Useful to preserve a specific state before major changes, testing, migration, or risky config changes.</p>
+    </div>
+  </div>
+
+  <!-- 33 & 34. Copy & Share Snapshots -->
+  <h2 class="sec-heading">33. Snapshot Copy Across Regions &nbsp;|&nbsp; 34. Sharing</h2>
+  <div class="flow-h" style="justify-content:flex-start; font-size: 13px; gap:4px;">
+    <span class="flow-node">Mumbai Region</span><span class="flow-arrow">→</span><span class="flow-node">Snapshot</span><span class="flow-arrow">→</span><span class="flow-node">Copy</span><span class="flow-arrow">→</span><span class="flow-node">Another Region</span>
+  </div>
+  <p>This supports: Disaster recovery, regional migration, business continuity, geographic redundancy. RDS snapshots can also be shared with other AWS accounts for cross-account migration and collaboration.</p>
+
+  <!-- 35 to 38. Multi-AZ & Read Replicas -->
+  <h2 class="sec-heading">35. Multi-AZ Deployment &nbsp;|&nbsp; 36. Read Replicas</h2>
+  
+  <div class="two-col">
+    <div>
+      <p><strong>35. Multi-AZ:</strong> Primarily designed for <strong>High Availability and failover</strong>.</p>
+      <div class="ascii-tree" style="margin:4px 0; padding:6px;">       RDS
+        |
+----------------
+|              |
+Primary      Standby
+ AZ-1         AZ-2
+|
+| Sync replication
+↓</div>
+      <p style="font-size:13px;">If primary fails, AWS performs failover. Multi-AZ is for HA, not read scaling.</p>
+    </div>
+    
+    <div>
+      <p><strong>36. Read Replica:</strong> Designed to improve read scalability.</p>
+      <div class="ascii-tree" style="margin:4px 0; padding:6px;">      Primary
+     /       \
+    ↓         ↓
+ Read Replica  Read Replica</div>
+      <p style="font-size:13px;">Primary handles writes, replicas handle reads. Reduces read workload on the primary database.</p>
+    </div>
+  </div>
+
+  <h3 class="subsec-heading">37. Multi-Region Read Replica &nbsp;|&nbsp; 38. Multi-AZ vs Read Replica</h3>
+  <p>A primary instance exists in one Region and a read replica exists in another. Benefits: lower latency for closer users, geographic distribution, DR strategies.</p>
+  
+  <table class="hand-table">
+    <thead>
+      <tr><th>Feature</th><th>Multi-AZ</th><th>Read Replica</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Main purpose</td><td>High Availability</td><td>Read scalability</td></tr>
+      <tr><td>Failover</td><td>Yes</td><td>Not primarily the purpose</td></tr>
+      <tr><td>Read traffic</td><td>Not the main purpose</td><td>Yes</td></tr>
+      <tr><td>Setup</td><td>Primary + standby</td><td>Primary + replicas</td></tr>
+      <tr><td>Typical use</td><td>Fault tolerance</td><td>Heavy read workload</td></tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding:4px 8px;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <strong>Multi-AZ = Availability &nbsp;|&nbsp; Read Replica = Read Performance</strong>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 39. Cluster & 40. Aurora & 41. Quick Comparison -->
+  <h2 class="sec-heading">39. RDS Cluster &nbsp;|&nbsp; 40. Aurora &nbsp;|&nbsp; 41. Arch Comparison</h2>
+  
+  <div class="two-col">
+    <div>
+      <p><strong>39. Cluster Architecture:</strong> Multiple instances participate in a cluster (Primary = Read/Write, DB-2/DB-3 = Read).</p>
+      <p><strong>40. Amazon Aurora:</strong> Cloud-optimized DB engine compatible with MySQL/PostgreSQL. Designed for high performance, high availability, scalability, automated management, failover.</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">41. Quick Comparison</h3>
+      <ul style="font-size: 13px; margin-bottom: 0;">
+        <li><strong>Basic:</strong> App → RDS</li>
+        <li><strong>Multi-AZ:</strong> App → Primary → Standby (HA)</li>
+        <li><strong>Read Replica:</strong> App → Primary + RR1/RR2 (Read scale)</li>
+        <li><strong>Multi-Region RR:</strong> Region A Primary → Region B Replica (DR/Geo read)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 42 & 43. Use Cases & Benefits -->
+  <h2 class="sec-heading">42. RDS Use Cases &nbsp;|&nbsp; 43. Major Benefits</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom: 2px;">Use Cases:</p>
+      <ul style="font-size:13.5px;">
+        <li><strong>Web Apps:</strong> Website → App → RDS</li>
+        <li><strong>E-Commerce:</strong> Customers, orders, inventory.</li>
+        <li><strong>Business Apps:</strong> Structured data.</li>
+        <li><strong>CRM:</strong> Customer info, sales records.</li>
+        <li><strong>Financial:</strong> Structured financial workloads.</li>
+      </ul>
+    </div>
+    <div>
+      <p style="font-weight:700; margin-bottom: 2px;">Benefits:</p>
+      <ul style="font-size:13.5px;">
+        <li>Managed Service (AWS handles infra)</li>
+        <li>High Availability (Multi-AZ)</li>
+        <li>Automated Backups & Recovery (Snapshots)</li>
+        <li>Read Replicas (Scaling)</li>
+        <li>Monitoring, Security, DR, Cost Efficiency.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 44 & 45. Complete Arch & Data Flow -->
+  <h2 class="sec-heading">44. Complete Practical Arch &nbsp;|&nbsp; 45. Data Flow</h2>
+  <div class="two-col">
+    <div class="ascii-tree" style="margin:0; padding:6px 12px;">                   USER
+                     |
+                     ↓
+                WEB BROWSER
+                     |
+                     ↓
+               EC2 PUBLIC IP
+                     |
+                     ↓
+                 HTTP : 80
+                     |
+                     ↓
+             DOCKER CONTAINER
+                     |
+                     ↓
+               NODE.JS APP
+                     |
+                     ↓
+             MySQL Connection
+                     |
+                     ↓
+               RDS ENDPOINT
+                     |
+                     ↓
+                MySQL RDS
+                     |
+                     ↓
+             CONTACTS TABLE</div>
+    <div>
+      <p style="font-weight: 700;">45. End-to-End Data Flow</p>
+      <ol style="font-size:13px; padding-left: 18px; margin-top:2px;">
+        <li>User enters email in browser.</li>
+        <li>Request reaches EC2 application.</li>
+        <li>Node.js receives the request.</li>
+        <li>Node.js sends a SQL query to RDS.</li>
+        <li>RDS/MySQL stores the data.</li>
+        <li>App retrieves stored data when requested.</li>
+      </ol>
+      <div class="flow-h" style="font-size:11px; gap:2px; justify-content: flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">User</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Browser</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">EC2</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Node.js</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">RDS</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">MySQL</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Table</span>
+      </div>
+      
+      <div class="warn-box" style="margin-top: 10px;">
+        <h3 class="subsec-heading" style="margin-top:0;">46. Cleanup After Practical</h3>
+        <p style="font-size:12.5px;">Delete App Resources → Terminate EC2 → Delete RDS → Remove Snapshots → Check Other Resources.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 47. Interview Questions -->
+  <h2 class="sec-heading">47. Important Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is Amazon RDS?</div>
+        <div class="qa-a">Amazon RDS is a managed AWS service for running relational databases.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q2. Why use RDS instead of installing MySQL manually on EC2?</div>
+        <div class="qa-a">RDS reduces database administration work by providing managed capabilities such as backups, monitoring, maintenance, scaling options, and high-availability features.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q3. Which databases can be used with RDS?</div>
+        <div class="qa-a">MySQL, PostgreSQL, MariaDB, Oracle, Microsoft SQL Server.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q4. What is the default MySQL port?</div>
+        <div class="qa-a"><strong>3306</strong></div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. What is a DB snapshot?</div>
+        <div class="qa-a">A point-in-time saved state of an RDS database that can be used for restoration.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q6. What is Multi-AZ?</div>
+        <div class="qa-a">A configuration designed primarily for high availability and failover.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is a Read Replica?</div>
+        <div class="qa-a">A replicated database instance designed primarily to handle read workloads.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q8. Multi-AZ vs Read Replica?</div>
+        <div class="qa-a">Multi-AZ → High Availability<br>Read Replica → Read Scalability</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q9. What is the RDS endpoint?</div>
+        <div class="qa-a">It is the network endpoint used by an application/client to connect to the RDS database.</div>
+      </div>
+      <div class="qa-block">
+        <div class="qa-q">Q10. What is Aurora?</div>
+        <div class="qa-a">Aurora is an AWS cloud-optimized relational database engine compatible with MySQL and PostgreSQL technologies.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 48 & 49. Revision & Memory Map -->
+  <h2 class="sec-heading">48. Quick Revision &nbsp;|&nbsp; 49. One-Minute Memory Map</h2>
+  <div class="two-col">
+    <div class="hand-box" style="background:#faf5ff; border-color:#a855f7;">
+      <p style="font-weight: 700; margin-top:0;">RDS = Managed Relational DB Service</p>
+      <ul style="font-size:13.5px; margin-bottom: 4px;">
+        <li><strong>Engines:</strong> MySQL, PostgreSQL, MariaDB, Oracle, SQL Server</li>
+        <li><strong>Port:</strong> MySQL → 3306</li>
+        <li><strong>Flow:</strong> User → EC2 → Node.js → RDS → MySQL → Tables</li>
+      </ul>
+      <p style="font-weight: 700; margin-bottom: 0;">Remember:</p>
+      <ul style="font-size:13.5px;">
+        <li>Multi-AZ → High Availability</li>
+        <li>Read Replica → Read Scalability</li>
+        <li>Snapshot → Backup/Restore</li>
+        <li>Endpoint → Database Connection</li>
+        <li>Security Group → Network Access Control</li>
+      </ul>
+    </div>
+
+    <div class="ascii-tree" style="font-size: 10px; line-height: 1.15; margin-top:0; padding:6px;">                         AWS RDS
+                            |
+          -----------------------------------
+          |                |                |
+       Engines          Features       Architecture
+          |                |                |
+   MySQL/PostgreSQL      Backup         Single-AZ
+   MariaDB/Oracle        Snapshot       Multi-AZ
+   SQL Server            Monitoring     Read Replica
+                         Maintenance    Multi-Region
+                         Scaling        Aurora
+                            |
+                            ↓
+                       Application
+                            |
+                            ↓
+                          EC2
+                            |
+                            ↓
+                         Docker
+                            |
+                            ↓
+                       Node.js App
+                            |
+                            ↓
+                        RDS MySQL
+                            |
+                            ↓
+                      Relational Data</div>
+  </div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ Final Takeaway
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 4px 0; font-weight: 700;">
+      Amazon RDS makes it easier to run relational databases on AWS without manually managing all of the underlying database infrastructure.<br><br>
+      EC2 runs the application → RDS stores relational data → Security Groups control access → Monitoring observes performance → Backups/Snapshots support recovery → Multi-AZ provides high availability → Read Replicas improve read scalability.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

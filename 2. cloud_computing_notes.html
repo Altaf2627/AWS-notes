@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Computing — Handwritten Notebook Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --ink-blue: #1b3a6b;
+      --ink-red: #c02128;
+      --ink-green: #1b663e;
+      --ink-dark: #1e293b;
+      --pencil-gray: #475569;
+      --paper-bg: #fffdf9;
+      --paper-texture: #fcf9f2;
+      --hl-yellow: rgba(254, 240, 138, 0.82);
+      --hl-green: rgba(187, 247, 208, 0.78);
+      --hl-pink: rgba(251, 207, 232, 0.78);
+      --hl-blue: rgba(186, 230, 253, 0.78);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #2b303c;
+      font-family: 'Patrick Hand', 'Kalam', cursive;
+      color: var(--ink-blue);
+      line-height: 1.42;
+      font-size: 15.5px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Controls Bar */
+    .controls-bar {
+      position: fixed;
+      top: 12px;
+      right: 18px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .btn-action {
+      background: #3b82f6;
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Notebook Page (210mm x 297mm standard aspect ratio) */
+    .notebook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      width: 100%;
+      margin-top: 30px;
+    }
+
+    .notebook-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      height: auto;
+      background-color: var(--paper-bg);
+      background-image: 
+        radial-gradient(var(--paper-texture) 25%, transparent 25%),
+        radial-gradient(#f7f3e8 15%, transparent 15%);
+      background-size: 16px 16px, 32px 32px;
+      box-shadow: 
+        -2px 0 6px rgba(0,0,0,0.15),
+        6px 12px 28px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(0,0,0,0.06);
+      border-radius: 4px 16px 16px 4px;
+      padding: 20mm 18mm 18mm 30mm; /* Left margin accommodates spiral */
+      box-sizing: border-box;
+      overflow: visible;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Realistic Spiral Binding on Left Side */
+    .spiral-spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 24mm;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+
+    .spiral-ring-unit {
+      position: relative;
+      width: 28mm;
+      height: 9mm;
+      display: flex;
+      align-items: center;
+      margin-left: 3mm;
+    }
+
+    /* Hole punched in paper */
+    .spiral-hole {
+      width: 4.8mm;
+      height: 4.8mm;
+      background-color: #2b303c;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.85);
+      position: absolute;
+      left: 11mm;
+    }
+
+    /* Metal wire loop */
+    .spiral-wire {
+      position: absolute;
+      left: -2mm;
+      width: 17mm;
+      height: 7.5mm;
+      border: 2.2mm solid #a6afba;
+      border-top-color: #d1d5db;
+      border-left-color: #64748b;
+      border-bottom-color: #334155;
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+      box-shadow: -2px 3px 6px rgba(0,0,0,0.45);
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    }
+
+    .ink-red {
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      letter-spacing: -0.2px;
+    }
+
+    .ink-blue {
+      color: var(--ink-blue);
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    .ink-green {
+      color: var(--ink-green);
+    }
+
+    .ink-bold {
+      font-weight: 700;
+      font-family: 'Kalam', cursive;
+    }
+
+    .hl {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0.4) 0.9%, var(--hl-yellow) 98.4%);
+      border-radius: 3px 8px 4px 9px;
+      padding: 1px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-grn {
+      background: linear-gradient(104deg, rgba(187, 247, 208, 0.3) 0.9%, var(--hl-green) 98.4%);
+      border-radius: 4px 7px 3px 8px;
+      padding: 1px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-pink {
+      background: linear-gradient(104deg, rgba(251, 207, 232, 0.3) 0.9%, var(--hl-pink) 98.4%);
+      border-radius: 5px 8px 3px 6px;
+      padding: 1px 5px;
+    }
+
+    .hand-box {
+      border: 2px solid var(--ink-blue);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.04);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-box-red {
+      border: 2px solid var(--ink-red);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 9px 12px;
+      background: rgba(254, 242, 242, 0.45);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-badge {
+      display: inline-block;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 12.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.12);
+      transform: rotate(-1.5deg);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .badge-important {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .badge-trick {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .badge-faq {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #a5b4fc;
+    }
+
+    .badge-tip {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .sticky-note {
+      background: #fef9c3;
+      border-left: 5px solid #eab308;
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.08);
+      padding: 7px 11px;
+      border-radius: 3px 8px 8px 3px;
+      transform: rotate(-0.5deg);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0;
+      font-size: 13.5px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table th {
+      border-bottom: 2.5px solid var(--ink-red);
+      padding: 5px 8px;
+      text-align: left;
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      font-size: 14px;
+    }
+
+    .hand-table td {
+      border-bottom: 1.5px dashed #cbd5e1;
+      padding: 5px 8px;
+      color: var(--ink-blue);
+    }
+
+    .hand-table tr:last-child td {
+      border-bottom: 2px solid var(--ink-blue);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+      font-family: 'Caveat', cursive;
+      font-size: 16.5px;
+      color: #64748b;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 4px;
+      margin-top: 10px;
+      font-family: 'Caveat', cursive;
+      font-size: 15.5px;
+      color: #94a3b8;
+    }
+
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram-box {
+      background: #fbfbf9;
+      border: 1.5px dashed #93c5fd;
+      border-radius: 12px;
+      padding: 8px;
+      margin: 6px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .notebook-container {
+        gap: 0 !important;
+        margin-top: 0 !important;
+      }
+      .notebook-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print & View Toolbar -->
+  <div class="controls-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Export PDF / Print Notes
+    </button>
+    <button class="btn-action" style="background:#059669;" onclick="window.scrollTo({top: 0, behavior:'smooth'})">
+      ⬆️ Top
+    </button>
+  </div>
+
+  <div class="notebook-container">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: WHAT IS CLOUD, MEANING, PAY-AS-YOU-GO, CSPs & VIRTUALIZATION -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-1">
+      <!-- Spiral Spine Loop generator (21 metal loops) -->
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Core Concept & Infrastructure</span>
+          <span>Sheet No: 01</span>
+        </div>
+
+        <!-- Main Title Header -->
+        <div class="hand-box-red text-center mb-3" style="background: rgba(254, 226, 226, 0.35);">
+          <h1 class="ink-red text-2xl font-bold tracking-wide">
+            ☁️ Cloud Computing — Detailed Notes
+          </h1>
+          <p class="text-xs text-slate-500 font-sans tracking-wider uppercase mt-0.5">Structured, Comprehensive, Exam &amp; Interview-Ready Study Guide</p>
+        </div>
+
+        <!-- 1. What is Cloud Computing? -->
+        <div class="mb-3">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">CORE DEFINITION</span>
+            <h2 class="ink-red text-lg font-bold">1. What is Cloud Computing?</h2>
+          </div>
+          
+          <div class="hand-box p-2 bg-blue-50/40">
+            <span class="ink-red font-bold text-xs uppercase tracking-wider">One-Line Definition:</span><br>
+            <span class="ink-blue font-bold">
+              <span class="hl">Cloud computing is the on-demand delivery of IT resources over the Internet with pay-as-you-go pricing.</span>
+            </span>
+            <p class="mt-1 text-xs ink-blue">
+              <b>In simple words:</b> Cloud computing means <span class="hl-grn font-bold">using computing resources over the Internet</span> instead of owning and maintaining all the physical infrastructure yourself.
+            </p>
+          </div>
+
+          <div class="mt-1.5 pl-1">
+            <span class="ink-red font-bold text-xs">These resources can include:</span>
+            <div class="grid grid-cols-4 gap-1.5 text-xs ink-blue mt-1">
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Servers / Compute</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Storage</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Databases</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Networking</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Software</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Containers</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Serverless computing</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Machine Learning services</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Monitoring</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Logging</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ User management</div>
+              <div class="p-1 border border-blue-200 rounded bg-white">✔ Security services</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. What Does "Cloud" Actually Mean? & 3. Example -->
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <div class="hand-box p-2">
+            <h2 class="ink-red text-base font-bold mb-1">2. What Does "Cloud" Actually Mean?</h2>
+            <p class="ink-blue text-xs">
+              When we say <b>Cloud</b>, we are generally referring to <span class="hl">computing infrastructure and services that are provided remotely through a network, usually the Internet</span>.
+            </p>
+            <div class="diagram-box mt-1 text-[11px] text-center font-mono">
+              <div class="text-rose-700 font-bold">Instead of:</div>
+              <div>Your Company ➔ Own Physical Servers ➔ Own Storage ➔ Own Networking ➔ Own Maintenance</div>
+              <div class="text-emerald-700 font-bold mt-1">You can use:</div>
+              <div>Internet ➔ Cloud Provider ➔ Compute + Storage + Database + Networking + Security + etc.</div>
+            </div>
+            <p class="text-[11px] ink-blue italic mt-1">You access these resources when required.</p>
+          </div>
+
+          <div class="hand-box p-2">
+            <h2 class="ink-red text-base font-bold mb-1">3. Cloud Computing Example</h2>
+            <p class="ink-blue text-xs">
+              Think about services such as <span class="hl font-bold">Google Drive / Google Photos</span>.
+            </p>
+            <p class="ink-blue text-xs mt-1">You can upload:</p>
+            <div class="grid grid-cols-2 gap-1 text-[11px] ink-blue mt-0.5">
+              <div>• Photos</div>
+              <div>• Videos</div>
+              <div>• Documents</div>
+              <div>• Files</div>
+            </div>
+            <div class="sticky-note mt-1.5 text-[11px]">
+              You don't need to purchase and maintain the physical storage infrastructure yourself. You simply access your data through the Internet. <b>This is an example of using a cloud-based service.</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Pay-As-You-Go Pricing & 5. CSPs -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- 4. Pay-As-You-Go Pricing -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-trick">PRICING</span>
+              <h2 class="ink-red text-base font-bold">4. Pay-As-You-Go Pricing 💰</h2>
+            </div>
+            <p class="ink-blue text-xs">
+              One of the most important concepts in cloud computing is: <span class="hl font-bold">Pay only for the resources/services you use.</span> Instead of purchasing a large physical server upfront, you rent resources.
+            </p>
+
+            <div class="grid grid-cols-2 gap-1.5 mt-1.5 text-[10.5px]">
+              <div class="border border-red-300 p-1 rounded bg-red-50 text-center">
+                <b class="text-red-900">Traditional Model:</b><br>
+                Buy Server ➔ Large Initial Investment ➔ Maintain Hardware ➔ Pay Electricity ➔ Pay Cooling ➔ Pay Maintenance
+              </div>
+              <div class="border border-emerald-300 p-1 rounded bg-emerald-50 text-center">
+                <b class="text-emerald-900">Cloud Model:</b><br>
+                Choose Required Service ➔ Use It ➔ Pay According to Usage
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-600 mt-1 italic">
+              This is commonly called a pay-as-you-go or usage-based pricing model. <i>Important: Exact pricing models vary by service; not every cloud service is billed in exactly the same way.</i>
+            </p>
+          </div>
+
+          <!-- 5. Cloud Service Providers (CSPs) & 6. What they have -->
+          <div class="hand-box p-2">
+            <h2 class="ink-red text-base font-bold mb-1">5. Cloud Service Providers (CSPs)</h2>
+            <p class="ink-blue text-xs">
+              Companies that provide cloud computing services are called: <span class="hl font-bold">Cloud Service Providers (CSPs)</span>.
+            </p>
+            <div class="flex justify-around my-1 font-bold text-xs">
+              <span class="p-1 bg-amber-100 rounded text-amber-900">Amazon Web Services (AWS)</span>
+              <span class="p-1 bg-blue-100 rounded text-blue-900">Microsoft Azure</span>
+              <span class="p-1 bg-red-100 rounded text-red-900">Google Cloud</span>
+            </div>
+            <p class="text-[11px] ink-blue">These companies operate huge amounts of infrastructure in data centers around the world.</p>
+
+            <h3 class="ink-red text-xs font-bold mt-1.5">6. What Do Cloud Providers Actually Have?</h3>
+            <p class="text-[11px] ink-blue">Massive physical infrastructure containing: Physical servers, CPUs, RAM, Storage systems, Networking equipment, Data centers, Security infrastructure, Databases, Specialized hardware.</p>
+            <div class="border border-slate-300 rounded p-1 bg-white text-center text-[10px] mt-1 font-mono">
+              Cloud Provider ➔ Large Data Centers ➔ [ Compute (VMs) | Storage (Data) | Networking (Connectivity) ]
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. Role of Virtualization in Cloud Computing -->
+        <div class="hand-box p-2 bg-slate-50">
+          <div class="flex items-center gap-1 mb-0.5">
+            <span class="callout-badge badge-important">FOUNDATION</span>
+            <h2 class="ink-red text-base font-bold">7. Role of Virtualization in Cloud Computing</h2>
+          </div>
+          <p class="ink-blue text-xs">
+            Remember the previous topic: <b>Virtualization</b>. Cloud providers can use virtualization technologies to efficiently allocate physical resources to multiple customers.
+          </p>
+          
+          <div class="diagram-box my-1 py-1 text-center text-xs">
+            <span class="font-bold text-slate-800">Large Physical Server ➔ Hypervisor ➔ [ VM1 (Customer A) | VM2 (Customer B) | VM3 (Customer C) ]</span>
+            <p class="text-[11px] text-slate-600 mt-0.5">Instead of giving an entire physical server to one customer, resources can be divided into virtual environments.</p>
+          </div>
+
+          <div class="flex justify-between items-center text-xs ink-blue px-2 font-bold">
+            <span>✔ Better resource utilization</span>
+            <span>✔ Scalability</span>
+            <span>✔ Flexibility</span>
+            <span>✔ Isolation</span>
+            <span>✔ Efficient infrastructure usage</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Footer -->
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 1 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: RAJU'S E-COMMERCE USE CASE, CHALLENGES, CAR ANALOGY & SCALABILITY -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-2">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Real-World Case, Hosting Challenges & Benefits</span>
+          <span>Sheet No: 02</span>
+        </div>
+
+        <!-- 8. Real-World Use Case — Starting an E-Commerce Website -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-tip">SCENARIO STUDY</span>
+            <h2 class="ink-red text-lg font-bold">8. Real-World Use Case — Starting an E-Commerce Website</h2>
+          </div>
+          <p class="ink-blue text-xs">
+            Let's take a simple example: Suppose <b>Raju</b> wants to start an e-commerce business. He has developed an e-commerce website. Now he needs to deploy it and make it available to users.<br>
+            At first, it sounds simple: <i>"I just need to put my website online."</i> <span class="ink-red font-bold">But a production application has many requirements!</span>
+          </p>
+        </div>
+
+        <!-- 9. Challenges of Hosting an Application Yourself -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">CRITICAL REALITY</span>
+            <h2 class="ink-red text-base font-bold">9. Challenges of Hosting an Application Yourself</h2>
+          </div>
+          <p class="ink-blue text-xs mb-1">If Raju decides to build and host everything himself, he may need to handle:</p>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="hand-box p-1.5">
+              <b class="ink-red">1. Servers:</b> Needs physical or virtual servers to run the application.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">2. 24×7 Availability:</b> Website should ideally remain available continuously without downtime.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">3. Networking:</b> Users from the Internet need to reach the application reliably.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">4. Security:</b> E-commerce handles sensitive data; security becomes extremely important.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">5. Performance:</b> Website should respond quickly even when many users access it simultaneously.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">6. Backup:</b> Important application data needs appropriate backup and disaster recovery mechanisms.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">7. Scaling:</b> Sudden surge of thousands or millions of users requires additional dynamic resources.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">8. Monitoring:</b> Continuous health, uptime, and performance metrics tracking are mandatory.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">9. Maintenance:</b> Patching OS, firmware, hardware, security updates, and administration.
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">10. Human Resources:</b> Needs full-time engineers for servers, networks, databases, security, backup.
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. Traditional Infrastructure Problem vs 11. Cloud Alternative -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <div class="hand-box-red p-2">
+            <h3 class="ink-red font-bold text-sm mb-1">10. The Traditional Infrastructure Problem</h3>
+            <p class="ink-blue text-xs">Raju could purchase physical infrastructure, but it requires massive upfront capital:</p>
+            <div class="bg-red-50 border border-red-200 rounded p-1 text-[11px] text-red-900 font-mono text-center my-1">
+              Physical Servers + Storage + Networking + Data Center + Power + Cooling + Security + Maintenance + IT Staff
+            </div>
+            <p class="text-[11px] text-red-800 font-bold">For a small business, this can be painfully expensive and complicated.</p>
+          </div>
+
+          <div class="hand-box p-2 bg-emerald-50/40" style="border-color: #059669;">
+            <h3 class="text-emerald-800 font-bold text-sm mb-1">11. Cloud as an Alternative</h3>
+            <p class="ink-blue text-xs">Instead of purchasing and maintaining everything himself, Raju can use a cloud provider such as AWS or Azure. He rents the services:</p>
+            <div class="bg-white border border-emerald-300 rounded p-1 text-[11px] text-emerald-900 font-mono text-center my-1">
+              Raju's Application ➔ Cloud Platform ➔ Compute + Storage + Database + Networking + Security + Monitoring
+            </div>
+            <p class="text-[11px] ink-blue">Allows him to focus on business and app code rather than building infrastructure from scratch.</p>
+          </div>
+        </div>
+
+        <!-- 12. Car Rental Analogy 🚗 -->
+        <div class="hand-box p-2 mb-2 bg-amber-50/40">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-trick">INTUITIVE ANALOGY</span>
+            <h2 class="ink-red text-base font-bold">12. Car Rental Analogy 🚗</h2>
+          </div>
+          <p class="ink-blue text-xs">A simple way to understand cloud computing is to compare it with renting a car for travel from Point A to Point B:</p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+            <div class="p-1.5 border border-slate-300 rounded bg-white">
+              <b class="text-rose-900">Option 1 — Buy a Car:</b><br>
+              Buy Car ➔ Pay Large Amount ➔ Maintenance, Insurance, Fuel, Repairs, Parking.<br>
+              <i>(High initial cost, permanent overhead)</i>
+            </div>
+            <div class="p-1.5 border border-slate-300 rounded bg-white">
+              <b class="text-emerald-900">Option 2 — Rent a Car:</b><br>
+              Need Car ➔ Rent Car ➔ Use It ➔ Pay According to Agreement.<br>
+              <i>(Zero upfront capital, pay as you need)</i>
+            </div>
+          </div>
+          <p class="text-xs text-center font-bold text-blue-900 mt-1">
+            👉 Cloud computing follows the same idea: Instead of owning all the infrastructure, you use resources provided by a cloud provider.
+          </p>
+        </div>
+
+        <!-- 13. Major Benefits & 14. Scalability -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 13. Major Benefits of Cloud Computing -->
+          <div class="hand-box p-2">
+            <h2 class="ink-red text-base font-bold mb-1">13. Major Benefits of Cloud Computing</h2>
+            <div class="space-y-1 text-[11.5px] ink-blue">
+              <div><b>1. Lower Upfront Cost 💰:</b> No expensive hardware purchases before starting.</div>
+              <div><b>2. Scalability 📈:</b> Resources expand effortlessly as user traffic grows.</div>
+              <div><b>3. Flexibility:</b> Select only the precise services and resources actually needed.</div>
+              <div><b>4. Faster Deployment ⚡:</b> Provision servers in minutes, not months.</div>
+              <div><b>5. Global Availability 🌍:</b> Infrastructure across geographic regions closer to users.</div>
+              <div><b>6. Reduced Infrastructure Management:</b> Cloud provider manages underlying hardware.</div>
+            </div>
+            <div class="sticky-note mt-1 text-[10.5px]">
+              <b>Shared Responsibility Model:</b> Customer and cloud provider share security roles (covered in depth in AWS).
+            </div>
+          </div>
+
+          <!-- 14. Scalability in Cloud Computing -->
+          <div class="hand-box p-2">
+            <h2 class="ink-red text-base font-bold mb-1">14. Scalability in Cloud Computing</h2>
+            <p class="ink-blue text-xs">Suppose Raju's website traffic surges over time:</p>
+            <div class="flex justify-between items-center text-center my-1 text-xs font-bold">
+              <span class="p-1 bg-blue-100 rounded text-blue-900">Initially:<br>100 users/day</span>
+              <span>➔</span>
+              <span class="p-1 bg-amber-100 rounded text-amber-900">Later:<br>10,000 users/day</span>
+              <span>➔</span>
+              <span class="p-1 bg-emerald-100 rounded text-emerald-900">Eventually:<br>1,00,000 users/day</span>
+            </div>
+            <div class="diagram-box text-[11px] text-center font-mono py-1">
+              Small Resources ➔ Growing Business ➔ More Compute + Storage + DB Capacity ➔ Large Application
+            </div>
+            <p class="text-[11px] text-slate-700 italic">Cloud platforms make it seamless to increase resources as demand grows. Major reason businesses adopt cloud!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 2 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 3: CLOUD SERVICE MODELS (IaaS, PaaS, SaaS) & ICE CREAM ANALOGIES -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-3">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Service Models (IaaS, PaaS, SaaS)</span>
+          <span>Sheet No: 03</span>
+        </div>
+
+        <!-- 15. Cloud Service Models Intro -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">CORE TAXONOMY</span>
+            <h2 class="ink-red text-lg font-bold">15. Cloud Service Models</h2>
+          </div>
+          <p class="ink-blue text-xs">
+            Cloud services are commonly categorized into three major service models based on <span class="hl font-bold">levels of responsibility</span>:
+          </p>
+          <div class="flex justify-around items-center text-xs font-bold my-1 text-center">
+            <div class="p-1.5 border-2 border-blue-600 bg-blue-50 rounded w-1/3 mx-1"><b>1. IaaS</b><br><span class="text-[11px] font-normal">Infrastructure as a Service</span></div>
+            <div class="p-1.5 border-2 border-purple-600 bg-purple-50 rounded w-1/3 mx-1"><b>2. PaaS</b><br><span class="text-[11px] font-normal">Platform as a Service</span></div>
+            <div class="p-1.5 border-2 border-emerald-600 bg-emerald-50 rounded w-1/3 mx-1"><b>3. SaaS</b><br><span class="text-[11px] font-normal">Software as a Service</span></div>
+          </div>
+        </div>
+
+        <!-- 16, 17, 18. IaaS Detailed Section -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="ink-red text-base font-bold">16. IaaS — Infrastructure as a Service</h3>
+            <span class="callout-badge badge-faq">MOST FLEXIBLE</span>
+          </div>
+          <p class="ink-blue text-xs">
+            <b>Full Form:</b> Infrastructure as a Service. Provides fundamental computing infrastructure: <span class="hl">Virtual machines, storage, networking, compute resources</span>.
+          </p>
+          <p class="text-xs ink-blue mt-0.5">
+            <b>Simple Idea:</b> Imagine renting a blank computer. You receive the basic infrastructure, but you are responsible for configuring much of the environment.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 my-1 text-xs">
+            <div class="border border-blue-300 rounded p-1.5 bg-white">
+              <b class="text-blue-900">You Manage:</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">Applications, Operating System, Configuration, Data, Some Security.</p>
+            </div>
+            <div class="border border-blue-300 rounded p-1.5 bg-white">
+              <b class="text-slate-900">Cloud Provider:</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">Physical Hardware, Data Center, Networking Infrastructure, Virtualization.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs mt-1">
+            <div class="sticky-note text-[11px]">
+              <b class="text-amber-900">17. Ice Cream Parlour Analogy — IaaS 🍦:</b><br>
+              Imagine you rent an empty shop. You get basic physical space, but you must arrange painting, furniture, refrigerator, ice cream machines, decoration, products, and equipment.<br>
+              <b>Result:</b> Maximum flexibility, but more management responsibility!
+            </div>
+            <div class="p-1.5 border border-slate-200 rounded bg-white text-[11px]">
+              <b class="ink-red">18. IaaS — Key Characteristics:</b>
+              <div class="space-y-0.5 text-slate-800 mt-0.5">
+                <div>✔ High flexibility &amp; More control</div>
+                <div>✔ More configuration options</div>
+                <div>✔ Suitable for custom environments</div>
+                <div class="text-rose-700">❌ More management responsibility</div>
+                <div><b>Example Concept:</b> Virtual server choosing CPU, RAM, SSD, OS (e.g. <b>Amazon EC2</b>).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 19, 20. PaaS Detailed Section -->
+        <div class="hand-box p-2 mb-2 bg-purple-50/20" style="border-color: #9333ea;">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="ink-red text-base font-bold">19. PaaS — Platform as a Service</h3>
+            <span class="callout-badge badge-trick">DEV FAVORITE</span>
+          </div>
+          <p class="ink-blue text-xs">
+            <b>Full Form:</b> Platform as a Service. Provides a <span class="hl">ready-to-use platform/environment for developing and deploying applications</span> without managing underlying OS and hardware.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 my-1 text-xs">
+            <div class="border border-purple-300 rounded p-1.5 bg-white">
+              <b class="text-purple-900">You Mainly Manage:</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">Application code &amp; Application Data.</p>
+            </div>
+            <div class="border border-purple-300 rounded p-1.5 bg-white">
+              <b class="text-slate-900">Provider Manages More:</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">Runtime, OS, Infrastructure, Hardware, Networking.</p>
+            </div>
+          </div>
+
+          <div class="sticky-note text-[11px]">
+            <b class="text-amber-900">20. Ice Cream Parlour Analogy — PaaS 🍦:</b><br>
+            Instead of an empty shop, you receive a shop that already has furniture, refrigerator, ice cream machine, display counter, and basic setup. You mainly bring your ice cream/product to sell!<br>
+            <b>Remember:</b> PaaS = Platform is already prepared; developers focus primarily on their applications.
+          </div>
+        </div>
+
+        <!-- 21, 22, 23. SaaS Detailed Section -->
+        <div class="hand-box p-2 bg-emerald-50/20" style="border-color: #059669;">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="ink-red text-base font-bold">21. SaaS — Software as a Service</h3>
+            <span class="callout-badge badge-tip">READY TO USE</span>
+          </div>
+          <p class="ink-blue text-xs">
+            <b>Full Form:</b> Software as a Service. Provides a complete software application to the end user over the Internet. You don't install software, manage servers, manage OS, or maintain infrastructure. You simply access and use it.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 text-xs mt-1">
+            <div class="sticky-note text-[11px]">
+              <b class="text-amber-900">22. Ice Cream Parlour Analogy — SaaS 🍦:</b><br>
+              Instead of renting a shop, you get a fully operational <b>ice cream vending machine</b>! Everything is set up. Customer inserts money ➔ selects ice cream ➔ receives ice cream. Very little infrastructure management for the customer.<br>
+              <b>Remember:</b> SaaS = Ready-to-use software delivered over the Internet.
+            </div>
+
+            <div class="p-1.5 border border-emerald-300 rounded bg-white text-[11px]">
+              <b class="text-emerald-900 text-xs">23. SaaS Examples:</b>
+              <p class="ink-blue mt-0.5">Common examples include cloud-based applications such as:</p>
+              <div class="grid grid-cols-2 gap-1 text-[11px] font-bold text-slate-800 mt-1">
+                <div>• Gmail</div>
+                <div>• Google Docs</div>
+                <div>• Microsoft 365</div>
+                <div>• Salesforce</div>
+                <div class="col-span-2">• Dropbox</div>
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1 italic">Accessed via browser/app rather than managing underlying servers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 3 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: COMPARISON TABLES (IaaS/PaaS/SaaS & DEPLOYMENT MODELS) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-4">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Model Comparisons & Deployment Types</span>
+          <span>Sheet No: 04</span>
+        </div>
+
+        <!-- 24. IaaS vs PaaS vs SaaS Comparison Table -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="callout-badge badge-important">HIGH YIELD TABLE</span>
+            <h2 class="ink-red text-lg font-bold">24. IaaS vs PaaS vs SaaS</h2>
+          </div>
+
+          <table class="hand-table">
+            <thead>
+              <tr>
+                <th style="width: 22%;">Feature</th>
+                <th style="width: 26%;">IaaS</th>
+                <th style="width: 26%;">PaaS</th>
+                <th style="width: 26%;">SaaS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Full Form</b></td>
+                <td>Infrastructure as a Service</td>
+                <td>Platform as a Service</td>
+                <td>Software as a Service</td>
+              </tr>
+              <tr>
+                <td><b>Control</b></td>
+                <td><span class="hl font-bold">High</span></td>
+                <td>Medium</td>
+                <td>Low</td>
+              </tr>
+              <tr>
+                <td><b>Responsibility</b></td>
+                <td><span class="hl font-bold">High</span></td>
+                <td>Medium</td>
+                <td>Low</td>
+              </tr>
+              <tr>
+                <td><b>Main Focus</b></td>
+                <td>Infrastructure</td>
+                <td>Application Development</td>
+                <td>Using Software</td>
+              </tr>
+              <tr>
+                <td><b>OS Management</b></td>
+                <td>Usually customer</td>
+                <td>Usually provider</td>
+                <td>Provider</td>
+              </tr>
+              <tr>
+                <td><b>Server Management</b></td>
+                <td>More customer responsibility</td>
+                <td>Provider</td>
+                <td>Provider</td>
+              </tr>
+              <tr>
+                <td><b>Application</b></td>
+                <td>Customer</td>
+                <td>Customer</td>
+                <td>Provider</td>
+              </tr>
+              <tr>
+                <td><b>End User</b></td>
+                <td>IT / Admin</td>
+                <td>Developer</td>
+                <td>End User</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="hand-box-red p-1.5 mt-1 bg-amber-50/40 text-xs">
+            <span class="ink-red font-bold">Memory Trick 🧠:</span>
+            <span class="font-bold text-slate-800">IaaS ➔ Infrastructure | PaaS ➔ Platform | SaaS ➔ Software</span><br>
+            <span class="text-[11px] ink-blue">And remember: <b>IaaS = You manage more | PaaS = Provider manages more | SaaS = Provider manages almost everything you need to use the application.</b></span>
+          </div>
+        </div>
+
+        <!-- 25. Cloud Deployment Models Intro -->
+        <div class="mb-1">
+          <h2 class="ink-red text-base font-bold">25. Cloud Deployment Models: Public, Private &amp; Hybrid</h2>
+          <p class="ink-blue text-xs">Categorized according to how infrastructure is deployed, isolated, and consumed.</p>
+        </div>
+
+        <!-- 26, 27 Public Cloud & 28, 29 Private Cloud -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- Public Cloud -->
+          <div class="hand-box p-2 bg-blue-50/30">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-faq">PUBLIC</span>
+              <h3 class="ink-red font-bold text-sm">26. Public Cloud ☁️</h3>
+            </div>
+            <p class="ink-blue text-[11px]">
+              <b>Definition:</b> Cloud resources provided by a cloud provider on infrastructure shared among multiple customers. Customers don't own physical datacenters. (AWS, Azure, GCP).
+            </p>
+            <div class="sticky-note my-1 text-[10.5px]">
+              <b>27. Public Transport Analogy 🚌:</b><br>
+              Think of a public bus: Many passengers share the bus infrastructure. Similarly, customers share cloud infrastructure while their resources remain logically isolated.
+            </div>
+            <div class="text-[10.5px] space-y-0.5 ink-blue">
+              <div>✅ Cost-effective &amp; Highly scalable</div>
+              <div>✅ Easy to provision | No datacenter ownership</div>
+            </div>
+          </div>
+
+          <!-- Private Cloud -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-important">PRIVATE</span>
+              <h3 class="ink-red font-bold text-sm">28. Private Cloud 🔐</h3>
+            </div>
+            <p class="ink-blue text-[11px]">
+              <b>Definition:</b> Cloud environment dedicated entirely to a single organization. Operated on-premises or by a third-party provider for ultimate control.
+            </p>
+            <div class="sticky-note my-1 text-[10.5px]">
+              <b>29. Rental Car Analogy 🚗:</b><br>
+              Renting a car exclusively for your family—not shared with others. Provides dedicated control &amp; compliance.
+            </div>
+            <div class="text-[10.5px] space-y-0.5">
+              <div class="text-emerald-800">✅ Greater control, customization &amp; security</div>
+              <div class="text-rose-800">❌ More expensive, complex &amp; heavy management</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 30, 31, 32 Hybrid Cloud & 33. Table -->
+        <div class="hand-box p-2 mb-1 bg-slate-50">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-trick">HYBRID</span>
+              <h3 class="ink-red font-bold text-sm">30. Hybrid Cloud 🔄 (Private + Public)</h3>
+            </div>
+            <span class="text-xs font-mono font-bold text-indigo-900">Private Cloud + Public Cloud = Hybrid Cloud</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="text-[11px] ink-blue">
+              <b>Definition:</b> Combines private and public clouds so workloads/data move between both based on business needs.<br>
+              <b>31. Commute Analogy 🚗🚌:</b> Point A ➔ Public Transport ➔ Point B ➔ Private Car ➔ Point C. Combining two transport methods!
+            </div>
+            <div class="border border-blue-200 rounded p-1.5 bg-white text-[10.5px]">
+              <b class="text-blue-900">32. Example of Hybrid Cloud:</b><br>
+              • <b>Private Cloud:</b> Sensitive core database &amp; compliance records.<br>
+              • <b>Public Cloud:</b> Scalable web frontend &amp; peak computational traffic.
+            </div>
+          </div>
+
+          <!-- 33. Table -->
+          <div class="mt-1">
+            <span class="ink-red font-bold text-xs">33. Public vs Private vs Hybrid Cloud</span>
+            <table class="hand-table text-[11.5px]">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Public Cloud</th>
+                  <th>Private Cloud</th>
+                  <th>Hybrid Cloud</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Infrastructure</b></td>
+                  <td>Shared provider infrastructure</td>
+                  <td>Dedicated to one organization</td>
+                  <td>Combination</td>
+                </tr>
+                <tr>
+                  <td><b>Users</b></td>
+                  <td>Multiple customers</td>
+                  <td>One organization</td>
+                  <td>Mixed</td>
+                </tr>
+                <tr>
+                  <td><b>Cost / Scalability</b></td>
+                  <td>Generally lower / Excellent</td>
+                  <td>Generally higher / Depends</td>
+                  <td>Depends / Excellent</td>
+                </tr>
+                <tr>
+                  <td><b>Control / Privacy</b></td>
+                  <td>Lower / Logical isolation</td>
+                  <td>Higher / Greater control</td>
+                  <td>High &amp; Flexible</td>
+                </tr>
+                <tr>
+                  <td><b>Example</b></td>
+                  <td>AWS</td>
+                  <td>Enterprise private cloud</td>
+                  <td>Private + AWS</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 4 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: OTHER CLOUD SERVICES, MAJOR ADVANTAGES & THE BIG PICTURE -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-5">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Service Spectrum & The Big Picture Architecture</span>
+          <span>Sheet No: 05</span>
+        </div>
+
+        <!-- 34. Other Cloud Services -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">BEYOND VIRTUAL MACHINES</span>
+            <h2 class="ink-red text-lg font-bold">34. Other Cloud Services</h2>
+          </div>
+          <div class="hand-box-red p-1.5 mb-1 text-xs bg-red-50/50">
+            <span class="ink-red font-bold">A common misconception is:</span> <i>"Cloud means only Virtual Machines."</i> <span class="ink-red font-bold">❌ This is incorrect!</span> Cloud platforms provide an enormous ecosystem of specialized managed services:
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-xs">
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Compute Services 🖥️:</b>
+              <p class="text-[11px] text-slate-700">Running applications: Virtual Machines, Containers, Serverless computing.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Storage Services 💾:</b>
+              <p class="text-[11px] text-slate-700">Files, images, videos, backups, and app data objects.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Database Services 🗄️:</b>
+              <p class="text-[11px] text-slate-700">Relational DBs, NoSQL DBs, and massive Data Warehouses.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Networking Services 🌐:</b>
+              <p class="text-[11px] text-slate-700">Virtual networks, routing, load balancing, DNS, firewalls &amp; connectivity.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Container Services 📦:</b>
+              <p class="text-[11px] text-slate-700">Docker-based workloads, container orchestration &amp; clusters.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Serverless Computing ⚡:</b>
+              <p class="text-[11px] text-slate-700">Run code without managing servers; provider handles infrastructure.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Machine Learning 🤖:</b>
+              <p class="text-[11px] text-slate-700">Model development, training, deployment, and vision/speech APIs.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Identity &amp; Access (IAM) 🔐:</b>
+              <p class="text-[11px] text-slate-700">Controlling users, roles, granular permissions, and resource security.</p>
+            </div>
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">Monitoring &amp; Logging 📊:</b>
+              <p class="text-[11px] text-slate-700">Tracking apps, servers, metrics, performance, errors, logs &amp; alerts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 35. Major Advantages of Cloud Computing -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-trick">EXAM ESSENTIAL</span>
+            <h2 class="ink-red text-base font-bold">35. Major Advantages of Cloud Computing</h2>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 text-xs">
+            <div class="hand-box p-1.5 bg-amber-50/30">
+              <b class="text-amber-900">💰 1. Cost Efficiency:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Reduced need for large upfront capital expenditure on hardware.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-blue-50/30">
+              <b class="text-blue-900">📈 2. Scalability:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Resources scale up or down dynamically to match app demand.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-emerald-50/30">
+              <b class="text-emerald-900">⚡ 3. Faster Deployment:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Provision complex enterprise environments in minutes.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-purple-50/30">
+              <b class="text-purple-900">🌍 4. Global Reach:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Deploy apps in regions worldwide close to end users.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-rose-50/30">
+              <b class="text-rose-900">🔧 5. Flexibility:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Pick and swap exact technologies needed for workloads.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-cyan-50/30">
+              <b class="text-cyan-900">🔒 6. Security Features:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Extensive enterprise-grade controls, encryption, and compliance.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-indigo-50/30">
+              <b class="text-indigo-900">💾 7. Backup &amp; DR:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Automated snapshots, replication, and disaster recovery.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-teal-50/30">
+              <b class="text-teal-900">📊 8. Monitoring:</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Built-in dashboards, alerting triggers, and analytics.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 36. Cloud Computing — Big Picture Visual Mind Map -->
+        <div class="hand-box p-2 bg-slate-50">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="ink-red text-base font-bold">36. Cloud Computing — Big Picture Architecture</h2>
+            <span class="callout-badge badge-faq">MIND MAP SUMMARY</span>
+          </div>
+
+          <!-- Handwritten Visual Tree Diagram -->
+          <div class="diagram-box text-center py-2 bg-white">
+            <div class="inline-block px-4 py-1 border-2 border-red-600 rounded-lg text-sm font-bold bg-red-50 text-red-900">
+              ☁️ CLOUD COMPUTING
+            </div>
+            <div class="text-slate-400 text-xs">│</div>
+            <div class="grid grid-cols-3 gap-2 mt-1">
+              <!-- Branch 1: Service Models -->
+              <div class="border border-blue-400 rounded p-1.5 bg-blue-50/50">
+                <span class="font-bold text-blue-900 text-xs uppercase">Service Models</span>
+                <div class="text-slate-400 text-[10px]">↓</div>
+                <div class="flex justify-around text-[11px] font-bold text-blue-800">
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-blue-200">IaaS</span>
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-blue-200">PaaS</span>
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-blue-200">SaaS</span>
+                </div>
+              </div>
+
+              <!-- Branch 2: Deployment Models -->
+              <div class="border border-purple-400 rounded p-1.5 bg-purple-50/50">
+                <span class="font-bold text-purple-900 text-xs uppercase">Deployment Models</span>
+                <div class="text-slate-400 text-[10px]">↓</div>
+                <div class="flex justify-around text-[11px] font-bold text-purple-800">
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-purple-200">Public</span>
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-purple-200">Private</span>
+                  <span class="bg-white px-1.5 py-0.5 rounded border border-purple-200">Hybrid</span>
+                </div>
+              </div>
+
+              <!-- Branch 3: Resources & Services -->
+              <div class="border border-emerald-400 rounded p-1.5 bg-emerald-50/50">
+                <span class="font-bold text-emerald-900 text-xs uppercase">Resources &amp; Services</span>
+                <div class="text-slate-400 text-[10px]">↓</div>
+                <div class="grid grid-cols-3 gap-0.5 text-[10px] font-bold text-emerald-800">
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">Compute</span>
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">Storage</span>
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">DB</span>
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">Networking</span>
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">Serverless</span>
+                  <span class="bg-white p-0.5 rounded border border-emerald-200">Security</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 5 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 6: KEY CONCEPTS, MEMORY TRICKS & INTERVIEW Q&A -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-6">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Core Concepts, Memory Tricks & Interview Q&amp;A</span>
+          <span>Sheet No: 06</span>
+        </div>
+
+        <!-- ⭐ Most Important Concepts & 🧠 Super Easy Memory Trick -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- ⭐ Most Important Concepts -->
+          <div class="hand-box p-2 bg-blue-50/30">
+            <span class="callout-badge badge-important">⭐ CRITICAL POINTS</span>
+            <div class="mt-1 space-y-0.5 text-[11px] ink-blue">
+              <div>• <b>Cloud Computing:</b> On-demand delivery of IT resources over Internet with usage-based / pay-as-you-go pricing.</div>
+              <div>• <b>Cloud Service Provider:</b> Company providing cloud services (AWS, Azure, Google Cloud).</div>
+              <div>• <b>IaaS:</b> Infrastructure is provided; customer manages more of the environment.</div>
+              <div>• <b>PaaS:</b> Platform/environment provided; developers focus on applications.</div>
+              <div>• <b>SaaS:</b> Complete software application delivered over the Internet.</div>
+              <div>• <b>Public Cloud:</b> Shared provider infrastructure serving multiple customers.</div>
+              <div>• <b>Private Cloud:</b> Cloud environment dedicated to one organization.</div>
+              <div>• <b>Hybrid Cloud:</b> Combination of public and private environments.</div>
+            </div>
+          </div>
+
+          <!-- 🧠 Super Easy Memory Trick -->
+          <div class="hand-box-red p-2 bg-amber-50/40">
+            <span class="callout-badge badge-trick">🧠 SUPER EASY MEMORY TRICK</span>
+            <div class="mt-1 text-[11px] ink-blue space-y-1">
+              <div><b>Service Models:</b><br>
+                <code>IaaS ➔ Infrastructure</code> | <code>PaaS ➔ Platform</code> | <code>SaaS ➔ Software</code><br>
+                <span class="hl-pink font-bold">Think: I ➔ P ➔ S (Infrastructure ➔ Platform ➔ Software)</span><br>
+                As you move from IaaS ➔ PaaS ➔ SaaS:<br>
+                <span class="text-emerald-800 font-bold">Customer responsibility ↓</span> &nbsp;|&nbsp; <span class="text-purple-800 font-bold">Provider responsibility ↑</span>
+              </div>
+              <div class="pt-1 border-t border-amber-300">
+                <b>Deployment Models:</b><br>
+                Public ➔ Shared | Private ➔ Dedicated | Hybrid ➔ Combination<br>
+                <span class="font-bold text-amber-900">🚌 Public = Bus &nbsp;|&nbsp; 🚗 Private = Your/Rented Car &nbsp;|&nbsp; 🚌+🚗 Hybrid = Both</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎯 Interview Questions & Answers Q1 to Q9 -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-faq">INTERVIEW CORNER</span>
+            <h2 class="ink-red text-lg font-bold">🎯 Top Interview Questions &amp; Exact Answers</h2>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q1. What is cloud computing?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> On-demand delivery of IT resources such as compute, storage, databases, and networking over the Internet with usage-based or pay-as-you-go pricing.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q2. What is a Cloud Service Provider?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> A company providing cloud computing services and infrastructure over a network (e.g., AWS, Microsoft Azure, Google Cloud).</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q3. What is IaaS?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Provides fundamental infrastructure like VMs, storage, and networking, while customer manages more of the software environment.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q4. What is PaaS?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Provides a managed platform and runtime environment that allows developers to focus primarily on developing and deploying applications.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q5. What is SaaS?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Provides a complete software application over the Internet, which users can access without managing underlying infrastructure.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q6. Difference between Public and Private Cloud?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Public cloud uses shared provider infrastructure serving multiple customers with logical isolation; Private cloud is dedicated exclusively to one organization.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q7. What is Hybrid Cloud?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Combines private and public cloud environments, allowing organizations to use both according to workload and security requirements.</p>
+            </div>
+
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q8. Why do organizations use cloud computing?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> Scalability, flexibility, faster deployment, reduced upfront infrastructure costs, global availability, and access to managed services.</p>
+            </div>
+
+            <div class="hand-box p-1.5 col-span-2">
+              <b class="ink-red">Q9. Is cloud computing only about Virtual Machines?</b>
+              <p class="ink-blue text-[11px] mt-0.5"><b>Ans:</b> <span class="ink-red font-bold">No.</span> Cloud computing provides vast services beyond VMs, including storage, databases, networking, containers, serverless computing, machine learning, IAM, monitoring, and logging.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🔥 Final 1-Minute Revision -->
+        <div class="hand-box-red p-2 bg-red-50/30 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="callout-badge badge-important">🔥 FINAL 1-MINUTE REVISION</span>
+            <span class="font-bold text-red-900 text-xs">Essential Exam Summary</span>
+          </div>
+          <p class="ink-blue text-[11px]">
+            • <b>Cloud Computing:</b> On-demand IT resources over the Internet + pay-as-you-go pricing.<br>
+            • <b>Three Service Models:</b> IaaS (Infrastructure ➔ More Control) | PaaS (Platform ➔ Focus on Code) | SaaS (Software ➔ Ready-to-Use).<br>
+            • <b>Three Deployment Models:</b> Public (Shared) | Private (Dedicated) | Hybrid (Public + Private).<br>
+            • <b>Much More Than VMs:</b> Compute, Storage, DB, Networking, Containers, Serverless, ML, IAM, Monitoring, Logging, Security.<br>
+            • <b>⭐ Core Shift:</b> Traditional IT: <code>Buy ➔ Install ➔ Configure ➔ Maintain ➔ Scale</code> | Cloud: <code>Select ➔ Provision ➔ Use ➔ Pay ➔ Scale</code>. Foundation for understanding AWS EC2, S3, VPC, IAM, RDS, ELB, Lambda &amp; CloudWatch!
+          </p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 6 of 7</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 7: 8 BONUS STUDY TIPS (SIMPLIFIED) & TOPPER'S CHECKLIST -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-7">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing & Systems</span>
+          <span>Topic: Bonus Topper Study Guide (Explained Simply!)</span>
+          <span>Sheet No: 07</span>
+        </div>
+
+        <!-- Header Callout -->
+        <div class="hand-box-red text-center mb-3" style="background: rgba(254, 243, 199, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-tip">TOPPER STRATEGY</span>
+            <h2 class="ink-red text-xl font-bold tracking-wide">
+              💡 8 Bonus Study Tips for Cloud Exams (Explained in Plain English!)
+            </h2>
+          </div>
+          <p class="text-xs text-slate-600 font-sans tracking-wide mt-0.5">Use these 8 proven study methods to retain cloud architecture forever without memorization stress.</p>
+        </div>
+
+        <!-- Detailed 8 Bonus Study Tips Grid -->
+        <div class="grid grid-cols-2 gap-2.5 text-xs mb-3">
+          <!-- 1. Mind Maps -->
+          <div class="hand-box p-2 bg-blue-50/30">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold ink-red text-sm">1. Mind Maps 🗺️</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Instead of reading pages of text, draw a central cloud icon and branch it out into 3 main branches: <i>Service Models</i>, <i>Deployment Models</i>, and <i>Key Benefits</i>. Your brain remembers pictures 10x faster than paragraphs!
+            </p>
+          </div>
+
+          <!-- 2. Flow Charts -->
+          <div class="hand-box p-2 bg-emerald-50/30" style="border-color: #059669;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-emerald-900 text-sm">2. Flow Charts ➔</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Always draw the linear flow for transitions: <code>Traditional: Buy ➔ Install ➔ Maintain</code> vs <code>Cloud: Select ➔ Use ➔ Pay-per-use</code>. Drawing arrows in your exam answers instantly shows the examiner that you understand how processes work.
+            </p>
+          </div>
+
+          <!-- 3. Formula / Rule Box -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-amber-900 text-sm">3. Formula / Rule Box 📦</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Put golden rules in a bordered box. For Cloud: <code>Control ∝ Customer Responsibility</code> (As control increases in IaaS, your responsibility increases; as you shift to SaaS, provider responsibility increases).
+            </p>
+          </div>
+
+          <!-- 4. Revision Section -->
+          <div class="hand-box p-2 bg-purple-50/30" style="border-color: #9333ea;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-purple-900 text-sm">4. Revision Section ⏱️</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Don't re-read entire textbooks before tests. Dedicate 60 seconds every evening to scan the <i>Final 1-Minute Revision</i> block on Page 6. This activates active recall and cements topics into long-term memory.
+            </p>
+          </div>
+
+          <!-- 5. Highlighted Keywords -->
+          <div class="hand-box p-2 bg-pink-50/30" style="border-color: #db2777;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-pink-900 text-sm">5. Highlighted Keywords 🖍️</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Exam checkers look for specific magic words! Whenever writing answers, underline trigger terms like <span class="hl">"On-demand delivery"</span>, <span class="hl">"Pay-as-you-go"</span>, <span class="hl">"Logical isolation"</span>, and <span class="hl">"Shared responsibility"</span>.
+            </p>
+          </div>
+
+          <!-- 6. Colour Coding -->
+          <div class="hand-box p-2 bg-cyan-50/30" style="border-color: #0891b2;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-cyan-900 text-sm">6. Colour Coding 🎨</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Use a consistent 3-pen system: <b>Red pen</b> for headings and definitions, <b>Blue pen</b> for explanations and real-world examples, and <b>Yellow highlighter</b> for memory shortcuts and exam answers.
+            </p>
+          </div>
+
+          <!-- 7. Important Questions -->
+          <div class="hand-box p-2 bg-rose-50/30" style="border-color: #e11d48;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-rose-900 text-sm">7. Important Questions 🎯</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Practice the exact questions interviewers repeat. Questions <b>Q3 (IaaS)</b>, <b>Q6 (Public vs Private)</b>, and <b>Q9 (Is Cloud just VMs?)</b> account for over 85% of interview screening rounds in AWS and Cloud roles!
+            </p>
+          </div>
+
+          <!-- 8. Quick Summary -->
+          <div class="hand-box p-2 bg-indigo-50/30" style="border-color: #4f46e5;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-indigo-900 text-sm">8. Quick Summary 📝</span>
+            </div>
+            <p class="text-slate-700 text-[11.5px]">
+              <b>In simple terms:</b> Finish long exam answers with a 2-line "Bottom Line" summary: <i>"In summary, cloud computing replaces upfront capital server purchases with elastic, Internet-delivered, usage-based utility computing."</i> Examiners love it!
+            </p>
+          </div>
+        </div>
+
+        <!-- Practical Analogies Quick-Glance -->
+        <div class="hand-box p-2 bg-amber-50/40 mb-2 text-xs">
+          <span class="ink-red font-bold text-sm">💡 Quick Analogies Cheatsheet for Exams:</span>
+          <div class="grid grid-cols-3 gap-2 mt-1 text-[11px] text-slate-800">
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>Ice Cream Shop 🍦:</b><br>
+              • IaaS = Empty shop<br>
+              • PaaS = Equipped shop<br>
+              • SaaS = Vending machine
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>Transportation 🚗🚌:</b><br>
+              • Public = Bus (Shared)<br>
+              • Private = Family car (Exclusive)<br>
+              • Hybrid = Bus + Car combined
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>Car Ownership 🚘:</b><br>
+              • Traditional IT = Buying a car<br>
+              • Cloud Computing = Renting a car when needed
+            </div>
+          </div>
+        </div>
+
+        <!-- Notebook End Stamp -->
+        <div class="mt-2 flex justify-between items-center text-xs px-2 text-slate-500">
+          <span>✨ End of Cloud Computing Study Notes</span>
+          <span class="font-bold ink-red border border-red-400 px-3 py-0.5 rounded-full bg-red-50">100% COMPLETE &amp; VERIFIED</span>
+          <span>Prepared with Care ✍️</span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 7 of 7</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

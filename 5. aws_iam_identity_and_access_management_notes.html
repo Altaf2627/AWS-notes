@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS IAM — Identity and Access Management — Handwritten Lecture Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --ink-blue: #1b3a6b;
+      --ink-red: #c02128;
+      --ink-green: #1b663e;
+      --ink-dark: #1e293b;
+      --pencil-gray: #475569;
+      --paper-bg: #fffdf9;
+      --paper-texture: #fcf9f2;
+      --hl-yellow: rgba(254, 240, 138, 0.85);
+      --hl-green: rgba(187, 247, 208, 0.8);
+      --hl-pink: rgba(251, 207, 232, 0.8);
+      --hl-blue: rgba(186, 230, 253, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #1e2430;
+      font-family: 'Patrick Hand', 'Kalam', cursive;
+      color: var(--ink-blue);
+      line-height: 1.36;
+      font-size: 13.5px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Toolbar */
+    .controls-bar {
+      position: fixed;
+      top: 12px;
+      right: 18px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-action {
+      background: #ea580c;
+      color: #ffffff;
+      border: none;
+      padding: 6px 15px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+    }
+    .btn-action:hover {
+      background: #c2410c;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Notebook Page (210mm x 297mm) */
+    .notebook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .notebook-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      height: auto;
+      background-color: var(--paper-bg);
+      background-image: 
+        radial-gradient(var(--paper-texture) 25%, transparent 25%),
+        radial-gradient(#f7f3e8 15%, transparent 15%);
+      background-size: 16px 16px, 32px 32px;
+      box-shadow: 
+        -2px 0 6px rgba(0,0,0,0.2),
+        8px 14px 30px rgba(0,0,0,0.42),
+        0 0 0 1px rgba(0,0,0,0.08);
+      border-radius: 4px 16px 16px 4px;
+      padding: 15mm 15mm 14mm 27mm; /* Left margin accommodates spiral binding */
+      box-sizing: border-box;
+      overflow: visible;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Realistic Spiral Binding */
+    .spiral-spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 24mm;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+
+    .spiral-ring-unit {
+      position: relative;
+      width: 26mm;
+      height: 8.5mm;
+      display: flex;
+      align-items: center;
+      margin-left: 2mm;
+    }
+
+    .spiral-hole {
+      width: 4.6mm;
+      height: 4.6mm;
+      background-color: #1e2430;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.85);
+      position: absolute;
+      left: 10mm;
+    }
+
+    .spiral-wire {
+      position: absolute;
+      left: -2mm;
+      width: 16mm;
+      height: 7.2mm;
+      border: 2.2mm solid #a6afba;
+      border-top-color: #f1f5f9;
+      border-left-color: #64748b;
+      border-bottom-color: #334155;
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+      box-shadow: -2px 3px 6px rgba(0,0,0,0.45);
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    }
+
+    /* Ink & Handwritten Accents */
+    .ink-red {
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      letter-spacing: -0.2px;
+    }
+
+    .ink-blue {
+      color: var(--ink-blue);
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    .ink-green {
+      color: var(--ink-green);
+    }
+
+    .ink-bold {
+      font-weight: 700;
+      font-family: 'Kalam', cursive;
+    }
+
+    .hl {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0.45) 0.9%, var(--hl-yellow) 98.4%);
+      border-radius: 3px 8px 4px 9px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-grn {
+      background: linear-gradient(104deg, rgba(187, 247, 208, 0.35) 0.9%, var(--hl-green) 98.4%);
+      border-radius: 4px 7px 3px 8px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-pink {
+      background: linear-gradient(104deg, rgba(251, 207, 232, 0.35) 0.9%, var(--hl-pink) 98.4%);
+      border-radius: 5px 8px 3px 6px;
+      padding: 1px 4px;
+    }
+
+    .hand-box {
+      border: 2px solid var(--ink-blue);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 7px 11px;
+      background: rgba(255, 255, 255, 0.75);
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.03);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-box-red {
+      border: 2px solid var(--ink-red);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 7px 11px;
+      background: rgba(254, 242, 242, 0.55);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-badge {
+      display: inline-block;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.1);
+      transform: rotate(-1.5deg);
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .badge-important {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .badge-trick {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .badge-faq {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #a5b4fc;
+    }
+
+    .badge-tip {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .badge-aws {
+      background: #ffedd5;
+      color: #9a3412;
+      border: 1px solid #fb923c;
+    }
+
+    .sticky-note {
+      background: #fef9c3;
+      border-left: 5px solid #eab308;
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.07);
+      padding: 6px 10px;
+      border-radius: 3px 8px 8px 3px;
+      transform: rotate(-0.3deg);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4px 0;
+      font-size: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table th {
+      border-bottom: 2.2px solid var(--ink-red);
+      padding: 4px 6px;
+      text-align: left;
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      font-size: 12.5px;
+    }
+
+    .hand-table td {
+      border-bottom: 1.5px dashed #cbd5e1;
+      padding: 4px 6px;
+      color: var(--ink-blue);
+    }
+
+    .hand-table tr:last-child td {
+      border-bottom: 2px solid var(--ink-blue);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 3px;
+      margin-bottom: 8px;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: #64748b;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 3px;
+      margin-top: 6px;
+      font-family: 'Caveat', cursive;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram-box {
+      background: #fafaf9;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 6px;
+      margin: 4px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .code-box {
+      font-family: 'Courier New', Courier, monospace;
+      background: #0f172a;
+      color: #38bdf8;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 11px;
+      line-height: 1.35;
+      margin: 4px 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .notebook-container {
+        gap: 0 !important;
+        margin-top: 0 !important;
+      }
+      .notebook-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print & Nav Controls -->
+  <div class="controls-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Export PDF / Print Notes
+    </button>
+    <button class="btn-action" style="background:#0284c7;" onclick="window.scrollTo({top: 0, behavior:'smooth'})">
+      ⬆️ Top
+    </button>
+  </div>
+
+  <div class="notebook-container">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: INTRO, WHY IAM, RESPONSIBILITIES, GLOBAL & PRICING -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-1">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: AWS IAM (Identity and Access Management)</span>
+          <span>Sheet No: 01</span>
+        </div>
+
+        <!-- Banner Title -->
+        <div class="hand-box-red text-center mb-2" style="background: rgba(254, 242, 242, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-aws">SECURITY CORE</span>
+            <h1 class="ink-red text-2xl font-bold tracking-wide">
+              🔐 AWS IAM — Identity and Access Management
+            </h1>
+          </div>
+          <p class="text-xs text-slate-500 font-sans uppercase tracking-wider mt-0.5">Comprehensive, Step-by-Step Security, Authentication &amp; Permissions Guide</p>
+        </div>
+
+        <!-- 1. Introduction to IAM -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">FOUNDATION</span>
+            <h2 class="ink-red text-base font-bold">1. Introduction to IAM</h2>
+          </div>
+          <div class="hand-box p-2 bg-amber-50/20 text-xs">
+            <p class="ink-blue font-bold">
+              IAM (Identity and Access Management) is one of the most important AWS services for managing authentication and authorization.
+            </p>
+            <p class="text-slate-700 font-bold mt-1">IAM helps you control:</p>
+            <div class="grid grid-cols-2 gap-1 mt-0.5 text-[11px] text-slate-800">
+              <div>• <b>Who</b> can access your AWS account</div>
+              <div>• <b>Which</b> AWS resources they can access</div>
+              <div>• <b>What actions</b> they can perform</div>
+              <div>• <b>How much permission</b> they should have</div>
+              <div>• How users and groups are managed</div>
+              <div>• How access is secured</div>
+            </div>
+
+            <div class="hand-box-red p-1.5 bg-white text-[11px] mt-1.5">
+              <b class="text-red-900">Simple Definition:</b><br>
+              <span class="hl font-bold">AWS IAM is a service used to securely control access to AWS resources by managing identities, permissions, and authentication.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Why Do We Need IAM? -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <span class="callout-badge badge-tip">USE CASE</span>
+              <h2 class="ink-red text-base font-bold">2. Why Do We Need IAM?</h2>
+            </div>
+            <span class="text-[11px] text-slate-500 font-mono">Organization Scenario: 50 Employees</span>
+          </div>
+
+          <p class="ink-blue text-xs mb-1">
+            Imagine an organization with 50 employees. Everyone cannot have complete access to everything!
+          </p>
+
+          <div class="grid grid-cols-4 gap-1.5 text-center text-xs font-mono">
+            <div class="hand-box p-1.5 bg-white">
+              <b class="text-blue-900 font-sans text-xs">Developers</b>
+              <div class="text-[10px] text-slate-500 my-0.5">↓</div>
+              <div class="bg-blue-50 text-blue-800 p-1 rounded text-[10.5px]">Need EC2 + S3 access</div>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="text-amber-900 font-sans text-xs">Database Team</b>
+              <div class="text-[10px] text-slate-500 my-0.5">↓</div>
+              <div class="bg-amber-50 text-amber-800 p-1 rounded text-[10.5px]">Need RDS access</div>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="text-emerald-900 font-sans text-xs">Operations Team</b>
+              <div class="text-[10px] text-slate-500 my-0.5">↓</div>
+              <div class="bg-emerald-50 text-emerald-800 p-1 rounded text-[10.5px]">Need EC2 + CloudWatch</div>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="text-purple-900 font-sans text-xs">Security Team</b>
+              <div class="text-[10px] text-slate-500 my-0.5">↓</div>
+              <div class="bg-purple-50 text-purple-800 p-1 rounded text-[10.5px]">Need IAM + Security</div>
+            </div>
+          </div>
+
+          <div class="sticky-note mt-1.5 text-[10.5px]">
+            <b class="text-red-900">⚠️ Critical Rule:</b> Giving everyone administrator access would be dangerous! IAM allows us to provide <span class="hl font-bold">only the access that each user needs</span>.
+          </div>
+        </div>
+
+        <!-- 3. IAM's Main Responsibilities -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">PILLARS</span>
+            <h2 class="ink-red text-base font-bold">3. IAM's Main Responsibilities</h2>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="hand-box p-2 bg-white">
+              <b class="text-blue-900 text-xs">1. Identity Management 👥</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Create and manage:</p>
+              <div class="flex gap-2 font-mono text-[10.5px] font-bold text-blue-800 mt-0.5">
+                <span class="border px-1.5 py-0.5 bg-blue-50 rounded">Users</span>
+                <span class="border px-1.5 py-0.5 bg-blue-50 rounded">Groups</span>
+                <span class="border px-1.5 py-0.5 bg-blue-50 rounded">Roles</span>
+              </div>
+            </div>
+
+            <div class="hand-box p-2 bg-white">
+              <b class="text-emerald-900 text-xs">2. Authentication 🔑</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Verify: <span class="hl-grn font-bold">"Who are you?"</span></p>
+              <p class="text-[10px] text-slate-600 mt-0.5">Examples: Username + password, MFA, other supported mechanisms.</p>
+            </div>
+
+            <div class="hand-box p-2 bg-white">
+              <b class="text-purple-900 text-xs">3. Authorization 🛡️</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Determine: <span class="hl-pink font-bold">"What are you allowed to do?"</span></p>
+              <div class="text-[10px] font-mono text-slate-700 mt-0.5">
+                Alex ➔ Allowed to view S3 ➔ <span class="text-red-700 font-bold">Denied</span> delete S3 buckets.
+              </div>
+            </div>
+
+            <div class="hand-box p-2 bg-white">
+              <b class="text-amber-900 text-xs">4. Permissions Management 📋</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">Define what actions users, groups, or roles can perform on AWS resources.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 & 5. Global Service & Pricing -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 4. Global Service -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">4. IAM Is a Global AWS Service 🌍</h3>
+              <span class="callout-badge badge-faq">GLOBAL</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              Unlike services such as EC2 (which are tied to a specific AWS Region), <span class="hl font-bold">IAM identities are not created separately in every region</span>.
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center font-mono text-[9.5px]">
+              User "Alex" created once ➔ Active in Mumbai, Singapore, US East, Europe, etc.
+            </div>
+            <p class="text-[10px] text-slate-600 italic">Console Observation: When viewing IAM in the AWS Console, you see <b>"Global"</b> instead of an AWS Region selector.</p>
+          </div>
+
+          <!-- 5. No Additional Service Charge -->
+          <div class="hand-box-red p-2 bg-amber-50/25">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">5. IAM Has No Additional Charge 💰</h3>
+              <span class="callout-badge badge-trick">FREE CORE</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              IAM itself is available <b>without an additional charge</b>.
+            </p>
+            <div class="sticky-note text-[10px] mt-1">
+              <b class="text-red-900">⚠️ Remember:</b> IAM being free does <span class="hl font-bold">NOT</span> mean the resources accessed through IAM are free!
+            </div>
+            <div class="grid grid-cols-4 gap-1 text-[9.5px] font-mono text-center mt-1">
+              <span class="p-0.5 border bg-white rounded">IAM: Free</span>
+              <span class="p-0.5 border bg-white rounded text-red-800">EC2: Paid</span>
+              <span class="p-0.5 border bg-white rounded text-red-800">RDS: Paid</span>
+              <span class="p-0.5 border bg-white rounded text-red-800">S3: Paid</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 1 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: ROOT USER, IAM USERS, GROUPS & POLICIES INTRO -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-2">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Root User, Users, Groups &amp; Policies Intro</span>
+          <span>Sheet No: 02</span>
+        </div>
+
+        <!-- 6 & 7. Root User & Why Avoid Daily Use -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 6. Root User -->
+          <div class="hand-box-red p-2 bg-red-50/25">
+            <div class="flex items-center justify-between mb-0.5">
+              <h2 class="ink-red text-sm font-bold">6. Root User 👑</h2>
+              <span class="callout-badge badge-important">HIGHEST ACCESS</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              When you initially create an AWS account, AWS creates a <b>root user</b> for that account.
+            </p>
+            <div class="diagram-box my-1 py-1 text-center font-mono text-[10.5px] bg-white">
+              AWS Account ➔ <b>Root User</b> ➔ Highest level access over everything!
+            </div>
+            <p class="text-[10.5px] text-slate-700">The root user has unrestricted access to all resources and billing. It must be protected very carefully.</p>
+          </div>
+
+          <!-- 7. Why Avoid Root User -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h2 class="ink-red text-sm font-bold">7. Why Avoid Root User Daily?</h2>
+              <span class="callout-badge badge-trick">SECURITY</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              Using the root user for everyday operations is <b>not recommended</b>.
+            </p>
+            <div class="diagram-box my-0.5 py-0.5 text-center font-mono text-[9.5px] text-red-900 bg-red-50/50">
+              Root credentials stolen ➔ Attacker gets ultimate control ➔ Complete account compromise!
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-[10px] mt-1 font-mono">
+              <div class="p-1 border border-red-300 rounded bg-red-50">
+                <b>Root User:</b><br>Secure with MFA; use ONLY when required.
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-emerald-50">
+                <b>IAM Users/Roles:</b><br>Use for all regular AWS operations.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. IAM Users -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">IDENTITIES</span>
+              <h2 class="ink-red text-sm font-bold">8. IAM Users</h2>
+            </div>
+            <span class="text-[10.5px] text-slate-500 font-mono">Individual Person / Identity</span>
+          </div>
+
+          <p class="ink-blue text-[11px] mb-1">
+            An <b>IAM User</b> represents an identity that can be given access to AWS resources. Each user can have different permissions:
+          </p>
+
+          <div class="grid grid-cols-3 gap-1.5 text-center font-mono text-[10.5px]">
+            <div class="p-1.5 border rounded bg-slate-50">
+              <b>Alex</b><br><span class="text-blue-800 text-[10px]">Role: Developer</span><br>
+              <span class="text-slate-600 text-[9.5px]">Permissions: EC2 + S3</span>
+            </div>
+            <div class="p-1.5 border rounded bg-slate-50">
+              <b>Paul</b><br><span class="text-emerald-800 text-[10px]">Role: Operations</span><br>
+              <span class="text-slate-600 text-[9.5px]">Permissions: EC2 + CloudWatch</span>
+            </div>
+            <div class="p-1.5 border rounded bg-slate-50">
+              <b>Sarah</b><br><span class="text-purple-800 text-[10px]">Role: Security</span><br>
+              <span class="text-slate-600 text-[9.5px]">Permissions: IAM + Security Services</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-600 mt-1 italic text-center">Each user receives permissions strictly appropriate to their job function.</p>
+        </div>
+
+        <!-- 9. IAM Groups -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-aws">COLLECTIONS</span>
+              <h2 class="ink-red text-sm font-bold">9. IAM Groups</h2>
+            </div>
+            <span class="text-[10.5px] text-blue-900 font-bold">Team Permission Bundling</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            An <b>IAM Group</b> is a collection of IAM users. Groups are useful when multiple users need similar permissions.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="p-1.5 border border-red-300 rounded bg-white text-[10px]">
+              <b class="text-red-900">Without Groups (Repetitive &amp; Painful):</b><br>
+              • Alex ➔ Operations permissions<br>
+              • Paul ➔ Operations permissions<br>
+              • John ➔ Operations permissions<br>
+              • Sarah ➔ Operations permissions
+            </div>
+            <div class="p-1.5 border border-emerald-300 rounded bg-white text-[10px]">
+              <b class="text-emerald-900">With IAM Groups (Clean &amp; Scalable):</b><br>
+              <span class="font-mono font-bold text-blue-900">Operations Group</span> ➔ Attach Operations Policy<br>
+              ➔ Add Alex, Paul, John, Sarah to Group.<br>
+              <i>All users inherit permissions automatically!</i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. Users vs Groups & 11. Policies Intro -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 10. Users vs Groups -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">10. Users vs Groups</h3>
+              <span class="callout-badge badge-faq">COMPARISON</span>
+            </div>
+
+            <table class="hand-table text-[10.5px]">
+              <thead>
+                <tr><th>IAM User</th><th>IAM Group</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Represents individual identity</td><td>Collection of users</td></tr>
+                <tr><td>Can have direct permissions</td><td>Permissions assigned to group</td></tr>
+                <tr><td>Example: Alex</td><td>Example: Developers</td></tr>
+                <tr><td>Used for individual access</td><td>Useful for common permissions</td></tr>
+              </tbody>
+            </table>
+
+            <div class="sticky-note text-[10px] mt-1 text-center font-bold">
+              🧠 Easy Memory Trick: <span class="hl">User = Person | Group = Team</span>
+            </div>
+          </div>
+
+          <!-- 11. IAM Policies Intro -->
+          <div class="hand-box p-2 bg-slate-50">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">11. IAM Policies</h3>
+              <span class="callout-badge badge-important">RULES DOC</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              A <b>policy</b> is a document that defines permissions. It answers the ultimate question:
+            </p>
+            <div class="hand-box-red p-1 bg-white text-[10.5px] my-1 text-center font-bold">
+              "Who can perform what action on which resource, under which conditions?"
+            </div>
+            <p class="text-[10.5px] text-slate-700">
+              AWS IAM policies are commonly written in <span class="hl font-mono font-bold">JSON</span> (JavaScript Object Notation) format.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 2 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 3: POLICY STRUCTURE, WILDCARDS & LEAST PRIVILEGE -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-3">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Policy Structure, Wildcards &amp; Least Privilege</span>
+          <span>Sheet No: 03</span>
+        </div>
+
+        <!-- 12. Basic IAM Policy Structure -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">JSON STRUCTURE</span>
+              <h2 class="ink-red text-sm font-bold">12. Basic IAM Policy Structure</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">Language: JSON</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <!-- JSON Code Box -->
+            <div class="code-box">
+<pre>{
+  <span class="text-amber-400">"Version"</span>: <span class="text-emerald-400">"2012-10-17"</span>,
+  <span class="text-amber-400">"Statement"</span>: [
+    {
+      <span class="text-amber-400">"Effect"</span>: <span class="text-emerald-400">"Allow"</span>,
+      <span class="text-amber-400">"Action"</span>: <span class="text-emerald-400">"s3:GetObject"</span>,
+      <span class="text-amber-400">"Resource"</span>: <span class="text-emerald-400">"*"</span>
+    }
+  ]
+}</pre>
+            </div>
+
+            <!-- Major Elements Breakdown -->
+            <div class="space-y-1 text-[10.5px] text-slate-800">
+              <div class="p-1 border rounded bg-slate-50">
+                <b class="text-blue-900 font-mono">Effect:</b> Determines whether the operation is <b>Allow</b> or <b>Deny</b>.
+              </div>
+              <div class="p-1 border rounded bg-slate-50">
+                <b class="text-emerald-900 font-mono">Action:</b> Defines what operation is being permitted or rejected. Example: <code>s3:GetObject</code>.
+              </div>
+              <div class="p-1 border rounded bg-slate-50">
+                <b class="text-purple-900 font-mono">Resource:</b> Specifies which AWS resource the permission applies to. Example: <code>*</code> (wildcard = all applicable resources).
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 13. IAM Policy — Easy Explanation -->
+        <div class="hand-box p-2 mb-2 bg-amber-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">13. IAM Policy — Easy Explanation (The Instruction Sheet)</h3>
+            <span class="callout-badge badge-trick">PLAIN ENGLISH</span>
+          </div>
+          <p class="ink-blue text-[11px] mb-1">Think of a policy as a simple 4-question instruction sheet:</p>
+
+          <div class="grid grid-cols-4 gap-1 text-center font-mono text-[10.5px]">
+            <div class="p-1 border rounded bg-white"><b>WHO?</b><br><span class="text-[9.5px] text-slate-600">Which identity?</span></div>
+            <div class="p-1 border rounded bg-white"><b>WHAT?</b><br><span class="text-[9.5px] text-slate-600">Which action?</span></div>
+            <div class="p-1 border rounded bg-white"><b>WHERE?</b><br><span class="text-[9.5px] text-slate-600">Which resource?</span></div>
+            <div class="p-1 border rounded bg-white"><b>ALLOW / DENY?</b><br><span class="text-[9.5px] text-slate-600">What should happen?</span></div>
+          </div>
+          <div class="diagram-box mt-1 py-0.5 text-center font-mono text-[10.5px] text-blue-900">
+            Real Example: <b>"Allow Alex to read objects from a specific S3 bucket."</b>
+          </div>
+        </div>
+
+        <!-- 14 & 15. Managed Policies & AdministratorAccess -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 14. Managed Policies -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">14. Managed Policies</h3>
+              <span class="callout-badge badge-aws">AWS PREBUILT</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              AWS provides many predefined policies for common use cases, saving admins from creating every permission from scratch:
+            </p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10px] text-slate-800 font-mono mt-1">
+              <div>• AdministratorAccess</div>
+              <div>• ReadOnlyAccess</div>
+              <div>• AmazonS3FullAccess</div>
+              <div>• AmazonEC2FullAccess</div>
+              <div class="col-span-2">• CloudWatchFullAccess</div>
+            </div>
+          </div>
+
+          <!-- 15. AdministratorAccess -->
+          <div class="hand-box-red p-2 bg-red-50/30">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">15. AdministratorAccess Policy</h3>
+              <span class="callout-badge badge-important">DANGER</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              Provides broad access across all services. Conceptually:
+            </p>
+            <div class="code-box text-[10px] py-1">
+              Effect: Allow | Action: * | Resource: *
+            </div>
+            <div class="sticky-note text-[10px] mt-0.5">
+              <b class="text-red-900">⚠️ Warning:</b> The <code>*</code> wildcard means <b>ALL actions on ALL resources</b>. Never give this unnecessarily! It violates least privilege.
+            </div>
+          </div>
+        </div>
+
+        <!-- 16 & 17. Custom Policies & Principle of Least Privilege -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 16. Custom Policies -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">16. Custom IAM Policies</h3>
+            <p class="ink-blue text-[10.5px]">You can create custom policies via two approaches in the AWS Console:</p>
+            <div class="space-y-1 text-[10px] mt-1">
+              <div class="p-1 border rounded bg-white">
+                <b>1. Visual Editor:</b> Point-and-click GUI to select Service ➔ Actions ➔ Resources ➔ Conditions.
+              </div>
+              <div class="p-1 border rounded bg-white">
+                <b>2. JSON Editor:</b> Directly write or modify the raw JSON policy document.
+              </div>
+            </div>
+            <p class="text-[9.5px] text-slate-500 italic mt-0.5 text-center">Visual Editor ↕ JSON Editor both produce the exact same policy.</p>
+          </div>
+
+          <!-- 17. Principle of Least Privilege -->
+          <div class="hand-box-red p-2 bg-amber-50/35">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="callout-badge badge-tip">GOLDEN RULE</span>
+              <h3 class="ink-red text-sm font-bold">17. Principle of Least Privilege</h3>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              <b>Definition:</b> Give a user, application, or role <span class="hl font-bold">only the permissions required to perform its job — nothing more.</span>
+            </p>
+            <div class="grid grid-cols-2 gap-1 text-[10px] mt-1">
+              <div class="p-1 border border-red-300 rounded bg-red-50 text-red-900">
+                <b>❌ Bad Approach:</b><br>Developer ➔ AdministratorAccess (when only reading 1 S3 bucket).
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-emerald-50 text-emerald-900">
+                <b>✅ Better Approach:</b><br>Developer ➔ Specific S3 permissions on that specific bucket only!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 3 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: IAM ROLES, FEDERATION & MULTI-FACTOR AUTH (MFA) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-4">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: IAM Roles, Federation &amp; Multi-Factor Auth (MFA)</span>
+          <span>Sheet No: 04</span>
+        </div>
+
+        <!-- 18, 19, 20. IAM Roles & Comparison -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">TEMPORARY ACCESS</span>
+              <h2 class="ink-red text-sm font-bold">18. IAM Roles &amp; 19. Role vs User</h2>
+            </div>
+            <span class="text-[10px] font-mono text-blue-900 font-bold">No Long-Term Credentials!</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            An <b>IAM Role</b> is an identity that can be assumed by trusted entities to obtain <span class="hl font-bold">temporary permissions</span>.
+          </p>
+          <p class="text-[10.5px] text-slate-700 mt-0.5">Roles are heavily used by: AWS Services, Applications, EC2 instances, Lambda functions, Users needing temporary access, Federated identities.</p>
+
+          <table class="hand-table text-[10.5px] my-1">
+            <thead>
+              <tr><th>Feature</th><th>IAM User</th><th>IAM Role</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Nature</b></td><td>Represents an identity</td><td>Provides permissions that can be assumed</td></tr>
+              <tr><td><b>Association</b></td><td>Often associated with a specific person</td><td>Used by AWS services/apps &amp; temporary access</td></tr>
+              <tr><td><b>Credentials</b></td><td>Can have long-term credentials (password/keys)</td><td>Designed strictly around <b>temporary credentials</b></td></tr>
+              <tr><td><b>Example</b></td><td>Developer user (Alex)</td><td>EC2 instance assuming role to read S3</td></tr>
+            </tbody>
+          </table>
+
+          <div class="sticky-note text-[10px] text-center font-bold">
+            🧠 Memory Trick: <span class="hl">User = Who you are | Role = What access you can assume</span>
+          </div>
+        </div>
+
+        <!-- 20. Example of IAM Role & 21. Federated Access -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 20. EC2 to S3 Role Example -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">20. Real Example of an IAM Role</h3>
+            <p class="ink-blue text-[10.5px]">Imagine an EC2 web app that needs to read files from S3:</p>
+            <div class="space-y-1 text-[9.5px] mt-1 font-mono">
+              <div class="p-1 border border-red-300 rounded bg-red-50 text-red-900">
+                <b>❌ Without a Role (Dangerous):</b><br>
+                Hardcode Access Key + Secret Key inside the app code. (Leaking code = leaking account!)
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-emerald-50 text-emerald-900">
+                <b>✅ With an IAM Role (Safe):</b><br>
+                EC2 Instance ➔ Attach IAM Role ➔ Temporary Credentials ➔ S3 Access. (Zero hardcoded keys!)
+              </div>
+            </div>
+          </div>
+
+          <!-- 21. Federated Access -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">21. Federated Access (Enterprise)</h3>
+            <p class="ink-blue text-[10.5px]">
+              Large enterprises already have their own corporate directory identity systems:
+            </p>
+            <div class="diagram-box my-1 py-1 text-center font-mono text-[10px]">
+              Company ➔ Active Directory / Okta IdP ➔ IAM Role ➔ AWS Access
+            </div>
+            <p class="text-[10px] text-slate-700">
+              IAM participates in <b>identity federation</b>, allowing companies to centralize logins without creating separate AWS users for every staff member.
+            </p>
+          </div>
+        </div>
+
+        <!-- 22 to 26. Multi-Factor Authentication (MFA) -->
+        <div class="hand-box-red p-2 bg-amber-50/25 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">SECURITY DEFENSE</span>
+              <h3 class="ink-red text-sm font-bold">22–26. Multi-Factor Authentication (MFA)</h3>
+            </div>
+            <span class="text-[10px] text-red-900 font-bold">Essential Extra Layer</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            <b>22. Definition:</b> MFA adds an essential second verification layer beyond passwords.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 my-1 text-[10px] font-mono">
+            <div class="p-1 border border-red-200 rounded bg-white text-center">
+              <b>Without MFA:</b><br>Username + Password ➔ Login (Vulnerable!)
+            </div>
+            <div class="p-1 border border-emerald-300 rounded bg-emerald-50 text-center">
+              <b>With MFA:</b><br>Username + Password + <span class="text-emerald-900 font-bold">MFA Code</span> ➔ Login ✓
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[10px] mt-1">
+            <div class="p-1 border rounded bg-white">
+              <b>23. Why MFA is Crucial:</b><br>
+              If a hacker steals your password, they still cannot sign in without physical possession of the MFA device!
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>24. Common MFA Methods:</b><br>
+              • Authenticator Apps (Google Auth, Authy)<br>
+              • Hardware Security Keys (YubiKey)<br>
+              • Other supported token devices
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>25. MFA Example (TOTP):</b><br>
+              Phone app displays rotating 6-digit code (e.g. <code>123456</code>). Code changes every 30 seconds!
+            </div>
+          </div>
+
+          <div class="sticky-note text-[10px] mt-1">
+            <b class="text-red-900">26. Protect the Root User with MFA:</b> One of the most important AWS security mandates. Enable MFA on root immediately!
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 4 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: PASSWORD POLICIES, ACCESS KEYS, AWS CLI & SDK -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-5">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Password Policies, Access Keys, CLI &amp; SDK</span>
+          <span>Sheet No: 05</span>
+        </div>
+
+        <!-- 27 & 28. Password Policy & Expiration -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 27. Password Policy -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">27. IAM Password Policy</h3>
+            <p class="ink-blue text-[10.5px]">Administrators configure requirements for user passwords:</p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10px] text-slate-800 font-mono mt-0.5">
+              <div>• Minimum length (e.g. 12)</div>
+              <div>• Uppercase letters</div>
+              <div>• Lowercase letters</div>
+              <div>• Numbers &amp; symbols</div>
+              <div>• Password reuse limits</div>
+              <div>• User password reset</div>
+            </div>
+          </div>
+
+          <!-- 28. Expiration & 29. Access Keys -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">28. Expiration &amp; 29. Access Keys</h3>
+            <p class="text-[10px] text-slate-700"><b>28. Expiration:</b> E.g., password expires after 90 days, forcing a rotation.</p>
+            <div class="hand-box-red p-1 bg-white text-[10px] mt-1">
+              <b class="text-rose-900">29. Access Keys:</b> Used for programmatic access to AWS. Consists of a pair:<br>
+              <span class="font-mono font-bold text-blue-900">Access Key ID + Secret Access Key</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 30, 31, 32. AWS CLI & Comparison -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-aws">TERMINAL</span>
+              <h2 class="ink-red text-sm font-bold">30–32. AWS CLI (Command Line Interface)</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">Automation Powerhouse</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            <b>30. Definition:</b> Interact with AWS from a command-line environment. Example command: <code class="font-bold text-blue-900">aws iam list-users</code>
+          </p>
+
+          <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px]">
+            Terminal ➔ AWS CLI ➔ AWS API ➔ AWS Service
+          </div>
+
+          <!-- 31. Console vs CLI Table -->
+          <table class="hand-table text-[10.5px] my-1">
+            <thead>
+              <tr><th>AWS Console (GUI)</th><th>AWS CLI (Command Line)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Graphical, browser-based interface</td><td>Command-line terminal tool</td></tr>
+              <tr><td>Easy for beginners to explore</td><td>Extremely powerful for automation &amp; scripting</td></tr>
+              <tr><td>Manual clicks &amp; operations</td><td>Scriptable, repeatable operations</td></tr>
+              <tr><td>Requires browser</td><td>Runs in terminal / CI/CD pipelines</td></tr>
+            </tbody>
+          </table>
+
+          <p class="text-[10px] text-slate-700 mt-0.5">
+            <b>32. Why Use CLI?</b> Performing an operation 100 times manually = 100 clicks &amp; mistakes. With CLI, write 1 bash script and execute instantly!
+          </p>
+        </div>
+
+        <!-- 33 to 36. CloudShell, SDK & 3 Access Methods -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 33, 34, 35. CloudShell & SDK -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">33. CloudShell &amp; 34–35. SDKs</h3>
+            <p class="text-[10px] text-slate-700">
+              <b>33. AWS CloudShell:</b> Built-in browser terminal inside the AWS Console, pre-authenticated with your login session.
+            </p>
+            <p class="text-[10px] text-slate-700 mt-0.5">
+              <b>34–35. AWS SDK (Software Development Kit):</b> Write code in Python (Boto3), Java, JavaScript, etc., to call AWS APIs directly:
+            </p>
+            <div class="diagram-box py-0.5 text-center font-mono text-[9px] bg-white mt-0.5">
+              Python App ➔ AWS SDK ➔ AWS API ➔ S3 / EC2
+            </div>
+          </div>
+
+          <!-- 36. 3 Ways to Access AWS -->
+          <div class="hand-box-red p-2 bg-amber-50/30">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="callout-badge badge-trick">THE BIG 3</span>
+              <h3 class="ink-red text-sm font-bold">36. Three Ways to Access AWS</h3>
+            </div>
+            <div class="space-y-0.5 text-[10px] font-mono">
+              <div class="p-1 border rounded bg-white">1. <b>AWS Console</b> (GUI): Browser ➔ Click</div>
+              <div class="p-1 border rounded bg-white">2. <b>AWS CLI</b> (Terminal): Shell ➔ Command</div>
+              <div class="p-1 border rounded bg-white">3. <b>AWS SDK/APIs</b> (Programmatic): Code ➔ APIs</div>
+            </div>
+            <div class="sticky-note text-[10.5px] mt-1 font-bold text-center">
+              🧠 Easy Memory Trick:<br>
+              <span class="hl">Console = Click | CLI = Command | SDK = Code</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 5 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 6: CREDENTIAL SECURITY, CLI CONFIG & AUDITING -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-6">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Credential Security, CLI Setup &amp; Auditing</span>
+          <span>Sheet No: 06</span>
+        </div>
+
+        <!-- 37 & 38. Security: Never Commit to Git -->
+        <div class="hand-box-red p-2 mb-2 bg-red-50/25 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">CRITICAL WARNING</span>
+              <h2 class="ink-red text-sm font-bold">37–38. Protect Access Keys &amp; Never Commit to Git!</h2>
+            </div>
+            <span class="text-[10px] text-red-900 font-bold">Bot Scanners Alert</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            <b>37. Access keys are sensitive credentials.</b> Never send them in chats, upload to GitHub, commit to source code, store in public repos, put in screenshots, or share in documents.
+          </p>
+
+          <div class="diagram-box my-1 py-1 text-center font-mono text-[9.5px] bg-white text-red-900">
+            Hardcode Keys in Code ➔ Git Commit ➔ Push to GitHub ➔ Attacker Scans Repo ➔ Full Account Compromised! 💸
+          </div>
+
+          <div class="sticky-note text-[10px]">
+            <b class="text-red-900">38. Modern Secure Approach:</b> Use IAM Roles, AWS Secrets Manager, environment variables, or temporary STS credentials. Never bake static keys into files!
+          </div>
+        </div>
+
+        <!-- 39 to 43. Access Key Creation & CLI Configuration -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 39 & 40. CLI Setup -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">39–40. Access Key Creation &amp; Config</h3>
+            <p class="text-[10px] text-slate-700"><b>39. Critical Rule:</b> The Secret Access Key is shown <b>only once</b> at creation. Download/save it securely immediately!</p>
+
+            <div class="code-box text-[9.5px] mt-1">
+              $ aws configure<br>
+              AWS Access Key ID: AKIAIOSFODNN7EXAMPLE<br>
+              AWS Secret Access Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCY<br>
+              Default region name: ap-south-1<br>
+              Default output format: json
+            </div>
+          </div>
+
+          <!-- 41, 42, 43. Listing Users & Auth Flow -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">41–43. Listing IAM Users &amp; Flow</h3>
+            <div class="code-box text-[9.5px]">
+              $ aws iam list-users
+            </div>
+            <p class="text-[10px] text-slate-700 mt-0.5">
+              <b>42. Why did it initially fail?</b> If run before <code>aws configure</code>, it throws: <i>"Unable to locate credentials."</i> AWS needs to know WHO you are!
+            </p>
+            <div class="diagram-box py-0.5 text-center font-mono text-[9px] bg-white mt-0.5">
+              CLI ➔ Credentials ➔ AWS API ➔ IAM Policy Evaluation ➔ Allow / Deny
+            </div>
+          </div>
+        </div>
+
+        <!-- 44. Access Keys vs Password -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">44. Access Keys vs Password</h3>
+            <span class="callout-badge badge-faq">KEY COMPARISON</span>
+          </div>
+
+          <table class="hand-table text-[10.5px]">
+            <thead>
+              <tr><th>Password</th><th>Access Keys</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Commonly used for AWS Console sign-in</td><td>Used for programmatic access (CLI / SDK / API)</td></tr>
+              <tr><td>GUI / browser access</td><td>Terminal, script, and code access</td></tr>
+              <tr><td>Username + Password</td><td>Access Key ID + Secret Access Key</td></tr>
+              <tr><td>Can be protected with MFA</td><td>Must be securely managed and rotated periodically</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 45 to 48. Credential Report & Access Analyzer -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 45 & 46. Credential Report -->
+          <div class="hand-box p-2 bg-amber-50/20">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">45–46. IAM Credential Report</h3>
+              <span class="callout-badge badge-tip">AUDIT</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              Downloads a complete audit CSV of all account credentials. Answers:
+            </p>
+            <div class="text-[9.5px] text-slate-700 mt-0.5 space-y-0.5">
+              <div>• Who has passwords? When last used?</div>
+              <div>• Which access keys exist? Are they active?</div>
+              <div>• Who has MFA enabled? Who doesn't?</div>
+            </div>
+            <p class="text-[9.5px] text-amber-900 font-bold mt-0.5">Indispensable when managing 100+ IAM users!</p>
+          </div>
+
+          <!-- 47 & 48. Access Analyzer -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">47–48. Access Analyzer &amp; Monitoring</h3>
+              <span class="callout-badge badge-aws">DEFENSE</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              <b>47. IAM Access Analyzer:</b> Identifies resources (S3, KMS, IAM roles) shared outside your trusted zone/organization.
+            </p>
+            <p class="text-[10px] text-slate-700 mt-0.5">
+              <b>48. Monitoring User Access:</b> Review individual user permissions, groups, and last-accessed service timestamps regularly.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 6 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 7: BEST PRACTICES, ARCHITECTURE & PITFALLS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-7">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: IAM Best Practices, Architecture &amp; Pitfalls</span>
+          <span>Sheet No: 07</span>
+        </div>
+
+        <!-- 49. IAM Security Best Practices (8 Rules) -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">8 RULES</span>
+              <h2 class="ink-red text-sm font-bold">49. IAM Security Best Practices</h2>
+            </div>
+            <span class="text-[10px] text-slate-500">Industry Gold Standards</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1 text-[9.5px] text-slate-800">
+            <div class="p-1 border rounded bg-slate-50"><b>1. Avoid Root Daily:</b> Use root only for initial setup.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>2. Enable MFA:</b> Mandate MFA on Root &amp; privileged users.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>3. Use Groups:</b> Assign permissions to teams, not users.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>4. Least Privilege:</b> Grant minimum necessary rights.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>5. Protect Keys:</b> Never commit access keys to code/git.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>6. Audit Regularly:</b> Run Credential Reports periodically.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>7. Clean Unused:</b> Disable/delete inactive credentials.</div>
+            <div class="p-1 border rounded bg-slate-50"><b>8. Prefer Roles:</b> Use IAM Roles over hardcoded keys.</div>
+          </div>
+        </div>
+
+        <!-- 50 & 51. Big Picture Architecture & Access Model -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 50. Big Picture Diagram -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">50. IAM Architecture — Big Picture</h3>
+            <div class="diagram-box bg-white p-1 font-mono text-[9px] text-slate-800 text-center">
+              AWS ACCOUNT ➔ Root User (MFA)<br>
+              ↓<br>
+              [ IAM Users (Alex, Paul) ] ➔ IAM Group ➔ Policies<br>
+              ↓<br>
+              Permissions ➔ [ EC2 | S3 | RDS ]<br>
+              ↑<br>
+              IAM Roles (Assumed by EC2 / Lambda)
+            </div>
+          </div>
+
+          <!-- 51. Access Model & 54. Policy Evaluation -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">51 &amp; 54. Complete Access Model</h3>
+            <div class="diagram-box py-0.5 text-center font-mono text-[9.5px] bg-slate-50">
+              Identity (User/Role) ➔ Policy ➔ Action ➔ Resource ➔ Evaluation
+            </div>
+            <div class="hand-box-red p-1 bg-red-50/40 text-[9.5px] mt-1">
+              <b class="text-red-900">54. IAM Evaluation Rule:</b><br>
+              By default, all requests are <b>DENIED</b>. An explicit <b>ALLOW</b> grants access. However, an <span class="hl font-bold text-red-900">explicit DENY always overrides any ALLOW!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 52 & 53. Practical Example: Alex & Paul -->
+        <div class="hand-box p-2 mb-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">52–53. Practical Example: Adding &amp; Removing Developers</h3>
+            <span class="callout-badge badge-tip">WORKFLOW</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1 text-[9.5px] font-mono text-center">
+            <div class="p-1 border rounded bg-white">Step 1: Create Users (Alex, Paul)</div>
+            <div class="p-1 border rounded bg-white">Step 2: Create Group (Developers)</div>
+            <div class="p-1 border rounded bg-white">Step 3: Attach S3 Policy to Group</div>
+            <div class="p-1 border rounded bg-white">Step 4: Add Users to Group</div>
+          </div>
+          <p class="text-[10px] text-slate-700 mt-1">
+            <b>53. What happens when Alex is removed from Developers?</b> He instantly loses all S3 permissions inherited through that group! No manual revocation needed per service.
+          </p>
+        </div>
+
+        <!-- 55 to 60. Auth vs Auth, SG vs IAM & Mistakes -->
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <div class="hand-box p-1.5 bg-white">
+            <b class="ink-red text-[11px]">55. Auth vs Auth</b>
+            <p class="text-[9.5px] text-slate-700 mt-0.5">
+              <b>Authentication:</b> <i>"Who are you?"</i> (Username, MFA).<br>
+              <b>Authorization:</b> <i>"What can you do?"</i> (Policies).
+            </p>
+          </div>
+          <div class="hand-box p-1.5 bg-white">
+            <b class="ink-red text-[11px]">58. IAM vs Security Groups</b>
+            <p class="text-[9.5px] text-slate-700 mt-0.5">
+              <b>IAM:</b> API identity permissions.<br>
+              <b>Security Group:</b> Virtual firewall controlling network IP traffic to EC2.
+            </p>
+          </div>
+          <div class="hand-box-red p-1.5 bg-red-50/30">
+            <b class="ink-red text-[11px]">60. Common Mistakes ❌</b>
+            <p class="text-[9px] text-red-900 mt-0.5">
+              • Giving AdminAccess to all<br>
+              • Using Root daily<br>
+              • Committing keys to GitHub<br>
+              • Forgetting MFA
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 7 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 8: COMPLETE INTERVIEW QUESTIONS & ANSWERS (Q1 TO Q20) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-8">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Complete Interview Questions &amp; Answers (Q1–Q20)</span>
+          <span>Sheet No: 08</span>
+        </div>
+
+        <div class="flex items-center gap-1 mb-1">
+          <span class="callout-badge badge-important">VIVA / SCREENING</span>
+          <h2 class="ink-red text-base font-bold">61. Top 20 Interview Questions &amp; Answers</h2>
+        </div>
+
+        <!-- 20 Interview Questions Grid (2 Columns, 10 Rows of Compact Cards) -->
+        <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q1. What is AWS IAM?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> A service used to securely manage identities and control access to AWS resources through authentication and authorization.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q2. Is IAM regional or global?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> IAM is a <b>global service</b>. Identities and policies are not created separately for each AWS Region.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q3. Is IAM free?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Yes, IAM is offered at no additional charge. However, resources managed via IAM (EC2, S3) incur standard charges.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q4. What is the AWS root user?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> The original identity created with the AWS account. Has complete access; must be locked with MFA and avoided for daily tasks.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q5. What is an IAM user?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> An identity representing a person or application that can be granted granular permissions to access AWS resources.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q6. What is an IAM group?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> A collection of IAM users. Permissions assigned to the group are automatically inherited by all its members.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q7. Why use IAM groups?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> To simplify permission administration by assigning common policies centrally rather than individually.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q8. What is an IAM policy?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> A JSON document that formally defines permissions (Effect, Action, Resource, Condition) for identities.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q9. What is the Principle of Least Privilege?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Granting only the minimum required permissions necessary for an identity to perform its job — nothing more.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q10. What is an IAM role?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> An identity with permissions that can be assumed by trusted entities (services, users, apps) using temporary credentials.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q11. What is MFA?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Multi-Factor Authentication. Adds an additional verification factor (e.g. 6-digit TOTP code) beyond the password.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q12. Why enable MFA for root?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Because the root user has ultimate power. MFA ensures account safety even if the root password is compromised.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q13. Difference: Authentication vs Authorization?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Authentication = <i>"Who are you?"</i> (login). Authorization = <i>"What are you allowed to do?"</i> (permissions).</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q14. What are access keys used for?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Credentials (Key ID + Secret Key) used for programmatic access to AWS via CLI, SDKs, and APIs.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q15. What is AWS CLI?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> A unified command-line tool to manage and interact with AWS services using terminal commands and scripts.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q16. Why is AWS CLI useful?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Enables task automation, repetitive batch operations, scripting, DevOps pipelines, and headless administration.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q17. What is AWS SDK?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Software Development Kits enabling software applications (Python, Java, Node.js) to call AWS APIs programmatically.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q18. 3 Main ways to access AWS?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> 1. AWS Console (Click), 2. AWS CLI (Command), 3. AWS SDK/APIs (Code).</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q19. What is a Credential Report?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> An auditing CSV report showing password status, access key age, and MFA adoption across all account users.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[10px]">Q20. Why never commit keys to GitHub?</b>
+            <p class="ink-blue text-[9.5px]"><b>Ans:</b> Automated bots scan public repos within seconds, hijacking credentials to run malicious crypto miners or steal data.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 8 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 9: REVISION SHEET, MEMORY TRICKS & BONUS STUDY TIPS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-9">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Quick Revision Sheet &amp; 8 Bonus Study Tips</span>
+          <span>Sheet No: 09</span>
+        </div>
+
+        <!-- 62 & 63. Quick Revision Sheet & Master Formula -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">62–63. Quick Revision Sheet &amp; Master Formula</h3>
+            <span class="callout-badge badge-trick">30 SECONDS</span>
+          </div>
+
+          <div class="diagram-box bg-slate-50 text-center py-0.5 font-mono text-[9.5px]">
+            <b>IAM Access Formula:</b> "USER ➔ GROUP ➔ POLICY ➔ PERMISSION ➔ RESOURCE"<br>
+            <b>Security Formula:</b> "MFA ➔ LEAST PRIVILEGE ➔ AUDIT ➔ PROTECT CREDENTIALS"<br>
+            <b>Access Methods:</b> "CONSOLE = Click | CLI = Command | SDK/API = Code"
+          </div>
+        </div>
+
+        <!-- Banner Callout for Bonus Tips -->
+        <div class="hand-box-red text-center mb-2" style="background: rgba(254, 243, 199, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-tip">TOPPER STRATEGY</span>
+            <h2 class="ink-red text-lg font-bold tracking-wide">
+              💡 8 Bonus Study Tips for AWS IAM (Plain English!)
+            </h2>
+          </div>
+          <p class="text-[11px] text-slate-600 font-sans tracking-wide mt-0.5">Simple methods to remember IAM concepts forever and ace cloud security viva questions.</p>
+        </div>
+
+        <!-- 8 Bonus Tips Grid -->
+        <div class="grid grid-cols-2 gap-1.5 text-xs mb-2">
+          <!-- 1. Mind Maps -->
+          <div class="hand-box p-1.5 bg-blue-50/30">
+            <b class="ink-red text-xs">1. Mind Maps 🗺️</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Put <b>"IAM"</b> in the center circle. Draw 4 branches: <i>Identities (Root, Users, Groups, Roles)</i>, <i>Policies (JSON, Managed, Custom)</i>, <i>Access (Console, CLI, SDK)</i>, and <i>Security (MFA, Least Privilege, Credential Report)</i>. It stops topic mix-up instantly!
+            </p>
+          </div>
+
+          <!-- 2. Flow Charts -->
+          <div class="hand-box p-1.5 bg-emerald-50/30" style="border-color: #059669;">
+            <b class="text-emerald-900 text-xs">2. Flow Charts ➔</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Draw this evaluation chain: <code>Request ➔ Authenticate ➔ Any Explicit Deny? (Yes ➔ Denied) ➔ Any Explicit Allow? (Yes ➔ Allowed) ➔ Otherwise Denied by Default</code>.
+            </p>
+          </div>
+
+          <!-- 3. Formula Box -->
+          <div class="hand-box p-1.5 bg-amber-50/30">
+            <b class="text-amber-900 text-xs">3. Formula / Rule Box 📦</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Memorize the 3 core identities: <code>User = Person (Long-term)</code>, <code>Group = Team (Policy container)</code>, and <code>Role = Coat you put on (Temporary STS credentials)</code>.
+            </p>
+          </div>
+
+          <!-- 4. Revision Section -->
+          <div class="hand-box p-1.5 bg-purple-50/30" style="border-color: #9333ea;">
+            <b class="text-purple-900 text-xs">4. Revision Section ⏱️</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Before every lab, do a 30-second rapid check: <i>"Am I on Root? (Stop!). Is MFA on? Have I attached a Role instead of typing Secret Keys?"</i>
+            </p>
+          </div>
+
+          <!-- 5. Highlighted Keywords -->
+          <div class="hand-box p-1.5 bg-pink-50/30" style="border-color: #db2777;">
+            <b class="text-pink-900 text-xs">5. Highlighted Keywords 🖍️</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Examiners listen for trigger words: <span class="hl">"Global Service"</span>, <span class="hl">"Least Privilege"</span>, <span class="hl">"Temporary Credentials"</span>, <span class="hl">"Explicit Deny"</span>, and <span class="hl">"Credential Report"</span>.
+            </p>
+          </div>
+
+          <!-- 6. Colour Coding -->
+          <div class="hand-box p-1.5 bg-cyan-50/30" style="border-color: #0891b2;">
+            <b class="text-cyan-900 text-xs">6. Colour Coding 🎨</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Use <b>Red pen</b> for hazards (Root login, Git commits, AdminAccess), <b>Blue pen</b> for policy structure and groups, and <b>Yellow highlighter</b> for CLI commands like <code>aws configure</code>.
+            </p>
+          </div>
+
+          <!-- 7. Important Questions -->
+          <div class="hand-box p-1.5 bg-rose-50/30" style="border-color: #e11d48;">
+            <b class="text-rose-900 text-xs">7. Important Questions 🎯</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Practice the Big 3 viva questions out loud: <i>1. What is the difference between an IAM User and an IAM Role?</i>, <i>2. Authentication vs Authorization?</i>, and <i>3. What is Least Privilege?</i>
+            </p>
+          </div>
+
+          <!-- 8. Quick Summary -->
+          <div class="hand-box p-1.5 bg-indigo-50/30" style="border-color: #4f46e5;">
+            <b class="text-indigo-900 text-xs">8. Quick Summary 📝</b>
+            <p class="text-slate-700 text-[10px] mt-0.5">
+              <b>In simple terms:</b> Conclude any IAM interview answer with: <i>"In summary, IAM is a free, global service that secures AWS by authenticating identities and enforcing least privilege policies across users, groups, and temporary roles."</i>
+            </p>
+          </div>
+        </div>
+
+        <!-- Student IAM Lab Pre-Flight Checklist -->
+        <div class="hand-box p-1.5 bg-amber-50/40 mb-1.5 text-xs">
+          <span class="ink-red font-bold text-xs">✅ Student IAM Lab Checklist:</span>
+          <div class="grid grid-cols-4 gap-1 mt-0.5 text-[9.5px] text-slate-800 text-center font-bold">
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Root Locked with MFA
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Group-Based Permissions
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Zero Keys in GitHub Code
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Roles Used for EC2 / Apps
+            </div>
+          </div>
+        </div>
+
+        <!-- Notebook Completion Stamp -->
+        <div class="flex justify-between items-center text-xs px-1 text-slate-500">
+          <span>✨ End of AWS IAM Lecture Notes</span>
+          <span class="font-bold ink-red border border-red-400 px-3 py-0.5 rounded-full bg-red-50">100% COMPLETE &amp; VERIFIED</span>
+          <span>Prepared for AWS Security Mastery ✍️</span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 9 of 9</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

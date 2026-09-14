@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS VPC Practical Setup & Networking Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 29px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 17.5px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a;
+    font-size: 15px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS VPC — Practical Setup & Networking Notes</div>
+
+  <!-- 1. Creating a VPC -->
+  <h2 class="sec-heading">1. Creating a VPC</h2>
+  <h3 class="subsec-heading">What is a VPC?</h3>
+  <p>A Virtual Private Cloud (VPC) is an isolated virtual network in AWS where you can launch resources such as EC2 instances.</p>
+  <p>When creating a VPC, the important configuration is the <span class="highlight">CIDR block</span>.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <p style="margin:2px 0;">VPC Name: <span class="code-term">my-vpc</span></p>
+    <p style="margin:2px 0;">IPv4 CIDR: <span class="code-term">10.0.0.0/16</span></p>
+    <p style="margin:2px 0;">IPv6: Not required for this example</p>
+    <p style="margin-top:6px; font-size:13.5px;">A <span class="code-term">/16</span> IPv4 CIDR represents 65,536 total IPv4 addresses before AWS subnet reservations.</p>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">⭐ Key Point</span>
+    <p style="margin-top:4px;">The VPC CIDR defines the overall IP address range available inside your VPC.</p>
+  </div>
+
+  <!-- 2. CIDR Block -->
+  <h2 class="sec-heading">2. CIDR Block</h2>
+  <p><strong>CIDR = Classless Inter-Domain Routing</strong></p>
+  <p>It defines an IP address range. For example: <span class="code-term">10.0.0.0/16</span></p>
+  <p>The VPC can then be divided into smaller ranges called subnets.</p>
+
+  <div class="ascii-tree" style="margin-top: 6px;">Example structure
+VPC
+10.0.0.0/16
+│
+├── Public Subnet
+│   └── 10.0.1.0/24
+│
+└── Private Subnet
+    └── 10.0.2.0/24</div>
+  <p style="font-size: 13.5px;">A <span class="code-term">/24</span> contains 256 total IPv4 addresses, although AWS reserves 5 addresses in every subnet, so fewer are available for resources.</p>
+
+  <!-- 3. Creating Subnets -->
+  <h2 class="sec-heading">3. Creating Subnets</h2>
+  <p>After creating the VPC, the next step is to create subnets.</p>
+  <p>A subnet is a smaller IP range inside the VPC.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+      <p style="margin:2px 0;">VPC: <span class="code-term">10.0.0.0/16</span></p>
+      <p style="margin:2px 0;">Public subnet: <span class="code-term">10.0.1.0/24</span></p>
+      <p style="margin:2px 0;">Private subnet: <span class="code-term">10.0.2.0/24</span></p>
+      <p style="font-size:13.5px; margin-top:6px;">These ranges are different and do not overlap.</p>
+    </div>
+    
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">4. Availability Zone</h2>
+      <p style="font-size:14px;">When creating a subnet, AWS asks you to select an Availability Zone (AZ).</p>
+      <div class="ascii-tree" style="font-size:11px; padding:6px;">Region
+└── Availability Zone A
+    └── Public Subnet</div>
+      <p style="font-size:14px;">You can also create another subnet in another AZ.</p>
+    </div>
+  </div>
+
+  <h3 class="subsec-heading">Recommended production architecture</h3>
+  <div class="ascii-tree">Region
+│
+├── AZ-A
+│   ├── Public Subnet
+│   └── Private Subnet
+│
+└── AZ-B
+    ├── Public Subnet
+    └── Private Subnet</div>
+  <p style="font-size: 14px;">This improves availability because your application does not depend on only one AZ.</p>
+  <div class="warn-box" style="padding: 4px 8px; margin-top: 4px;">
+    <span class="tag-badge badge-imp">⭐ Important</span> A subnet belongs to exactly one Availability Zone.
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Public and Private Subnets -->
+  <h2 class="sec-heading">5. Public and Private Subnets</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Public Subnet</h3>
+      <p style="font-size:14px;">A public subnet is a subnet whose route table has a route to an Internet Gateway.</p>
+      <p style="font-size:14px; font-weight:700; margin-bottom:2px;">Typical resources:</p>
+      <ul style="font-size:13.5px; margin-top:0;">
+        <li>Application Load Balancer</li>
+        <li>Public-facing EC2 instance</li>
+        <li>Bastion host</li>
+      </ul>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Private Subnet</h3>
+      <p style="font-size:14px;">A private subnet does not have a direct route to the Internet Gateway for internet access.</p>
+      <p style="font-size:14px; font-weight:700; margin-bottom:2px;">Typical resources:</p>
+      <ul style="font-size:13.5px; margin-top:0;">
+        <li>Databases</li>
+        <li>Backend application servers</li>
+        <li>Private ECS tasks</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="subsec-heading">Simple architecture</h3>
+  <div class="ascii-tree" style="text-align: center;">                 INTERNET
+                     │
+                     ▼
+              Internet Gateway
+                     │
+                     ▼
+              Public Subnet
+                     │
+              ┌──────┴──────┐
+              │             │
+             ALB          EC2
+              │
+              ▼
+         Private Subnet
+              │
+        Application/DB</div>
+
+  <!-- 6. Route Table -->
+  <h2 class="sec-heading">6. Route Table</h2>
+  <p>A Route Table contains rules that determine where network traffic should go.</p>
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <span class="code-term" style="display:block; margin-bottom:4px;">Destination       Target<br>0.0.0.0/0         Internet Gateway</span>
+    <p style="font-weight:700; margin:4px 0 2px 0;">Meaning:</p>
+    <p style="font-size:14px; margin:0;"><span class="code-term" style="display:inline; padding:0 4px;">0.0.0.0/0</span> means: Any IPv4 destination that does not have a more specific route.</p>
+    <p style="font-size:14px; margin:4px 0 0 0;">So: <span class="code-term" style="display:inline; padding:0 4px;">0.0.0.0/0 → Internet Gateway</span> provides a path from the associated subnet toward the internet.</p>
+  </div>
+
+  <!-- 7. Main / Default Route Table -->
+  <h2 class="sec-heading">7. Main / Default Route Table</h2>
+  <p>When you create a VPC, AWS automatically creates some default networking components, including a main route table.</p>
+  <p>A subnet that isn't explicitly associated with another route table uses the VPC's main route table.</p>
+
+  <div class="warn-box">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Important correction</h3>
+    <p style="font-size: 14px;">A default/main route table does not automatically make a subnet public.</p>
+    <p style="font-size: 14px; margin-bottom: 2px;">For a subnet to function as a public subnet, you generally need:</p>
+    <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+      <span class="flow-node" style="padding:1px 4px;">Subnet</span>
+      <span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span>
+      <span class="flow-node" style="padding:1px 4px;">Route Table</span>
+      <span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span>
+      <span class="flow-node" style="padding:1px 4px;">0.0.0.0/0 → Internet Gateway</span>
+    </div>
+    <p style="font-size: 14px; margin-top: 4px;">And the resource itself must have appropriate public addressing and security configuration.</p>
+  </div>
+
+  <!-- 8. Internet Gateway (IGW) -->
+  <h2 class="sec-heading">8. Internet Gateway (IGW)</h2>
+  <p>An Internet Gateway provides the VPC with a path for internet communication.</p>
+  <div class="flow-v" style="gap:2px; font-size:13px; align-items:flex-start;">
+    <span class="code-term">VPC</span>
+    <span style="margin-left: 20px;">│</span>
+    <span style="margin-left: 20px;">└── Internet Gateway</span>
+  </div>
+  <p style="margin-top: 4px;">After creating the Internet Gateway, you attach it to the VPC. Example: <span class="code-term" style="display:inline; padding:0 4px;">my-vpc → my-internet-gateway</span></p>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 9. Connecting a Public Subnet to the Internet -->
+  <h2 class="sec-heading">9. Connecting a Public Subnet to the Internet</h2>
+  <p>Creating an Internet Gateway alone isn't enough. You need to connect the pieces.</p>
+  
+  <div class="hand-box">
+    <p style="margin:2px 0;"><strong>Step 1 — Create Internet Gateway</strong> (<span class="code-term" style="display:inline; padding:0 2px;">Internet Gateway</span>)</p>
+    <p style="margin:2px 0;"><strong>Step 2 — Attach it to VPC</strong> (<span class="code-term" style="display:inline; padding:0 2px;">my-vpc → Internet Gateway</span>)</p>
+    <p style="margin:2px 0;"><strong>Step 3 — Create a route table</strong> (<span class="code-term" style="display:inline; padding:0 2px;">my-route-table</span>)</p>
+    <p style="margin:2px 0;"><strong>Step 4 — Associate the public subnet</strong> (<span class="code-term" style="display:inline; padding:0 2px;">my-route-table → Public Subnet</span>)</p>
+    <p style="margin:2px 0;"><strong>Step 5 — Add internet route</strong> (<span class="code-term" style="display:inline; padding:0 2px;">Destination: 0.0.0.0/0 | Target: Internet Gateway</span>)</p>
+  </div>
+  
+  <p>Now the flow becomes:</p>
+  <div class="flow-v" style="gap:2px; font-size:13.5px;">
+    <span class="flow-node" style="padding:1px 8px;">Internet</span><span class="flow-arrow" style="font-size:14px;">↕</span><span class="flow-node" style="padding:1px 8px;">Internet Gateway</span><span class="flow-arrow" style="font-size:14px;">↕</span><span class="flow-node" style="padding:1px 8px;">Route Table</span><span class="flow-arrow" style="font-size:14px;">↕</span><span class="flow-node" style="padding:1px 8px;">Public Subnet</span>
+  </div>
+
+  <!-- 10. VPC Resource Map -->
+  <h2 class="sec-heading">10. VPC Resource Map</h2>
+  <p>AWS provides a Resource Map that makes the relationships easier to understand. Conceptually:</p>
+  <div class="ascii-tree">VPC
+│
+├── Public Subnet
+│      │
+│      └── Route Table
+│              │
+│              └── Internet Gateway
+│
+└── Private Subnet
+       │
+       └── Main/Private Route Table</div>
+  <p>This is extremely useful when learning AWS networking because you can visually understand how the components are connected.</p>
+
+  <!-- 11. Launching an EC2 Instance Inside Your VPC -->
+  <h2 class="sec-heading">11. Launching an EC2 Instance Inside Your VPC</h2>
+  <p>After creating the VPC and subnets, you can launch an EC2 instance.</p>
+  <p>During EC2 creation: <strong>Network Settings → VPC</strong></p>
+  <p>Instead of <span class="code-term" style="display:inline; padding:0 4px;">Default VPC</span>, select <span class="code-term" style="display:inline; padding:0 4px;">my-vpc</span>. Then select the required subnet.</p>
+  
+  <div class="hand-box">
+    <p style="margin:2px 0;"><strong>For example:</strong></p>
+    <ul style="margin:2px 0 0 18px; font-size:14px;">
+      <li>VPC: <span class="code-term" style="display:inline; padding:0 4px;">my-vpc</span></li>
+      <li>Subnet: <span class="code-term" style="display:inline; padding:0 4px;">Private Subnet</span></li>
+      <li>Auto-assign Public IP: <span class="code-term" style="display:inline; padding:0 4px;">Disabled</span></li>
+    </ul>
+  </div>
+
+  <!-- 12. Private EC2 Instance Example -->
+  <h2 class="sec-heading">12. Private EC2 Instance Example</h2>
+  <p>Suppose your private subnet has: <span class="code-term" style="display:inline; padding:0 4px;">10.0.2.0/24</span></p>
+  <p>You launch an EC2 instance into this subnet. AWS may assign it an address such as: <span class="code-term" style="display:inline; padding:0 4px;">10.0.2.15</span></p>
+  <div class="flow-v" style="gap:2px; font-size:13px; align-items:flex-start; margin-left: 20px;">
+    <span class="code-term" style="background:none; border:none; padding:0;">Private Subnet</span>
+    <span style="margin-left: 20px;">│</span>
+    <span style="margin-left: 20px;">└── EC2 (10.0.2.15)</span>
+  </div>
+  <p>The important point is: The instance receives an IP from the subnet's CIDR range.</p>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 13. Complete VPC Architecture -->
+  <h2 class="sec-heading">13. Complete VPC Architecture</h2>
+  <p>The practical setup from this demonstration can be visualized as:</p>
+  <div class="ascii-tree" style="text-align: center;">                         AWS REGION
+                             │
+                             ▼
+                           VPC
+                      10.0.0.0/16
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+       PUBLIC SUBNET                 PRIVATE SUBNET
+        10.0.1.0/24                  10.0.2.0/24
+              │                             │
+              ▼                             ▼
+        Route Table                    Route Table
+              │                             │
+              ▼                             │
+      Internet Gateway                    EC2
+              │                         10.0.2.x
+              ▼
+          INTERNET</div>
+
+  <!-- 14. Public Subnet Traffic Flow -->
+  <h2 class="sec-heading">14. Public Subnet Traffic Flow</h2>
+  <p>For a properly configured public resource:</p>
+  <div class="flow-v" style="gap:2px; font-size:12.5px;">
+    <span class="flow-node" style="padding:1px 6px;">User</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Internet</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Internet Gateway</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Route Table</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Public Subnet</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">EC2 / ALB</span>
+  </div>
+  <p style="font-size:14px; margin-top:6px;">The important configuration is: <span class="code-term" style="display:inline; padding:0 4px;">Public Subnet → Route Table → 0.0.0.0/0 → Internet Gateway</span></p>
+
+  <!-- 15. Private Subnet Traffic Flow -->
+  <h2 class="sec-heading">15. Private Subnet Traffic Flow</h2>
+  <p>A private subnet normally does not have <span class="code-term" style="display:inline; padding:0 4px;">0.0.0.0/0 → Internet Gateway</span> directly.</p>
+  <p>If a private resource needs outbound internet access, a common architecture is:</p>
+  <div class="flow-v" style="gap:2px; font-size:12.5px;">
+    <span class="flow-node" style="padding:1px 6px;">Private EC2</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Route Table</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px; border-color:#047857; background:#d1fae5;">NAT Gateway</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Internet Gateway</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 6px;">Internet</span>
+  </div>
+  <p style="font-size:14px; margin-top:6px;">This allows the private resource to initiate outbound connections without making it directly reachable from the internet.</p>
+
+  <!-- 16. Important Difference: Public vs Private -->
+  <h2 class="sec-heading">16. Important Difference: Public vs Private</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Public Subnet</th>
+        <th>Private Subnet</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Route to IGW</strong></td>
+        <td>Yes</td>
+        <td>No direct internet route</td>
+      </tr>
+      <tr>
+        <td><strong>Direct internet exposure</strong></td>
+        <td>Possible</td>
+        <td>Not directly</td>
+      </tr>
+      <tr>
+        <td><strong>Typical resources</strong></td>
+        <td>ALB, public web servers</td>
+        <td>DB, backend servers</td>
+      </tr>
+      <tr>
+        <td><strong>Public IP</strong></td>
+        <td>Can be used</td>
+        <td>Usually not required</td>
+      </tr>
+      <tr>
+        <td><strong>Outbound internet</strong></td>
+        <td>IGW</td>
+        <td>NAT Gateway, if required</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <div class="warn-box" style="margin-top: 0;">
+    <span class="tag-badge badge-imp">⚠️ Remember</span>
+    <p style="margin:2px 0;">A subnet is not public merely because it is called <span class="code-term" style="display:inline; padding:0 2px;">public-subnet</span>. Its route table configuration determines whether it has a public route.</p>
+  </div>
+
+  <!-- 17. Important Concepts to Remember -->
+  <h2 class="sec-heading">17. Important Concepts to Remember</h2>
+  <div class="two-col" style="font-size: 14px;">
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>VPC:</strong> Overall virtual network</li>
+      <li><strong>Subnet:</strong> Smaller IP range inside VPC</li>
+      <li><strong>Route Table:</strong> Decides where traffic goes</li>
+    </ul>
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>Internet Gateway:</strong> VPC ↔ Internet connectivity</li>
+      <li><strong>NAT Gateway:</strong> Private Outbound Internet</li>
+      <li><strong>EC2:</strong> Compute resource inside a subnet</li>
+    </ul>
+  </div>
+
+  <!-- Easy Memory Map -->
+  <div class="sticky-note" style="border-left-color: #3b82f6; background: #eff6ff;">
+    <h3 class="subsec-heading" style="margin-top:0; color: #1d4ed8;">🧠 Easy Memory Map</h3>
+    <div class="two-col">
+      <div>
+        <p style="font-weight:700; margin-bottom:2px; font-size:13.5px;">Hierarchy:</p>
+        <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+          <span class="flow-node" style="padding:1px 4px;">AWS Region</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Availability Zone</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">VPC</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Subnet</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Resource</span>
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:700; margin-bottom:2px; font-size:13.5px;">Paths:</p>
+        <p style="font-size:12px; margin:2px 0;"><strong>Public:</strong> Internet → IGW → Route Table → Public Subnet → Resource</p>
+        <p style="font-size:12px; margin:6px 0 2px 0;"><strong>Private Outbound:</strong> Private Resource → Route Table → NAT Gateway → IGW → Internet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interview / Exam Questions -->
+  <h2 class="sec-heading">⭐ Interview / Exam Questions</h2>
+  
+  <div class="qa-block">
+    <div class="qa-q">Q1. What is a VPC?</div>
+    <div class="qa-a">A VPC is an isolated virtual network in AWS where cloud resources can be deployed and networked.</div>
+  </div>
+  
+  <div class="qa-block">
+    <div class="qa-q">Q2. What is CIDR?</div>
+    <div class="qa-a">CIDR defines the IP address range of a VPC or subnet. Example: <span class="code-term" style="display:inline; padding:0 2px;">10.0.0.0/16</span></div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q3. What is a subnet?</div>
+    <div class="qa-a">A subnet is a smaller IP range created inside a VPC.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q4. What is a public subnet?</div>
+    <div class="qa-a">A subnet whose route table provides a route to an Internet Gateway.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q5. What is a private subnet?</div>
+    <div class="qa-a">A subnet without a direct route to the Internet Gateway for internet access.</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- Interview / Exam Questions Continued -->
+  <div class="qa-block">
+    <div class="qa-q">Q6. What does a route table do?</div>
+    <div class="qa-a">It determines where network traffic should be forwarded.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q7. What is an Internet Gateway?</div>
+    <div class="qa-a">It provides a path between a VPC and the internet for appropriately configured public resources.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q8. Why do we need an Internet Gateway?</div>
+    <div class="qa-a">To enable internet connectivity for resources that are configured for public access.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q9. Can a private subnet access the internet?</div>
+    <div class="qa-a">Yes, for outbound access it can commonly use a NAT Gateway.</div>
+  </div>
+
+  <div class="qa-block">
+    <div class="qa-q">Q10. Where is an EC2 instance launched?</div>
+    <div class="qa-a">An EC2 instance is launched into a subnet, which is part of a VPC.</div>
+  </div>
+
+  <!-- Most Important Corrections -->
+  <div class="warn-box" style="margin-top: 15px;">
+    <h2 class="sec-heading" style="margin-top:0; color:#be123c; border-bottom: 1.5px solid rgba(190, 18, 60, 0.35);">⚠️ Most Important Corrections</h2>
+    <ul style="font-size: 14.5px;">
+      <li>VPC is logically isolated, not necessarily a physically separate network.</li>
+      <li>An Availability Zone is not simply one physical server; it represents an isolated infrastructure location within a region.</li>
+      <li>Every subnet belongs to exactly one AZ.</li>
+      <li>EC2 is launched into a subnet, not directly into a VPC.</li>
+      <li>A default route table doesn't automatically make a subnet public.</li>
+      <li>Internet Gateway + route table + appropriate public addressing/security are needed for public connectivity.</li>
+      <li>NAT Gateway is for outbound connections initiated from private resources; it does not provide unsolicited inbound internet access.</li>
+      <li>A Security Group and NACL provide additional traffic controls around these networking components.</li>
+    </ul>
+  </div>
+
+  <!-- One-Line Revision -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 18px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      🔥 One-Line Revision
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 4px 0; font-weight: 700; text-align: center;">
+      VPC = Network → Subnet = IP Segment → Route Table = Traffic Direction → IGW = Internet Path → NAT = Private Outbound Internet → EC2 = Compute Resource
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

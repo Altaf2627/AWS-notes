@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS CloudFormation - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 29px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 17.5px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a;
+    font-size: 15px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+    white-space: pre-wrap;
+    display: block;
+    margin: 4px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS CloudFormation — Structured English Notes</div>
+
+  <!-- 1. What is AWS CloudFormation? -->
+  <h2 class="sec-heading">1. What is AWS CloudFormation?</h2>
+  <p>AWS CloudFormation is an <span class="highlight">Infrastructure as Code (IaC)</span> service provided by AWS.</p>
+
+  <h3 class="subsec-heading">Infrastructure as Code (IaC)</h3>
+  <p>IaC means: Creating and managing cloud infrastructure using code instead of doing everything manually through the AWS Console.</p>
+  <p>For example, instead of manually creating an EC2 instance by selecting:</p>
+  <ul style="font-size:14.5px;">
+    <li>AMI</li>
+    <li>Instance type</li>
+    <li>Storage</li>
+    <li>Security Group</li>
+    <li>Other settings</li>
+  </ul>
+  <p>you can define all of these in a CloudFormation template. CloudFormation then creates the required resources automatically.</p>
+
+  <!-- 2. Manual Infrastructure vs CloudFormation -->
+  <h2 class="sec-heading">2. Manual Infrastructure vs CloudFormation</h2>
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">Traditional/manual approach</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">AWS Console</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Create EC2</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Select AMI</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Select Instance Type</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Configure Storage</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Configure Security Group</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Review</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Create Instance</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:4px;">This involves a lot of manual work.</p>
+    </div>
+
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">CloudFormation approach</h3>
+      <div class="flow-v" style="gap:2px; font-size:12px; margin-top:10px;">
+        <span class="flow-node">CloudFormation Template</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#047857; background:#d1fae5;">Create Stack</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">CloudFormation reads template</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">AWS Resources</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node">Resources created</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:4px;">The main benefit is automation and repeatability.</p>
+    </div>
+  </div>
+
+  <!-- 3. CloudFormation Template -->
+  <h2 class="sec-heading">3. CloudFormation Template</h2>
+  <p>A template is a file that describes the infrastructure you want CloudFormation to create.</p>
+  <p>CloudFormation templates can be written in: <span class="highlight">YAML</span> or <span class="highlight">JSON</span></p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example:</h3>
+    <span class="code-term">Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: ami-xxxxxxxx
+      Tags:
+        - Key: Name
+          Value: MySimpleInstance</span>
+    <p style="margin-top:4px; font-size:14px;">This template says: "Create an EC2 instance with this AMI, this instance type, and this name."</p>
+  </div>
+
+  <!-- 4. Declarative Approach -->
+  <h2 class="sec-heading">4. Declarative Approach</h2>
+  <p>CloudFormation follows a declarative approach.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">What does declarative mean?</span>
+    <p style="margin:2px 0;">You specify: <strong>WHAT you want</strong></p>
+    <p style="margin:2px 0;">rather than explaining every individual step of: <strong>HOW to create it.</strong></p>
+  </div>
+  <p>For example, you just declare:</p>
+  <span class="code-term">Type: AWS::EC2::Instance
+
+Properties:
+  InstanceType: t3.micro
+  ImageId: ami-xxxxxxxx</span>
+  <p>You don't manually write: Open EC2 → Click Launch Instance → Select AMI → Configure settings → Launch. Instead, you declare the desired infrastructure state.</p>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Important CloudFormation Terms -->
+  <h2 class="sec-heading">5. Important CloudFormation Terms</h2>
+  
+  <h3 class="subsec-heading">A. Template</h3>
+  <p>The file containing your infrastructure definition. Formats: <strong>YAML</strong> or <strong>JSON</strong></p>
+
+  <h3 class="subsec-heading">B. Stack</h3>
+  <p>A Stack is a <span class="highlight">collection of AWS resources</span> created and managed together from a CloudFormation template.</p>
+  <div class="ascii-tree">CloudFormation Stack
+       │
+       ├── EC2 Instance
+       ├── Security Group
+       └── Elastic IP</div>
+  <p>Instead of managing every resource separately, you can manage them as one logical unit.</p>
+
+  <h3 class="subsec-heading">C. Resources</h3>
+  <p>Resources are the AWS services/components defined in the template. Examples: EC2, S3, VPC, Security Group, Elastic IP, RDS, Lambda, IAM resources, Load Balancer.</p>
+
+  <!-- 6. Creating a Stack -->
+  <h2 class="sec-heading">6. Creating a Stack</h2>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Create Stack</span><span class="flow-arrow">→</span><span class="flow-node">Choose Template</span><span class="flow-arrow">→</span><span class="flow-node">Upload Template</span><span class="flow-arrow">→</span><span class="flow-node">Specify Stack Name</span><span class="flow-arrow">→</span><span class="flow-node">Configure Options</span><span class="flow-arrow">→</span><span class="flow-node">Review</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Create Stack</span>
+  </div>
+  <p>You can use: Existing templates, Sample templates, Templates stored locally, Templates stored in Amazon S3, or Infrastructure Composer.</p>
+
+  <!-- 7. AWS Infrastructure Composer -->
+  <h2 class="sec-heading">7. AWS Infrastructure Composer</h2>
+  <p>CloudFormation provides Infrastructure Composer for <span class="highlight">visualizing infrastructure</span>. Instead of seeing only code, you can visualize resources and their relationships.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">        Security Group
+              │
+              ↓
+          EC2 Instance
+              ↑
+              │
+        Elastic IP</div>
+    <div class="hand-box" style="margin-top:0;">
+      <p style="font-weight:700; color:#1e40af; margin:0;">Benefits:</p>
+      <ul style="font-size:13.5px; margin-bottom:0;">
+        <li>Visual understanding of architecture</li>
+        <li>See resource relationships</li>
+        <li>Review infrastructure</li>
+        <li>Edit & Validate templates</li>
+      </ul>
+    </div>
+  </div>
+  <p style="font-size:14px; margin-top:4px;">This is particularly useful when a template contains many interconnected resources.</p>
+
+  <!-- 8. CloudFormation Stack Lifecycle -->
+  <h2 class="sec-heading">8. CloudFormation Stack Lifecycle</h2>
+  <p>A basic stack can go through three important operations:</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Create</h3>
+      <div class="flow-h" style="font-size:12px; gap:4px; justify-content:flex-start;"><span class="flow-node">Template</span><span class="flow-arrow">→</span><span class="flow-node">Create Stack</span><span class="flow-arrow">→</span><span class="flow-node">Resources Created</span></div>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Update</h3>
+      <div class="flow-h" style="font-size:12px; gap:4px; justify-content:flex-start;"><span class="flow-node">Existing Stack</span><span class="flow-arrow">→</span><span class="flow-node">Modify Template</span><span class="flow-arrow">→</span><span class="flow-node">Preview Changes</span><span class="flow-arrow">→</span><span class="flow-node">Update Stack</span></div>
+    </div>
+  </div>
+  
+  <div class="hand-box" style="width: 50%;">
+    <h3 class="subsec-heading" style="margin-top:0;">Delete</h3>
+    <div class="flow-h" style="font-size:12px; gap:4px; justify-content:flex-start;"><span class="flow-node">Delete Stack</span><span class="flow-arrow">→</span><span class="flow-node">CloudFormation Deletes Resources</span></div>
+  </div>
+  <div class="sticky-note" style="padding:4px 8px; text-align:center;">
+    <strong>Create → Update → Delete</strong> are fundamental CloudFormation operations.
+  </div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 9. Updating a Stack & 10. Change Sets -->
+  <h2 class="sec-heading">9. Updating a Stack &nbsp;|&nbsp; 10. Change Sets</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;">Suppose the original template contains: <span class="code-inline">InstanceType: t3.micro</span>. Later you change it to: <span class="code-inline">InstanceType: t2.micro</span>. You can update the existing stack instead of manually modifying the infrastructure.</p>
+    </div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">10. Change Sets</h3>
+      <p style="font-size:13px;">A Change Set allows you to <span class="highlight">preview proposed infrastructure changes</span> before applying them.</p>
+      <div class="flow-v" style="gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 4px;">Current Template</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Modified Template</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8; padding:1px 4px;">Change Set</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Review Changes</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 4px;">Execute Update</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <span class="tag-badge badge-imp">Important Note on Changes</span>
+    <p style="margin:2px 0; font-size:14px;">The change preview can indicate whether a resource will be: Modified, Replaced, Deleted, or Created.</p>
+    <p style="margin:2px 0; font-size:14px; font-weight:bold;">A resource replacement can mean the existing resource is removed and a new resource is created.</p>
+    <p style="margin:2px 0; font-size:14px;">Therefore, always review changes carefully before executing an update.</p>
+  </div>
+
+  <!-- 11. Example: Simple Name Update -->
+  <h2 class="sec-heading">11. Example: Simple Name Update</h2>
+  <p>Suppose the instance initially has: <span class="code-inline">MySimpleInstance</span>. You change it to: <span class="code-inline">MyDemoInstance</span>.</p>
+  <p>CloudFormation can identify the change and update the stack. If the change does not require replacing the underlying resource, the existing resource can remain while its applicable property is updated.</p>
+
+  <!-- 12. Rollback and Failure Handling & 13. Why Important -->
+  <h2 class="sec-heading">12. Rollback and Failure Handling</h2>
+  <p>One of CloudFormation's important capabilities is <span class="highlight">rollback</span>. Suppose you attempt an invalid update: <span class="code-inline">t3.micro</span> → Invalid configuration → Update fails.</p>
+  <p>CloudFormation can roll back the stack to the previous successful state, depending on the operation and configuration.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Previous State</span><span class="flow-arrow">→</span><span class="flow-node">Update</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ef4444; background:#fee2e2;">ERROR</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#b91c1c; background:#fef2f2;">ROLLBACK</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Previous Successful State</span>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example from the transcript</h3>
+    <p style="font-size:13.5px;">An update attempted to change the instance type to t2.micro, but the configuration was not valid in that environment/region. The update failed and CloudFormation rolled the stack back. The EC2 instance therefore remained in its previous working state.</p>
+  </div>
+
+  <h3 class="subsec-heading">13. Why Rollback is Important</h3>
+  <p>Without proper state management, a failed infrastructure update could leave resources partially modified. CloudFormation helps maintain the intended stack state and provides mechanisms for handling failed operations.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Key Idea</span>
+    If an update fails, CloudFormation can attempt to restore the previous successful state.
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 14. Multiple Resources in One Template & 15. Resource References -->
+  <h2 class="sec-heading">14. Multiple Resources &nbsp;|&nbsp; 15. Resource References</h2>
+  <p>One of the biggest advantages of CloudFormation is that one template can create multiple related resources.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree">CloudFormation Stack
+        │
+        ├──────── EC2 Instance
+        │
+        ├──────── Security Group
+        │
+        └──────── Elastic IP</div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">15. Resource References</h3>
+      <p style="font-size:13.5px;">Resources can reference one another. The EC2 instance can reference the Security Group created in the same template. Similarly, the Elastic IP can reference the EC2 instance. This allows CloudFormation to understand relationships between resources.</p>
+    </div>
+  </div>
+
+  <!-- 16, 17, 18. Example: Web Server Stack -->
+  <h2 class="sec-heading">16. Example: Web Server Stack</h2>
+  <p>A more advanced template can automatically create a complete basic web server environment.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">                Internet
+                    │
+                    ↓
+              Elastic IP
+                    │
+                    ↓
+              EC2 Instance
+                    │
+             Security Group
+                    │
+                    ↓
+                Web Server
+                    │
+                    ↓
+              HTML Web Page</div>
+              
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">17. Security Group in Template</h3>
+      <p style="font-size:13px;">For a web server, the Security Group can allow HTTP traffic (Port 80) from the Internet. <em>Note: In production, security rules should be restricted appropriately rather than unnecessarily exposing services to the entire internet.</em></p>
+      
+      <h3 class="subsec-heading">18. Elastic IP</h3>
+      <p style="font-size:13px;">An Elastic IP is a static public IPv4 address. Without a persistent public address, the public IPv4 address associated with an instance can change in certain lifecycle situations. Using an Elastic IP provides a stable address for the application.</p>
+    </div>
+  </div>
+
+  <!-- 19 & 20. Automation and Major Use Cases -->
+  <h2 class="sec-heading">19. CloudFormation & Automation &nbsp;|&nbsp; 20. Major Use Cases</h2>
+  <p>CloudFormation becomes especially useful when infrastructure needs to be created repeatedly.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Create Template Once</span><span class="flow-arrow">→</span><span class="flow-node">Reuse Template</span><span class="flow-arrow">→</span><span class="flow-node">Create Infrastructure</span><span class="flow-arrow">→</span><span class="flow-node">Reuse Again</span><span class="flow-arrow">→</span><span class="flow-node">Create Infrastructure</span>
+  </div>
+
+  <h3 class="subsec-heading">20. Major Use Cases</h3>
+  <div class="hand-box">
+    <p><strong>1. Consistency:</strong> Same Template → Same Configuration → Consistent Infrastructure. Reduces manual configuration differences.</p>
+    <p><strong>2. Automation:</strong> Can be incorporated into automated workflows (e.g., Scheduled Job → AWS CLI → CloudFormation → Create Stack).</p>
+    <p><strong>3. Repeatable Environments:</strong> You can create similar environments for Development, Testing, Staging, and Production using the same base infrastructure definition with different parameters.</p>
+  </div>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 21. Infrastructure as Code — Key Benefits -->
+  <h2 class="sec-heading">21. Infrastructure as Code — Key Benefits</h2>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Benefit</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Automation</strong></td><td>Reduce manual infrastructure work</td></tr>
+      <tr><td><strong>Consistency</strong></td><td>Same infrastructure definition can be reused</td></tr>
+      <tr><td><strong>Repeatability</strong></td><td>Easily reproduce environments</td></tr>
+      <tr><td><strong>Version Control</strong></td><td>Templates can be stored with application code</td></tr>
+      <tr><td><strong>Faster Deployment</strong></td><td>Infrastructure can be created systematically</td></tr>
+      <tr><td><strong>Easy Cleanup</strong></td><td>Stack deletion can remove managed resources</td></tr>
+      <tr><td><strong>State Management</strong></td><td>CloudFormation tracks stack resources and operations</td></tr>
+      <tr><td><strong>Change Preview</strong></td><td>Change Sets show proposed modifications</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 22 & 23. Stack Deletion & Cost Management -->
+  <h2 class="sec-heading">22. Stack Deletion &nbsp;|&nbsp; 23. Cost Management Benefit</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;">Instead of manually deleting each resource (EC2, SG, EIP), you can delete the stack: <span class="highlight">Delete Stack → CloudFormation → Delete Stack Resources</span>. This is especially useful for temporary environments.</p>
+      <div class="warn-box" style="padding:4px 8px; margin:2px 0;">
+        <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Important</span> <span style="font-size:13px;">Always understand a resource's deletion behavior before deleting a production stack. Some resources may have retention policies.</span>
+      </div>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">23. Cost Management</h3>
+      <p style="font-size:13.5px;">CloudFormation itself does not generally charge simply for the existence of a template or stack. However, the AWS resources created by CloudFormation (EC2, RDS, NAT, etc.) can incur charges. Deleting unused stacks helps prevent unnecessary resource charges.</p>
+    </div>
+  </div>
+
+  <!-- 24. StackSets -->
+  <h2 class="sec-heading">24. StackSets</h2>
+  <p>A normal CloudFormation stack is generally deployed in a particular AWS account and region. For larger organizations, CloudFormation StackSets allow you to deploy CloudFormation stacks across <span class="highlight">Multiple AWS accounts</span> and <span class="highlight">Multiple AWS Regions</span>.</p>
+  <div class="ascii-tree" style="text-align: center;">             StackSet
+                │
+      ┌─────────┼─────────┐
+      ↓         ↓         ↓
+ Account A  Account B  Account C
+    │           │          │
+ Region 1    Region 1   Region 2</div>
+  <p><strong>Use case:</strong> Organizations can use StackSets to deploy standardized infrastructure across many accounts and regions.</p>
+
+  <!-- 25. CloudFormation and AWS CLI -->
+  <h2 class="sec-heading">25. CloudFormation and AWS CLI</h2>
+  <p>CloudFormation can also be operated through the AWS CLI.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12px;">
+    <span class="flow-node">Local Template</span><span class="flow-arrow">→</span><span class="flow-node">AWS CLI</span><span class="flow-arrow">→</span><span class="flow-node">CloudFormation</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Create Stack</span>
+  </div>
+  <span class="code-term">aws cloudformation create-stack \
+  --stack-name demo-stack \
+  --template-body file://template.yaml</span>
+  <p style="font-size:13.5px;">The AWS CLI must be configured with appropriate credentials and region settings.</p>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 26, 27. CloudFormation Documentation & Resource Types -->
+  <h2 class="sec-heading">26. Documentation &nbsp;|&nbsp; 27. Resource Types</h2>
+  <p>When creating templates, you use the <strong>CloudFormation Template Reference</strong> to find Resource types, Supported properties, Required properties, and Allowed values.</p>
+  
+  <div class="two-col">
+    <div>
+      <div class="flow-v" style="gap:2px; font-size:11px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px;">Choose AWS Service</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Find CFN Resource Type</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Check Properties</span><span class="flow-arrow" style="font-size:12px; margin-left:20px;">↓</span><span class="flow-node" style="padding:1px 4px;">Write Template</span>
+      </div>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">27. Resource Type</h3>
+      <p style="font-size:13px; margin:2px 0;">A resource declaration typically contains: <span class="code-inline">Type: AWS::EC2::Instance</span>. This tells CloudFormation which AWS resource should be created.</p>
+      <p style="font-size:12.5px; margin:0;">Examples: <span class="code-inline">AWS::S3::Bucket</span>, <span class="code-inline">AWS::RDS::DBInstance</span>, <span class="code-inline">AWS::Lambda::Function</span></p>
+    </div>
+  </div>
+
+  <!-- 28. Common CloudFormation Use Cases -->
+  <h2 class="sec-heading">28. Common CloudFormation Use Cases</h2>
+  <div class="two-col">
+    <ul style="font-size:14px; margin-bottom:0;">
+      <li><strong>EC2:</strong> EC2 Instance + Security Group + Elastic IP</li>
+      <li><strong>S3:</strong> S3 Bucket</li>
+      <li><strong>Networking:</strong> VPC, Subnets, Route Tables, Internet Gateway, Security Components</li>
+    </ul>
+    <ul style="font-size:14px; margin-bottom:0;">
+      <li><strong>Database:</strong> RDS Database + Backup Configuration</li>
+      <li><strong>Serverless:</strong> Lambda + API Gateway</li>
+      <li><strong>Web App:</strong> Load Balancer → Auto Scaling → EC2 Instances</li>
+    </ul>
+  </div>
+
+  <!-- 29. Drift Detection -->
+  <h2 class="sec-heading">29. Drift Detection</h2>
+  <p>Drift Detection identifies changes made to resources outside CloudFormation.</p>
+  <div class="hand-box">
+    <p style="margin:2px 0; font-size:13.5px;">Example: Your template says: <span class="code-inline">EC2 configuration = A</span>. But someone manually changes the resource through the AWS Console to <span class="code-inline">configuration = B</span>. Now there is a difference between Template State vs Actual Resource State. This difference is called <strong>drift</strong>.</p>
+    <div class="ascii-tree" style="margin-top:4px;">CloudFormation Template
+          │
+          │ expected state
+          ↓
+      Resource
+          ↑
+          │ actual state
+          │
+   Manual Console Change</div>
+  </div>
+
+  <!-- 30. CloudFormation Architecture & 31. Workflow -->
+  <h2 class="sec-heading">30. Architecture &nbsp;|&nbsp; 31. Practical Workflow</h2>
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center;">             CloudFormation
+                   │
+             Template
+          ┌────────┴────────┐
+          ↓                 ↓
+       Stack             Change Set
+          │
+          ↓
+   AWS Resources
+   ┌──────┼───────┐
+   ↓      ↓       ↓
+  EC2    SG      EIP</div>
+    
+    <div>
+      <ol style="font-size: 13px; margin: 0; padding-left: 18px;">
+        <li>Write Template (YAML/JSON)</li>
+        <li>Validate Template</li>
+        <li>Create Stack</li>
+        <li>CloudFormation Creates Resources</li>
+        <li>Monitor Stack Events</li>
+        <li>Update Template When Required</li>
+        <li>Create/Review Change Set</li>
+        <li>Apply Update</li>
+        <li>Rollback if Update Fails</li>
+        <li>Delete Stack When Done</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 32. Important Concepts Quick Table -->
+  <h2 class="sec-heading">32. Important CloudFormation Concepts — Quick Table</h2>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Concept</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>IaC</strong></td><td>Infrastructure managed through code</td></tr>
+      <tr><td><strong>Template</strong></td><td>YAML/JSON infrastructure definition</td></tr>
+      <tr><td><strong>Stack</strong></td><td>Collection of resources managed together</td></tr>
+      <tr><td><strong>Resource</strong></td><td>AWS component defined in a template</td></tr>
+      <tr><td><strong>Declarative</strong></td><td>Define desired result rather than every procedure</td></tr>
+      <tr><td><strong>Change Set</strong></td><td>Preview proposed stack changes</td></tr>
+      <tr><td><strong>Rollback</strong></td><td>Return toward previous successful state after failure</td></tr>
+      <tr><td><strong>StackSet</strong></td><td>Deploy stacks across accounts/regions</td></tr>
+      <tr><td><strong>Drift Detection</strong></td><td>Detect differences between template-defined and actual resource configuration</td></tr>
+      <tr><td><strong>Infrastructure Composer</strong></td><td>Visualize/design CloudFormation infrastructure</td></tr>
+      <tr><td><strong>AWS CLI</strong></td><td>Manage CloudFormation through command line</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 33. CloudFormation vs Manual AWS Console -->
+  <h2 class="sec-heading">33. CloudFormation vs Manual AWS Console</h2>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Manual Console</th><th>CloudFormation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Manual configuration</td><td>Code-based configuration</td></tr>
+      <tr><td>Time-consuming for repeated work</td><td>Reusable</td></tr>
+      <tr><td>Higher chance of human error</td><td>More consistent</td></tr>
+      <tr><td>Difficult to reproduce exactly</td><td>Easily reproducible</td></tr>
+      <tr><td>Individual resource management</td><td>Stack-based management</td></tr>
+      <tr><td>Manual cleanup</td><td>Stack deletion can clean up managed resources</td></tr>
+      <tr><td>Harder to automate</td><td>Easy to integrate into automation</td></tr>
+      <tr><td>Less suitable for large infrastructure</td><td>Useful for complex infrastructure</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Final Revision Box -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align:center;">
+      ⭐ Quick 1-Minute Revision
+    </div>
+    <div class="ascii-tree" style="text-align:center; background: transparent; border:none; padding:4px; font-weight:bold;">CloudFormation
+      ↓
+     IaC
+      ↓
+Template (YAML / JSON)
+      ↓
+    Stack
+      ↓
+AWS Resources
+ ┌────┼─────┐
+EC2   SG    EIP</div>
+    <ul style="font-size:14.5px; color:#881337; font-weight:700; margin-bottom:0;">
+      <li><strong>Template → Stack → Resources</strong></li>
+      <li><strong>Create → Update → Delete</strong></li>
+      <li><strong>Change Set</strong> → Preview Changes | <strong>Failure</strong> → Rollback</li>
+      <li><strong>Manual Change</strong> → Drift Detection</li>
+      <li><strong>Multiple Accounts/Regions</strong> → StackSets</li>
+      <li><strong>Main purpose</strong> → Automation + Consistency + Repeatability</li>
+    </ul>
+  </div>
+
+</div>
+
+</body>
+</html>

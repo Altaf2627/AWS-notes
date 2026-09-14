@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS EC2 — Elastic Compute Cloud — Handwritten Lecture Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --ink-blue: #1b3a6b;
+      --ink-red: #c02128;
+      --ink-green: #1b663e;
+      --ink-dark: #1e293b;
+      --pencil-gray: #475569;
+      --paper-bg: #fffdf9;
+      --paper-texture: #fcf9f2;
+      --hl-yellow: rgba(254, 240, 138, 0.85);
+      --hl-green: rgba(187, 247, 208, 0.8);
+      --hl-pink: rgba(251, 207, 232, 0.8);
+      --hl-blue: rgba(186, 230, 253, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #1e2430;
+      font-family: 'Patrick Hand', 'Kalam', cursive;
+      color: var(--ink-blue);
+      line-height: 1.34;
+      font-size: 13px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Toolbar */
+    .controls-bar {
+      position: fixed;
+      top: 12px;
+      right: 18px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-action {
+      background: #ea580c;
+      color: #ffffff;
+      border: none;
+      padding: 6px 15px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+    }
+    .btn-action:hover {
+      background: #c2410c;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Notebook Page (210mm x 297mm) */
+    .notebook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .notebook-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      height: auto;
+      background-color: var(--paper-bg);
+      background-image: 
+        radial-gradient(var(--paper-texture) 25%, transparent 25%),
+        radial-gradient(#f7f3e8 15%, transparent 15%);
+      background-size: 16px 16px, 32px 32px;
+      box-shadow: 
+        -2px 0 6px rgba(0,0,0,0.2),
+        8px 14px 30px rgba(0,0,0,0.42),
+        0 0 0 1px rgba(0,0,0,0.08);
+      border-radius: 4px 16px 16px 4px;
+      padding: 13mm 14mm 13mm 26mm; /* Left margin accommodates spiral binding */
+      box-sizing: border-box;
+      overflow: visible;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Realistic Spiral Binding */
+    .spiral-spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 24mm;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+
+    .spiral-ring-unit {
+      position: relative;
+      width: 26mm;
+      height: 8.5mm;
+      display: flex;
+      align-items: center;
+      margin-left: 2mm;
+    }
+
+    .spiral-hole {
+      width: 4.6mm;
+      height: 4.6mm;
+      background-color: #1e2430;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.85);
+      position: absolute;
+      left: 10mm;
+    }
+
+    .spiral-wire {
+      position: absolute;
+      left: -2mm;
+      width: 16mm;
+      height: 7.2mm;
+      border: 2.2mm solid #a6afba;
+      border-top-color: #f1f5f9;
+      border-left-color: #64748b;
+      border-bottom-color: #334155;
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+      box-shadow: -2px 3px 6px rgba(0,0,0,0.45);
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    }
+
+    /* Ink & Handwritten Accents */
+    .ink-red {
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      letter-spacing: -0.2px;
+    }
+
+    .ink-blue {
+      color: var(--ink-blue);
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    .ink-green {
+      color: var(--ink-green);
+    }
+
+    .ink-bold {
+      font-weight: 700;
+      font-family: 'Kalam', cursive;
+    }
+
+    .hl {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0.45) 0.9%, var(--hl-yellow) 98.4%);
+      border-radius: 3px 8px 4px 9px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-grn {
+      background: linear-gradient(104deg, rgba(187, 247, 208, 0.35) 0.9%, var(--hl-green) 98.4%);
+      border-radius: 4px 7px 3px 8px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-pink {
+      background: linear-gradient(104deg, rgba(251, 207, 232, 0.35) 0.9%, var(--hl-pink) 98.4%);
+      border-radius: 5px 8px 3px 6px;
+      padding: 1px 4px;
+    }
+
+    .hand-box {
+      border: 2px solid var(--ink-blue);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.75);
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.03);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-box-red {
+      border: 2px solid var(--ink-red);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 6px 10px;
+      background: rgba(254, 242, 242, 0.55);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-badge {
+      display: inline-block;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 10.5px;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.1);
+      transform: rotate(-1.5deg);
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .badge-important {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .badge-trick {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .badge-faq {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #a5b4fc;
+    }
+
+    .badge-tip {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .badge-aws {
+      background: #ffedd5;
+      color: #9a3412;
+      border: 1px solid #fb923c;
+    }
+
+    .sticky-note {
+      background: #fef9c3;
+      border-left: 5px solid #eab308;
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.07);
+      padding: 5px 8px;
+      border-radius: 3px 8px 8px 3px;
+      transform: rotate(-0.3deg);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 3px 0;
+      font-size: 11.5px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table th {
+      border-bottom: 2px solid var(--ink-red);
+      padding: 3px 5px;
+      text-align: left;
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      font-size: 12px;
+    }
+
+    .hand-table td {
+      border-bottom: 1.5px dashed #cbd5e1;
+      padding: 3px 5px;
+      color: var(--ink-blue);
+    }
+
+    .hand-table tr:last-child td {
+      border-bottom: 2px solid var(--ink-blue);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+      font-family: 'Caveat', cursive;
+      font-size: 14.5px;
+      color: #64748b;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 3px;
+      margin-top: 5px;
+      font-family: 'Caveat', cursive;
+      font-size: 13.5px;
+      color: #94a3b8;
+    }
+
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram-box {
+      background: #fafaf9;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 6px;
+      padding: 5px;
+      margin: 3px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .code-box {
+      font-family: 'Courier New', Courier, monospace;
+      background: #0f172a;
+      color: #38bdf8;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      line-height: 1.35;
+      margin: 3px 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .notebook-container {
+        gap: 0 !important;
+        margin-top: 0 !important;
+      }
+      .notebook-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print & Nav Controls -->
+  <div class="controls-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Export PDF / Print Notes
+    </button>
+    <button class="btn-action" style="background:#0284c7;" onclick="window.scrollTo({top: 0, behavior:'smooth'})">
+      ⬆️ Top
+    </button>
+  </div>
+
+  <div class="notebook-container">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: WHAT IS EC2, VISUALIZING, RENTING & ELASTICITY -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-1">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: AWS EC2 (Elastic Compute Cloud) Overview</span>
+          <span>Sheet No: 01</span>
+        </div>
+
+        <!-- Banner Title -->
+        <div class="hand-box-red text-center mb-2" style="background: rgba(254, 242, 242, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-aws">AWS COMPUTE</span>
+            <h1 class="ink-red text-2xl font-bold tracking-wide">
+              🖥️ AWS EC2 — Elastic Compute Cloud
+            </h1>
+          </div>
+          <p class="text-xs text-slate-500 font-sans uppercase tracking-wider mt-0.5">Detailed Notes | Concepts + Practical Workflow + Interview Preparation</p>
+        </div>
+
+        <!-- 1. What is Amazon EC2? -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">DEFINITION</span>
+            <h2 class="ink-red text-base font-bold">1. What is Amazon EC2?</h2>
+          </div>
+          <div class="hand-box p-2 bg-amber-50/20 text-xs">
+            <p class="ink-blue font-bold">
+              Amazon EC2 (Elastic Compute Cloud) is an AWS cloud service that provides resizable virtual servers, called <span class="hl font-bold">EC2 Instances</span>, in the cloud.
+            </p>
+            <div class="hand-box-red p-1 bg-white text-[11px] my-1">
+              <b class="text-red-900">Simple Definition:</b> Amazon EC2 allows you to create and manage virtual servers in the AWS cloud according to your computing requirements. Think of an EC2 instance as a virtual computer/server that you rent from AWS.
+            </div>
+            <p class="text-slate-700 font-bold mt-1">You can use an EC2 instance to:</p>
+            <div class="grid grid-cols-4 gap-1 mt-0.5 text-[10.5px] text-slate-800 font-mono">
+              <span class="p-0.5 border rounded bg-white text-center">• Host websites</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Run applications</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Run APIs</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Run databases</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Process workloads</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Dev / Test env</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Backend tasks</span>
+              <span class="p-0.5 border rounded bg-white text-center">• Business apps</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Visualizing EC2 -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-2">
+              <span class="callout-badge badge-tip">ARCHITECTURE</span>
+              <h2 class="ink-red text-sm font-bold">2. Visualizing EC2</h2>
+            </div>
+            <span class="text-[10px] text-slate-500 font-mono">Physical vs Cloud Virtual Server</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="hand-box p-2 bg-white font-mono text-[10px]">
+              <b class="text-slate-700">Physical Computer:</b>
+              <div class="mt-0.5 text-slate-600">
+                Physical Computer<br>
+                &nbsp;&nbsp;|-- CPU<br>
+                &nbsp;&nbsp;|-- RAM<br>
+                &nbsp;&nbsp;|-- Storage<br>
+                &nbsp;&nbsp;|-- Operating System<br>
+                &nbsp;&nbsp;|-- Network<br>
+                &nbsp;&nbsp;└── Applications
+              </div>
+            </div>
+
+            <div class="hand-box p-2 bg-blue-50/20 font-mono text-[10px]">
+              <b class="text-blue-900">With EC2 (AWS Cloud Infrastructure):</b>
+              <div class="mt-0.5 text-blue-950">
+                Your Laptop ➔ (Internet) ➔ AWS Cloud<br>
+                &nbsp;&nbsp;↓<br>
+                EC2 Instance<br>
+                &nbsp;&nbsp;|-- Virtual CPU &nbsp;&nbsp;|-- Memory<br>
+                &nbsp;&nbsp;|-- Storage &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- OS<br>
+                &nbsp;&nbsp;|-- Networking &nbsp;&nbsp;└── Applications
+              </div>
+            </div>
+          </div>
+          <p class="text-[10.5px] text-slate-600 mt-1 italic text-center">The server is not physically sitting in front of you. You access and manage it remotely through the internet. That is why we call it a <b>virtual server</b>.</p>
+        </div>
+
+        <!-- 3. EC2 = Renting a Computer in the Cloud -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-trick">CONCEPT</span>
+              <h3 class="ink-red text-sm font-bold">3. EC2 = Renting a Computer in the Cloud</h3>
+            </div>
+            <span class="text-[10px] text-amber-900 font-bold">Buy vs Rent</span>
+          </div>
+
+          <p class="ink-blue text-[11px] mb-1">Suppose you want to host a website. You have two choices:</p>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="hand-box-red p-1.5 bg-red-50/30 text-[10px]">
+              <b class="text-red-900 font-bold">Option 1 — Buy a Physical Server ❌</b><br>
+              <div class="grid grid-cols-2 gap-0.5 mt-0.5 text-red-950 font-mono">
+                <div>• High initial cost</div>
+                <div>• Hardware failures</div>
+                <div>• Hardware maintenance</div>
+                <div>• Capacity planning</div>
+                <div>• Electricity cost</div>
+                <div>• Physical security</div>
+                <div>• Cooling &amp; Network</div>
+                <div>• Expensive upgrades</div>
+              </div>
+            </div>
+
+            <div class="hand-box p-1.5 bg-emerald-50/30 text-[10px]">
+              <b class="text-emerald-900 font-bold">Option 2 — Use EC2 (Rent) ✅</b><br>
+              <div class="font-mono mt-0.5 text-emerald-950">
+                AWS Data Center ➔ Physical Hardware<br>
+                &nbsp;&nbsp;└── EC2 Virtual Server (CPU, RAM, Disk, Net, OS)<br>
+                <span class="hl-grn font-bold">Zero physical hardware to buy or maintain!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 & 5. Why Elastic & What Can You Control -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 4. Why Elastic -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">4. Why is EC2 called "Elastic"?</h3>
+            <p class="ink-blue text-[10.5px]">
+              <b>"Elastic"</b> means you can adjust your computing resources according to workload requirements:
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px]">
+              Low Traffic ➔ Small EC2 Instance<br>
+              High Traffic ➔ Larger Instance / More Instances
+            </div>
+            <p class="text-[10px] text-slate-600 italic">Change infrastructure dynamically as demand shifts!</p>
+          </div>
+
+          <!-- 5. What Can You Control -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">5. What Can You Control in an EC2 Instance?</h3>
+            <p class="ink-blue text-[10px]">It behaves like a real server you fully control:</p>
+            <div class="grid grid-cols-3 gap-0.5 text-[9.5px] font-mono text-slate-800 mt-0.5">
+              <span>• OS</span><span>• CPU</span><span>• RAM</span>
+              <span>• Storage</span><span>• Network</span><span>• Security Group</span>
+              <span>• Applications</span><span>• Software</span><span>• User Data</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 1 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: CREATION WORKFLOW, AMI & INSTANCE FAMILIES -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-2">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Instance Creation, AMIs &amp; Instance Types</span>
+          <span>Sheet No: 02</span>
+        </div>
+
+        <!-- 6. EC2 Real-World Example -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">USE CASE</span>
+              <h2 class="ink-red text-sm font-bold">6. EC2 Real-World Example: E-Commerce Deployment</h2>
+            </div>
+            <span class="text-[10px] text-slate-500 font-mono">Traditional vs AWS Speed</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-0.5">
+            <div class="p-1.5 border border-red-200 rounded bg-red-50/30 text-[10px] font-mono">
+              <b class="text-red-900">Physical Server Route (Weeks):</b><br>
+              Buy Server ➔ Install OS ➔ Configure Network ➔ Install Software ➔ Deploy App
+            </div>
+            <div class="p-1.5 border border-emerald-200 rounded bg-emerald-50/30 text-[10px] font-mono">
+              <b class="text-emerald-900">AWS EC2 Route (Minutes):</b><br>
+              AWS Console ➔ Launch EC2 ➔ Select OS ➔ Choose Type ➔ Set Net &amp; SG ➔ Deploy!
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 & 8. Creating an EC2 Instance & Name/Tags -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">7. Creating an EC2 Instance</h3>
+            <p class="text-[10.5px] text-slate-700">From the AWS Management Console:</p>
+            <div class="diagram-box py-0.5 text-center font-mono text-[10px] bg-white">
+              AWS Console ➔ Search "EC2" ➔ EC2 Dashboard ➔ <b>Launch Instance</b>
+            </div>
+          </div>
+
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">8. Step 1 — Name and Tags</h3>
+            <p class="text-[10.5px] text-slate-700">Meaningful names make infrastructure easy to manage:</p>
+            <div class="grid grid-cols-2 gap-1 text-[9.5px] font-mono mt-0.5">
+              <span class="border p-0.5 bg-slate-50 rounded">Production-Web-01</span>
+              <span class="border p-0.5 bg-slate-50 rounded">Development-Web-01</span>
+              <span class="border p-0.5 bg-slate-50 rounded">Testing-Web-01</span>
+              <span class="border p-0.5 bg-slate-50 rounded">Database-01</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9 & 10. AMI & Architecture -->
+        <div class="hand-box-red p-2 mb-2 bg-amber-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">CORE IMAGE</span>
+              <h2 class="ink-red text-sm font-bold">9. Step 2 — Application and OS Image (AMI)</h2>
+            </div>
+            <span class="text-[10px] font-mono text-red-900 font-bold">AMI ≠ EC2 Instance</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            An <b>Amazon Machine Image (AMI)</b> contains the information required to launch an instance: OS + configuration + preconfigured software.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="diagram-box bg-white p-1 text-center font-mono text-[10px]">
+              AMI (Image/Template)<br>
+              ├── OS (Amazon Linux, Ubuntu, Windows, RHEL, SUSE)<br>
+              ├── Configuration &amp; Software<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;↓ launches<br>
+              <b>EC2 Instance (Running Server)</b>
+            </div>
+
+            <div class="space-y-1 text-[10px]">
+              <div class="sticky-note">
+                <b class="text-red-900">⚠️ Critical Distinction:</b><br>
+                <b>AMI</b> = Template / Blueprint<br>
+                <b>EC2 Instance</b> = The actual running virtual server.
+              </div>
+              <div class="p-1 border rounded bg-white">
+                <b class="text-blue-900">10. Architecture:</b> Choose <b>x86_64</b> or <b>arm64</b> (Graviton). Ensure your AMI and instance type match!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11 & 12. Instance Type & Families Table -->
+        <div class="hand-box p-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-aws">HARDWARE SIZING</span>
+              <h2 class="ink-red text-sm font-bold">11. Step 3 — Instance Type &amp; 12. Instance Families</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">vCPU, RAM, Net</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            <b>Instance Type</b> determines computing capacity (vCPU, Memory, Network performance, Storage capabilities). Example: <code>t3.micro</code> (lightweight workloads).
+          </p>
+
+          <table class="hand-table text-[10.5px] mt-1">
+            <thead>
+              <tr><th>Category</th><th>Primary Purpose</th><th>Common Workloads</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>General Purpose</b></td><td>Balanced CPU, memory and networking</td><td>Websites, dev environments, small DBs</td></tr>
+              <tr><td><b>Compute Optimized</b></td><td>CPU-intensive workloads</td><td>Batch processing, video encoding, gaming</td></tr>
+              <tr><td><b>Memory Optimized</b></td><td>Memory-intensive workloads</td><td>In-memory DBs, real-time analytics, caching</td></tr>
+              <tr><td><b>Storage Optimized</b></td><td>High sequential read/write storage performance</td><td>Data warehouses, distributed file systems</td></tr>
+              <tr><td><b>Accelerated Computing</b></td><td>Hardware GPU/accelerator-based workloads</td><td>Machine learning, AI, 3D rendering</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 2 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 3: INSTANCE TYPES, SIZING & KEY PAIRS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-3">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Deep Dive into Instance Sizing &amp; Key Pairs</span>
+          <span>Sheet No: 03</span>
+        </div>
+
+        <!-- 13 to 16. Instance Family Explanations -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <div class="hand-box p-1.5 bg-white">
+            <b class="text-blue-900 text-xs">13. General Purpose (T &amp; M series)</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Balanced CPU, RAM, &amp; networking. Best for web apps, blogs, dev environments, and small relational databases.</p>
+          </div>
+          <div class="hand-box p-1.5 bg-white">
+            <b class="text-emerald-900 text-xs">14. Compute Optimized (C series)</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">High CPU-to-memory ratio. Best for batch processing, scientific modeling, high-traffic web servers, and media encoding.</p>
+          </div>
+          <div class="hand-box p-1.5 bg-white">
+            <b class="text-purple-900 text-xs">15. Memory Optimized (R, X series)</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Massive RAM capacity. Best for Redis/Memcached in-memory caches, Apache Spark, and real-time big data analytics.</p>
+          </div>
+          <div class="hand-box p-1.5 bg-white">
+            <b class="text-amber-900 text-xs">16. Accelerated Computing (G, P series)</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Dedicated hardware GPUs. Best for Machine Learning training/inference, 3D graphics rendering, and heavy parallel computing.</p>
+          </div>
+        </div>
+
+        <!-- 17 & 18. Sizing Examples -->
+        <div class="hand-box p-2 mb-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">17. Instance Type Sizing &amp; 18. Sizing Scenarios</h3>
+            <span class="callout-badge badge-trick">DO NOT GUESS</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            Choose based on: CPU, RAM, Network throughput, Storage, Workload nature, and Cost.
+          </p>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[10px] font-mono mt-1">
+            <div class="p-1 border rounded bg-white">
+              <b>Small Blog:</b><br>Low traffic, simple app ➔ Small General Purpose (e.g. <code>t3.micro</code>).
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>E-Commerce App:</b><br>High requests, DB load ➔ Moderate/Large General Purpose + Scale.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>Video Processing:</b><br>Heavy computation ➔ Accelerated Computing (GPU).
+            </div>
+          </div>
+        </div>
+
+        <!-- 19, 20, 21. Step 4 — Key Pair -->
+        <div class="hand-box-red p-2 mb-2 bg-red-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">AUTHENTICATION</span>
+              <h2 class="ink-red text-sm font-bold">19–21. Step 4 — Key Pair (Public &amp; Private Keys)</h2>
+            </div>
+            <span class="text-[10px] text-red-900 font-bold">Never Lose the .pem!</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            <b>How do you access a remote cloud server?</b> AWS uses asymmetric cryptography:
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="p-1.5 border border-red-300 rounded bg-white text-[10px]">
+              <b class="text-red-900">20. Protect Your Private Key (.pem):</b><br>
+              Never share it publicly, upload to GitHub, send in chats, store in public repos, or embed in source code! It is the master key to your server.
+            </div>
+
+            <div class="diagram-box bg-white p-1 text-center font-mono text-[9.5px]">
+              You (Private Key: <code>server.pem</code>)<br>
+              &nbsp;&nbsp;↓ SSH Client<br>
+              EC2 Instance (Public Key)<br>
+              &nbsp;&nbsp;↓ Signature Verified<br>
+              <b>Access Granted! ✓</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- 22 & 23. Step 5 — Network Settings & Public IP -->
+        <div class="hand-box p-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">NETWORKING</span>
+              <h3 class="ink-red text-sm font-bold">22. Network Settings &amp; 23. Public IP Address</h3>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">Internet Reachability</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            Network settings configure: <b>VPC</b>, <b>Subnet</b>, <b>Public IP assignment</b>, and <b>Security Group</b> firewall rules.
+          </p>
+
+          <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px]">
+            Public Internet ➔ Public IPv4 Address ➔ EC2 Instance ➔ Web Server ➔ Website
+          </div>
+
+          <p class="text-[10px] text-slate-600 italic">Without an appropriate public IP and route table path, the website cannot be reached directly from the internet.</p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 3 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: SECURITY GROUPS, PORTS & EBS STORAGE -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-4">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Security Groups, Traffic Rules &amp; EBS Storage</span>
+          <span>Sheet No: 04</span>
+        </div>
+
+        <!-- 24 & 25. Security Group & Inbound vs Outbound -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">VIRTUAL FIREWALL</span>
+              <h2 class="ink-red text-sm font-bold">24. Step 6 — Security Group &amp; 25. Traffic Direction</h2>
+            </div>
+            <span class="text-[10px] font-mono text-blue-900 font-bold">Allow-List Only!</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            A <b>Security Group</b> acts as a virtual firewall for an EC2 instance, controlling permitted network traffic.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 font-mono text-[10px]">
+            <div class="p-1 border rounded bg-white">
+              <b>Inbound Traffic:</b> Traffic coming INTO your EC2 instance.<br>
+              Browser ➔ Port 80 / Port 22 ➔ EC2.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>Outbound Traffic:</b> Traffic leaving FROM your EC2 instance.<br>
+              EC2 ➔ Download packages ➔ Internet.
+            </div>
+          </div>
+        </div>
+
+        <!-- 26. Common Ports Table & 27, 28 Rules & Warning -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- Common Ports -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">26. Common EC2 Ports</h3>
+            <table class="hand-table text-[10.5px]">
+              <thead>
+                <tr><th>Port</th><th>Protocol</th><th>Common Use</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>22</b></td><td>SSH</td><td>Linux remote admin</td></tr>
+                <tr><td><b>80</b></td><td>HTTP</td><td>Web traffic (unencrypted)</td></tr>
+                <tr><td><b>443</b></td><td>HTTPS</td><td>Secure encrypted web traffic</td></tr>
+                <tr><td><b>53</b></td><td>DNS</td><td>DNS traffic</td></tr>
+                <tr><td><b>21</b></td><td>FTP</td><td>File transfer</td></tr>
+              </tbody>
+            </table>
+            <p class="text-[9px] text-slate-500 italic mt-0.5">*Correction: HTTP uses port 80; HTTPS uses port 443.</p>
+          </div>
+
+          <!-- 27 & 28. Warning -->
+          <div class="hand-box-red p-2 bg-red-50/25">
+            <h3 class="ink-red text-sm font-bold mb-0.5">27–28. Security Warning: Port 22</h3>
+            <div class="sticky-note text-[10px]">
+              <b class="text-red-900">⚠️ NEVER Open SSH to 0.0.0.0/0:</b><br>
+              <code>0.0.0.0/0</code> means any IPv4 address in the entire world can attempt to brute-force your terminal!
+            </div>
+            <p class="text-[10px] text-slate-700 mt-1">
+              <b>Best Practice:</b> Restrict SSH Source to <b>My IP</b> (trusted source only) or use Systems Manager Session Manager.
+            </p>
+          </div>
+        </div>
+
+        <!-- 29 & 30. Security Group Characteristics & Default Behavior -->
+        <div class="hand-box p-2 mb-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">29. 5 Key Characteristics &amp; 30. Default Behavior</h3>
+            <span class="callout-badge badge-faq">STATEFUL</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[10px]">
+            <div class="space-y-0.5 text-slate-800">
+              <div>1. <b>Associated with ENI:</b> Attached to network interface.</div>
+              <div>2. <b>Stateful:</b> Return traffic is automatically allowed!</div>
+              <div>3. <b>Allow-list only:</b> NO explicit deny rules exist.</div>
+              <div>4. <b>Separate rules:</b> Inbound and outbound are independent.</div>
+              <div>5. <b>VPC-scoped:</b> Cannot be shared across multiple VPCs.</div>
+            </div>
+
+            <div class="p-1 border rounded bg-white text-slate-700">
+              <b class="text-blue-900">30. Default Security Group Rules:</b><br>
+              • <i>Inbound:</i> All traffic from same SG is allowed; external is blocked.<br>
+              • <i>Outbound:</i> All outbound traffic (0.0.0.0/0) allowed by default.<br>
+              <i>Custom SGs: Inbound is locked down until you add allow rules!</i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 31, 32, 33. Storage (EBS) & Instance Count -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 31 & 32. EBS -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">31–32. Step 7 — EBS Storage</h3>
+              <span class="callout-badge badge-aws">BLOCK STORAGE</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              <b>Amazon EBS (Elastic Block Store):</b> Persistent block storage volumes separate from compute capacity.
+            </p>
+            <div class="diagram-box my-0.5 py-0.5 text-center font-mono text-[9.5px]">
+              EC2 (Compute) ➔ Attached to ➔ EBS Volume (OS, Apps, Data)
+            </div>
+            <p class="text-[9.5px] text-slate-600 font-bold text-center"><span class="hl">EC2 = Computer | EBS = Hard Drive</span></p>
+          </div>
+
+          <!-- 33. Instance Count -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">33. Step 8 — Number of Instances</h3>
+            <p class="ink-blue text-[10.5px]">
+              Specify how many instances to launch (e.g., <code>1</code>).
+            </p>
+            <p class="text-[10px] text-slate-700 mt-1">
+              In production, instead of manually typing numbers, <b>Auto Scaling Groups (ASG)</b> dynamically launch/terminate instances based on CPU utilization and incoming load.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 4 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: USER DATA AUTOMATION, LAUNCH & TESTING -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-5">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: User Data, Launch Workflow &amp; Testing Website</span>
+          <span>Sheet No: 05</span>
+        </div>
+
+        <!-- 34 to 37. User Data Automation -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">BOOTSTRAP</span>
+              <h2 class="ink-red text-sm font-bold">34–37. Step 9 — User Data Automation</h2>
+            </div>
+            <span class="text-[10px] font-mono text-emerald-800 font-bold">Zero-Touch Setup</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            <b>34. Definition:</b> User Data runs bootstrap commands/scripts on first instance boot.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <!-- Bash Code -->
+            <div class="code-box text-[9.5px]">
+<pre>#!/bin/bash
+# Update packages
+yum update -y
+# Install web server
+yum install -y httpd
+# Create website
+echo "Welcome to My Web Server" > /var/www/html/index.html
+# Start web server
+systemctl enable --now httpd</pre>
+            </div>
+
+            <!-- Workflow & Use Cases -->
+            <div class="space-y-1 text-[10px]">
+              <div class="p-1 border rounded bg-slate-50 font-mono">
+                <b>36. User Data Workflow:</b><br>
+                Launch ➔ Boot ➔ Script runs ➔ Update ➔ httpd installed ➔ File created ➔ Server started ➔ Ready!
+              </div>
+              <div class="p-1 border rounded bg-slate-50">
+                <b>37. Common Use Cases:</b> Installing packages, web servers, agents, mounting disks, and cloning git code.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 38, 39, 40. Launch, Instance ID & Dashboard -->
+        <div class="grid grid-cols-3 gap-1.5 text-xs mb-2">
+          <div class="hand-box p-1.5 bg-slate-50">
+            <b class="text-blue-900 text-xs">38. Launching Instance</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Review Name, AMI, Type, Keys, Network, SG, Storage &amp; User Data, then click <b>Launch Instance</b>.</p>
+          </div>
+          <div class="hand-box p-1.5 bg-slate-50">
+            <b class="text-emerald-900 text-xs">39. EC2 Instance ID</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Unique ID for tracking and management: <code class="font-bold text-blue-900">i-0123456789abcdef0</code>.</p>
+          </div>
+          <div class="hand-box p-1.5 bg-slate-50">
+            <b class="text-purple-900 text-xs">40. EC2 Dashboard</b>
+            <p class="text-[10px] text-slate-700 mt-0.5">Shows State, Public IP, Private IP, Type, AZ, SG, Key Pair, and EBS volumes.</p>
+          </div>
+        </div>
+
+        <!-- 41. Public IP vs Private IP -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">41. Public IP vs Private IP</h3>
+            <span class="callout-badge badge-faq">NETWORKING</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[10.5px]">
+            <div class="p-1.5 border rounded bg-white">
+              <b class="text-blue-900 font-mono">Public IP:</b><br>
+              Used for communication over the public internet.<br>
+              <i>Internet ➔ Public IP ➔ EC2 Instance</i>
+            </div>
+            <div class="p-1.5 border rounded bg-white">
+              <b class="text-emerald-900 font-mono">Private IP:</b><br>
+              Used strictly inside the private VPC network.<br>
+              <i>EC2 A ➔ Private VPC Network ➔ EC2 B</i>
+            </div>
+          </div>
+          <div class="sticky-note text-[10px] mt-1 text-center font-bold">
+            🧠 Memory Trick: <span class="hl">Public IP = Outside World | Private IP = Internal VPC</span>
+          </div>
+        </div>
+
+        <!-- 42 & 43. Testing the Web Server & Port 80 Requirement -->
+        <div class="hand-box p-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">TESTING</span>
+              <h3 class="ink-red text-sm font-bold">42. Testing Web Server &amp; 43. Why Port 80 is Required</h3>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">http://PUBLIC-IP</span>
+          </div>
+
+          <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px]">
+            Browser HTTP Request ➔ Public IP ➔ Security Group (Port 80 Allow) ➔ EC2 ➔ Apache httpd ➔ index.html
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[10px] mt-1">
+            <div class="p-1 border border-red-200 rounded bg-red-50/30 text-red-900">
+              <b>Rule Removed:</b> Browser ➔ Port 80 ➔ <span class="font-bold">BLOCKED by SG!</span> (Page hangs / unreachable).
+            </div>
+            <div class="p-1 border border-emerald-200 rounded bg-emerald-50/30 text-emerald-900">
+              <b>Rule Added Back:</b> Browser ➔ Port 80 ➔ <span class="font-bold">ALLOWED!</span> SG changes take effect instantly with no reboot!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 5 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 6: SG REUSE, INSTANCE CONNECT & SSH (PUTTY / TERMINAL) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-6">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Security Group Reuse &amp; Remote Access (SSH / Connect)</span>
+          <span>Sheet No: 06</span>
+        </div>
+
+        <!-- 44 & 45. Custom Security Group & Reuse -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">44. Custom Security Group</h3>
+            <p class="text-[10px] text-slate-700">Create reusable SGs like <code>Web-Server-SG</code>:</p>
+            <div class="code-box text-[9.5px]">
+              Inbound: HTTP (80) &amp; SSH (22)<br>
+              Outbound: All traffic (0.0.0.0/0)
+            </div>
+          </div>
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">45. Reusing Security Groups</h3>
+            <p class="text-[10px] text-slate-700">
+              Attach <code>Web-Server-SG</code> to any new instance in the same VPC. Never recreate identical rules over and over!
+            </p>
+          </div>
+        </div>
+
+        <!-- 46 & 47. EC2 Instance Connect & Website Terminal Edit -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-aws">BROWSER TERMINAL</span>
+              <h2 class="ink-red text-sm font-bold">46. EC2 Instance Connect &amp; 47. Live Website Modification</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">1-Click Shell</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            <b>Workflow:</b> EC2 Dashboard ➔ Select Instance ➔ Connect ➔ EC2 Instance Connect ➔ Instant browser terminal.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="code-box text-[9.5px]">
+              $ whoami<br>
+              $ uname -a<br>
+              $ cat /etc/os-release
+            </div>
+            <div class="p-1.5 border rounded bg-slate-50 text-[10px]">
+              <b>Modify Website Live:</b><br>
+              <code>echo "Welcome to My Web Server - New Version" > /var/www/html/index.html</code><br>
+              Refresh browser ➔ Instant update visible!
+            </div>
+          </div>
+        </div>
+
+        <!-- 48 to 51. SSH & PuTTY on Windows -->
+        <div class="hand-box p-2 mb-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">48–51. SSH &amp; PuTTY on Windows (.pem vs .ppk)</h3>
+            <span class="callout-badge badge-trick">PORT 22</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[10px]">
+            <div class="p-1 border rounded bg-white">
+              <b>48. SSH (Secure Shell):</b> Port 22. Encrypted command-line terminal protocol for remote Linux administration.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>50. PEM vs PPK:</b> AWS provides <code>.pem</code>. PuTTY uses <code>.ppk</code>. Convert using <b>PuTTYgen</b>!
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>51. Default Users:</b><br>
+              • Amazon Linux: <code>ec2-user</code><br>
+              • Ubuntu: <code>ubuntu</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- 52, 53 & 54. Linux Terminal SSH & Connection Methods Table -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 52 & 53. chmod 400 -->
+          <div class="hand-box-red p-2 bg-red-50/25">
+            <h3 class="ink-red text-sm font-bold mb-0.5">52–53. Terminal SSH &amp; chmod 400</h3>
+            <div class="code-box text-[9px]">
+              $ chmod 400 my-web-server.pem<br>
+              $ ssh -i my-web-server.pem ec2-user@PUBLIC-IP
+            </div>
+            <p class="text-[9.5px] text-slate-700 mt-1">
+              <b>53. Why chmod 400?</b> SSH enforces that private keys MUST NOT be readable by other system users. Otherwise SSH rejects the connection!
+            </p>
+          </div>
+
+          <!-- 54. Connection Methods Table -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">54. EC2 Connection Methods</h3>
+            <table class="hand-table text-[10px]">
+              <thead>
+                <tr><th>Method</th><th>Typical Use Case</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>Instance Connect</b></td><td>Browser-based 1-click shell</td></tr>
+                <tr><td><b>SSH</b></td><td>Linux/macOS terminal admin</td></tr>
+                <tr><td><b>PuTTY</b></td><td>Windows SSH client</td></tr>
+                <tr><td><b>SSM Session Mgr</b></td><td>Managed shell without open port 22!</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 6 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 7: REGIONS, LIFECYCLE & COST AWARENESS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-7">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Regional Scope, Lifecycle &amp; Cost Control</span>
+          <span>Sheet No: 07</span>
+        </div>
+
+        <!-- 55, 56 & 57. Regions & Global View -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">REGIONAL SCOPE</span>
+              <h2 class="ink-red text-sm font-bold">55–57. EC2 Regions &amp; Region-Specific Resources</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">Stockholm vs Mumbai</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            EC2 instances are tied to specific AWS Regions. If you switch from Mumbai to US East, your instances seem to "disappear."
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="sticky-note text-[10px] font-bold">
+              🧠 Memory Trick: <span class="hl">EC2 ➔ Think Region First!</span> Check the top-right region selector whenever an instance cannot be found.
+            </div>
+            <div class="p-1.5 border rounded bg-slate-50 text-[9.5px]">
+              <b>57. Global View:</b> AWS provides multi-region dashboards for unified inventory and monitoring across all geographic areas.
+            </div>
+          </div>
+        </div>
+
+        <!-- 58, 59 & 60. Instance Lifecycle: Reboot vs Stop vs Terminate -->
+        <div class="hand-box-red p-2 mb-2 bg-amber-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-trick">LIFECYCLE</span>
+              <h2 class="ink-red text-sm font-bold">58–60. EC2 Instance Lifecycle: Reboot vs Stop vs Terminate</h2>
+            </div>
+            <span class="text-[10px] font-mono text-red-900 font-bold">Top Interview Question</span>
+          </div>
+
+          <div class="diagram-box bg-white p-1 text-center font-mono text-[10px]">
+            Running ➔ [ Reboot ➔ Running ] | [ Stop ➔ Stopped ➔ Start ➔ Running ] | [ Terminate ➔ Terminated (Deleted) ]
+          </div>
+
+          <table class="hand-table text-[10.5px] mt-1">
+            <thead>
+              <tr><th>Action</th><th>Meaning</th><th>Data &amp; Instance State</th><th>Billing Impact</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Reboot</b></td><td>Restart OS</td><td>Keeps instance and storage intact</td><td>Billing continues</td></tr>
+              <tr><td><b>Stop</b></td><td>Shutdown</td><td>Instance stopped; can be restarted later</td><td>Compute stops; EBS continues</td></tr>
+              <tr><td><b>Terminate</b></td><td>Permanent Delete</td><td>Instance is completely deleted and unrecoverable</td><td>All instance billing halts</td></tr>
+            </tbody>
+          </table>
+
+          <div class="sticky-note text-[10px] text-center font-bold mt-1">
+            🧠 Easy Memory Trick: <span class="hl">Reboot = Restart | Stop = Shutdown | Terminate = Delete</span>
+          </div>
+        </div>
+
+        <!-- 61 to 64. Why Terminate, Cost Awareness & Free Tier -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 61 & 62. Terminate & Cost -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">61–62. Cost Awareness &amp; Cleanup</h3>
+            <p class="text-[10px] text-slate-700">
+              <b>Never leave test instances running!</b> Pricing depends on Type, OS, Region, Duration, Storage, and Data Transfer.
+            </p>
+            <div class="sticky-note text-[9.5px] mt-1">
+              <b class="text-red-900">Rule:</b> Create ➔ Practice ➔ Terminate test instances immediately!
+            </div>
+          </div>
+
+          <!-- 63 & 64. Billing & Free Tier -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">63–64. Billing Habits &amp; Free Tier</h3>
+            <p class="text-[10px] text-slate-700">
+              Use Cost Explorer and Budgets regularly.
+            </p>
+            <div class="p-1 border border-amber-300 rounded bg-amber-50 text-[9.5px] mt-0.5">
+              <b class="text-amber-900">⚠️ Free Tier Caution:</b> Free Tier applies only to eligible configurations and hours. Always check your account limits!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 7 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 8: WORKLOAD SCENARIOS & PURCHASING OPTIONS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-8">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Workload Matching &amp; EC2 Purchasing Models</span>
+          <span>Sheet No: 08</span>
+        </div>
+
+        <!-- 65 to 70. Detailed Sizing & Scenarios -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">65–70. Matching Instance Types to Workloads</h3>
+            <span class="callout-badge badge-tip">ARCHITECT'S CHOICE</span>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1 text-[9.5px] font-mono text-center">
+            <div class="p-1 border rounded bg-slate-50">
+              <b>66. Blog / Small Web</b><br>Normal CPU/RAM<br>➔ T / M Series
+            </div>
+            <div class="p-1 border rounded bg-slate-50">
+              <b>67. E-Commerce</b><br>App + DB + ASG<br>➔ General / Compute
+            </div>
+            <div class="p-1 border rounded bg-slate-50">
+              <b>68. Video / AI</b><br>Heavy GPU parallel<br>➔ Accelerated (G/P)
+            </div>
+            <div class="p-1 border rounded bg-slate-50">
+              <b>69. Real-Time Analytics</b><br>In-memory cache<br>➔ Memory (R/X)
+            </div>
+          </div>
+          <p class="text-[9.5px] text-slate-600 mt-1 italic text-center"><b>70. Sizing Checklist:</b> CPU ➔ RAM ➔ Network ➔ Storage ➔ Workload Profile ➔ Budget.</p>
+        </div>
+
+        <!-- 71 to 77. EC2 Purchasing Options -->
+        <div class="hand-box-red p-2 mb-2 bg-amber-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">PRICING MODELS</span>
+              <h2 class="ink-red text-sm font-bold">71–77. EC2 Purchasing Options</h2>
+            </div>
+            <span class="text-[10px] text-red-900 font-bold">Cost Optimization</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[9.5px]">
+            <div class="p-1 border rounded bg-white">
+              <b>72. On-Demand:</b> No commitment, maximum flexibility. Pay by second/hour. Best for short-term and dev/test.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>73. Reserved Instances (RI):</b> 1 or 3-year commitment. Up to 72% discount for steady-state workloads.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>74. Spot Instances:</b> Spare AWS capacity up to 90% discount! Can be interrupted with 2-min notice. Best for batch jobs.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>75. Savings Plans:</b> Hourly spend commitment ($/hr). Flexible across instance families, OS, and regions.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>76. Dedicated Hosts:</b> Physical server dedicated to your use. Full socket/core visibility; ideal for BYOL licensing.
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>77. Dedicated Instances:</b> Dedicated hardware tenancy at instance level without host-level socket control.
+            </div>
+          </div>
+        </div>
+
+        <!-- 78. Purchasing Options Comparison Table -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <h3 class="ink-red text-sm font-bold mb-0.5">78. Purchasing Options Comparison</h3>
+          <table class="hand-table text-[10px]">
+            <thead>
+              <tr><th>Option</th><th>Best For</th><th>Commitment</th><th>Cost Potential</th><th>Flexibility</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>On-Demand</b></td><td>Short / unpredictable workloads</td><td>None</td><td>Higher</td><td>Very High</td></tr>
+              <tr><td><b>Reserved Instances</b></td><td>Steady long-term production</td><td>1 or 3 years</td><td>Lower (discounted)</td><td>Lower</td></tr>
+              <tr><td><b>Spot Instances</b></td><td>Interruptible, batch, stateless jobs</td><td>None</td><td>Very Low (up to 90% off)</td><td>Lower</td></tr>
+              <tr><td><b>Savings Plans</b></td><td>Predictable compute spend</td><td>1 or 3 years ($/hr)</td><td>Discounted</td><td>High</td></tr>
+              <tr><td><b>Dedicated Host</b></td><td>Host-level control &amp; BYOL licensing</td><td>Varies</td><td>High</td><td>Specialized</td></tr>
+              <tr><td><b>Dedicated Instance</b></td><td>Dedicated physical hardware tenancy</td><td>Varies</td><td>Higher</td><td>Specialized</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 79. Real-World Purchasing Decision -->
+        <div class="hand-box p-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">79. Real-World Purchasing Decisions</h3>
+            <span class="callout-badge badge-trick">SCENARIO</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-[9.5px] font-mono">
+            <div class="p-1 border rounded bg-white">
+              <b>Workload A (Testing):</b><br>Runs a few days ➔ <b>On-Demand</b>
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>Workload B (Production):</b><br>Runs 24/7 predictably ➔ <b>Savings Plans / RI</b>
+            </div>
+            <div class="p-1 border rounded bg-white">
+              <b>Workload C (Batch Processing):</b><br>Tolerates interruption ➔ <b>Spot Instances</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 8 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 9: BIG PICTURE ARCHITECTURE, FLOWS & BEST PRACTICES -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-9">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: EC2 Architecture, End-to-End Flows &amp; Comparisons</span>
+          <span>Sheet No: 09</span>
+        </div>
+
+        <!-- 80, 81 & 82. Architecture & Complete Flows -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 80. Big Picture Architecture -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">80. EC2 Architecture — Big Picture</h3>
+            <div class="diagram-box bg-white p-1 text-center font-mono text-[9px]">
+              AWS Region ➔ Availability Zone ➔ VPC / Subnet<br>
+              &nbsp;&nbsp;↓<br>
+              Security Group (Firewall)<br>
+              &nbsp;&nbsp;↓<br>
+              <b>EC2 Instance</b> [ vCPU + RAM (Compute) ] ➔ Attached to ➔ <b>EBS Volume</b> [ Storage ]<br>
+              &nbsp;&nbsp;↓<br>
+              Operating System ➔ Applications ➔ Website
+            </div>
+          </div>
+
+          <!-- 81 & 82. Creation & Website Flow -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">81 &amp; 82. End-to-End Flows</h3>
+            <div class="diagram-box bg-white py-0.5 text-center font-mono text-[8.5px]">
+              <b>81. Launch:</b> Console ➔ EC2 ➔ Launch ➔ Name ➔ AMI ➔ Type ➔ Key ➔ Net ➔ SG ➔ Storage ➔ User Data ➔ Running
+            </div>
+            <div class="diagram-box bg-white py-0.5 text-center font-mono text-[8.5px] mt-0.5">
+              <b>82. Web Traffic:</b> Browser ➔ Public IP ➔ SG Port 80 Allowed ➔ EC2 ➔ httpd ➔ index.html ➔ Response
+            </div>
+          </div>
+        </div>
+
+        <!-- 83. Important EC2 Terminology Table -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <h3 class="ink-red text-sm font-bold mb-0.5">83. Important EC2 Terminology</h3>
+          <div class="grid grid-cols-3 gap-1 text-[9.5px]">
+            <div>• <b>EC2:</b> Elastic Compute Cloud</div>
+            <div>• <b>Instance:</b> Virtual server</div>
+            <div>• <b>AMI:</b> Template image for launch</div>
+            <div>• <b>Instance Type:</b> vCPU &amp; RAM spec</div>
+            <div>• <b>vCPU:</b> Virtual processor thread</div>
+            <div>• <b>EBS:</b> Persistent block storage</div>
+            <div>• <b>Key Pair:</b> Asymmetric authentication</div>
+            <div>• <b>Security Group:</b> Stateful virtual firewall</div>
+            <div>• <b>Public IP:</b> Internet-routable address</div>
+            <div>• <b>Private IP:</b> Internal VPC address</div>
+            <div>• <b>User Data:</b> Boot initialization script</div>
+            <div>• <b>SSH:</b> Secure remote shell (Port 22)</div>
+            <div>• <b>Instance ID:</b> Unique identifier (i-...)</div>
+            <div>• <b>Region:</b> Geographic infrastructure area</div>
+            <div>• <b>AZ:</b> Isolated data center location</div>
+          </div>
+        </div>
+
+        <!-- 84 to 87. Key Comparisons & 88. Best Practices -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- Comparisons -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">84–87. Quick Concept Matchers</h3>
+            <div class="space-y-0.5 text-[9.5px] font-mono">
+              <div class="p-0.5 border rounded bg-slate-50"><b>85. EC2 vs EBS:</b> EC2 = Computer | EBS = Hard Drive</div>
+              <div class="p-0.5 border rounded bg-slate-50"><b>86. EC2 vs SG:</b> EC2 = House | SG = Security Gate</div>
+              <div class="p-0.5 border rounded bg-slate-50"><b>87. EC2 vs AMI:</b> AMI = Blueprint | EC2 = Built House</div>
+              <div class="p-0.5 border rounded bg-slate-50"><b>84. Physical vs EC2:</b> Bought hardware vs Rented elastic cloud</div>
+            </div>
+          </div>
+
+          <!-- 88. Best Practices -->
+          <div class="hand-box-red p-2 bg-amber-50/25">
+            <h3 class="ink-red text-sm font-bold mb-0.5">88. Important Best Practices</h3>
+            <div class="grid grid-cols-2 gap-0.5 text-[9px] text-slate-800">
+              <div>1. Least Privilege</div>
+              <div>2. Restrict SSH (No 0.0.0.0/0)</div>
+              <div>3. Protect .pem Keys</div>
+              <div>4. Monitor Costs Regularly</div>
+              <div>5. Terminate Unused Instances</div>
+              <div>6. Meaningful Names (Prod-01)</div>
+              <div>7. Workload-Based Sizing</div>
+              <div>8. Automate with User Data</div>
+              <div class="col-span-2">9. Monitor CPU &amp; Health with CloudWatch</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 9 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 10: MISTAKES, TROUBLESHOOTING & SCENARIOS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-10">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Common Pitfalls &amp; Systematic Troubleshooting</span>
+          <span>Sheet No: 10</span>
+        </div>
+
+        <!-- 89. Common Beginner Mistakes -->
+        <div class="hand-box-red p-2 mb-2 bg-red-50/25 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">PITFALLS</span>
+              <h2 class="ink-red text-sm font-bold">89. 7 Common Beginner Mistakes &amp; Solutions</h2>
+            </div>
+            <span class="text-[10px] text-red-900 font-bold">Avoid These!</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-[9.5px]">
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>1. Forgetting the Region:</b> Instance "disappeared"? Check Region selector!
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>2. Opening SSH to 0.0.0.0/0:</b> Exposes port 22 worldwide. Restrict to My IP!
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>3. Forgetting to Clean Up:</b> Test instances left running generate bills. Terminate!
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>4. Losing the Private Key:</b> .pem file cannot be re-downloaded. Store safely!
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>5. Confusing Public &amp; Private IP:</b> Public connects to internet; private is VPC only.
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white">
+              <b>6. Oversizing Instances:</b> Biggest is not best. Match size to real workload.
+            </div>
+            <div class="p-1 border border-red-200 rounded bg-white col-span-2">
+              <b>7. Missing Port 80 in SG:</b> If HTTP inbound is not allowed, web browser will timeout!
+            </div>
+          </div>
+        </div>
+
+        <!-- 90 & 91. Troubleshooting EC2 Website Access -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">DEBUGGING</span>
+              <h2 class="ink-red text-sm font-bold">90–91. Troubleshooting EC2 Website Access</h2>
+            </div>
+            <span class="text-[10px] font-mono text-slate-500">Systematic Checklist</span>
+          </div>
+
+          <p class="ink-blue text-[10.5px]">
+            If your website does not open, never change random settings! Follow this exact 7-step triage:
+          </p>
+
+          <div class="diagram-box my-1 py-0.5 text-center font-mono text-[9px] bg-slate-50">
+            1. Is EC2 Running? ➔ 2. Public IP Assigned? ➔ 3. SG Port 80 Allowed? ➔ 4. Web Server (httpd) Running? ➔ 5. index.html Present? ➔ 6. Correct URL Used? ➔ 7. Listening Port Correct?
+          </div>
+
+          <p class="text-[10px] text-slate-700 mt-0.5">
+            <b>91. Scenario Example:</b> EC2 is running, Public IP works, but page hangs ➔ Check Security Group Inbound rules ➔ Port 80 is missing! ➔ Add HTTP port 80 ➔ Test again ➔ Website opens immediately.
+          </p>
+        </div>
+
+        <!-- 92 & 94. Auth vs Auth & Practical Interview Scenario -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 92. Auth vs Auth -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">92. Auth vs Auth in EC2</h3>
+            <div class="text-[9.5px] space-y-1">
+              <div class="p-1 border rounded bg-white">
+                <b>Authentication (Who are you?):</b><br>SSH Private Key / Key Pair.
+              </div>
+              <div class="p-1 border rounded bg-white">
+                <b>Authorization (What can you do?):</b><br>Security Group, IAM Role, OS permissions.
+              </div>
+            </div>
+          </div>
+
+          <!-- 94. Practical Interview Scenario -->
+          <div class="hand-box-red p-2 bg-amber-50/30">
+            <h3 class="ink-red text-sm font-bold mb-0.5">94. Practical Interview Scenario</h3>
+            <p class="text-[9px] text-slate-800 italic">"You launched EC2 and installed Apache, but cannot access the website from your browser. What do you check?"</p>
+            <p class="text-[9px] text-emerald-950 font-bold mt-0.5">
+              <b>Answer:</b> Structured layer-by-layer triage: 1. Instance state ➔ 2. Public IP ➔ 3. Security Group port 80 ➔ 4. httpd process status ➔ 5. Listening ports (`netstat`) ➔ 6. HTML file path ➔ 7. OS firewall.
+            </p>
+          </div>
+        </div>
+
+        <!-- 95. One Complete Real-World Example Flow -->
+        <div class="hand-box p-1.5 bg-blue-50/20 text-xs">
+          <span class="ink-red font-bold text-xs">95. Complete 10-Step Real-World Launch Flow:</span>
+          <div class="grid grid-cols-5 gap-1 mt-0.5 text-[9px] font-mono text-center">
+            <span class="p-0.5 border bg-white rounded">1. Create EC2</span>
+            <span class="p-0.5 border bg-white rounded">2. Linux AMI</span>
+            <span class="p-0.5 border bg-white rounded">3. Instance Type</span>
+            <span class="p-0.5 border bg-white rounded">4. Key Pair</span>
+            <span class="p-0.5 border bg-white rounded">5. Network/VPC</span>
+            <span class="p-0.5 border bg-white rounded">6. Port 80 SG</span>
+            <span class="p-0.5 border bg-white rounded">7. User Data</span>
+            <span class="p-0.5 border bg-white rounded">8. Launch</span>
+            <span class="p-0.5 border bg-white rounded">9. Get Public IP</span>
+            <span class="p-0.5 border bg-white rounded">10. Open in Browser</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 10 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 11: COMPLETE INTERVIEW QUESTIONS & ANSWERS (Q1 TO Q23) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-11">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: 93. Complete EC2 Interview Questions (Q1–Q23)</span>
+          <span>Sheet No: 11</span>
+        </div>
+
+        <div class="flex items-center gap-1 mb-1">
+          <span class="callout-badge badge-important">VIVA / SCREENING</span>
+          <h2 class="ink-red text-base font-bold">93. Top 23 EC2 Interview Questions &amp; Answers</h2>
+        </div>
+
+        <!-- 23 Interview Questions Compact Grid -->
+        <div class="grid grid-cols-2 gap-1 text-[10px]">
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q1. What is Amazon EC2?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> AWS service providing resizable virtual servers (instances) to run apps and workloads in the cloud.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q2. Why is EC2 called Elastic?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Compute capacity can be dynamically adjusted up/down to match changing workloads.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q3. What is an EC2 instance?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> A virtual server running in AWS cloud infrastructure.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q4. What is an AMI?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Amazon Machine Image — a template containing the OS, configuration, and software needed to launch instances.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q5. What is an Instance Type?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Defines the hardware capacity of an instance: vCPU, memory, networking, and storage capabilities.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q6. What is a Security Group?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> A stateful virtual firewall associated with network interfaces that controls allowed inbound and outbound traffic.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q7. Difference: Inbound vs Outbound?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Inbound = traffic entering instance. Outbound = traffic leaving instance.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q8. What is port 22?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Default port for SSH (Secure Shell) remote Linux administration.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q9. What is port 80?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Default port for unencrypted HTTP web traffic.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q10. What is port 443?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Default port for encrypted HTTPS web traffic.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q11. Can Security Groups have deny rules?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> No. Security Groups are strictly an allow-list mechanism; everything not explicitly allowed is denied.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q12. What is EC2 User Data?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Bootstrap scripts executed at initial boot to automate software installation and configuration.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q13. Difference: Stop vs Terminate?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Stop shuts down the instance (can be restarted); Terminate permanently deletes it.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q14. Difference: Reboot vs Stop?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Reboot restarts OS without releasing host resources; Stop fully halts the compute instance.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q15. What is a Key Pair?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Public/private cryptographic key pair used for secure SSH authentication to instances.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q16. What is SSH?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Secure Shell — an encrypted network protocol for remote terminal command-line access.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q17. Why is port 22 important for Linux?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> It is the default SSH listening port; remote admin fails if port 22 is blocked.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q18. What is EBS?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Elastic Block Store — persistent, high-performance block storage volumes for EC2.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q19. Difference: Public IP vs Private IP?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Public IP routes over internet; Private IP routes exclusively inside internal VPC.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q20. What are On-Demand Instances?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Pay-as-you-go compute without long-term commitment, ideal for flexible/unpredictable jobs.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q21. What are Spot Instances?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> Spare AWS capacity at up to 90% discount, subject to 2-minute interruption notice.</p>
+          </div>
+          <div class="hand-box p-1 bg-white">
+            <b class="ink-red text-[9.5px]">Q22. When use Memory Optimized?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> For RAM-heavy apps: in-memory DBs (Redis), real-time analytics, and caching.</p>
+          </div>
+
+          <div class="hand-box p-1 bg-white col-span-2">
+            <b class="ink-red text-[9.5px]">Q23. When use Accelerated Computing?</b>
+            <p class="ink-blue text-[9px]"><b>Ans:</b> For GPU-accelerated workloads: ML model training/inference, 3D graphics rendering, and heavy video transcoding.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 11 of 12</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 12: REVISION, MEMORY TRICKS & 8 BONUS STUDY TIPS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-12">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Quick Revision &amp; 8 Bonus Study Tips</span>
+          <span>Sheet No: 12</span>
+        </div>
+
+        <!-- 96 to 100. Quick Revision, Formula & Roadmap -->
+        <div class="hand-box p-1.5 mb-1.5 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">96–100. 1-Minute Recall &amp; Memory Formulas</h3>
+            <span class="callout-badge badge-trick">30 SECONDS</span>
+          </div>
+
+          <div class="diagram-box bg-slate-50 text-center py-0.5 font-mono text-[9px]">
+            <b>Launch Formula:</b> A-T-K-N-S-U ➔ <b>AMI ➔ Type ➔ Key ➔ Network ➔ Storage ➔ User Data</b><br>
+            <b>Lifecycle Formula:</b> Reboot = Restart | Stop = Shutdown | Terminate = Delete<br>
+            <b>Ports Formula:</b> 22 = SSH | 80 = HTTP | 443 = HTTPS | <b>Security Group:</b> Allow-List Only &amp; Stateful
+          </div>
+        </div>
+
+        <!-- Banner Callout for Bonus Tips -->
+        <div class="hand-box-red text-center mb-1.5" style="background: rgba(254, 243, 199, 0.45); padding: 4px 8px;">
+          <div class="flex items-center justify-center gap-1.5">
+            <span class="callout-badge badge-tip">TOPPER STRATEGY</span>
+            <h2 class="ink-red text-base font-bold tracking-wide">
+              💡 8 Bonus Study Tips for AWS EC2 (Plain English!)
+            </h2>
+          </div>
+          <p class="text-[10.5px] text-slate-600 font-sans tracking-wide">Simple techniques to master EC2 exam concepts, troubleshoot live instances, and excel in interviews.</p>
+        </div>
+
+        <!-- 8 Bonus Tips Grid -->
+        <div class="grid grid-cols-2 gap-1 text-xs mb-1.5">
+          <!-- 1. Mind Maps -->
+          <div class="hand-box p-1 bg-blue-50/30">
+            <b class="ink-red text-[11px]">1. Mind Maps 🗺️</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Put <b>"EC2"</b> in the center circle. Branch out to: <i>Compute (vCPU/RAM Families)</i>, <i>Storage (EBS/Root)</i>, <i>Security (Key Pair, SG ports)</i>, and <i>Pricing (On-Demand, RI, Spot)</i>.
+            </p>
+          </div>
+
+          <!-- 2. Flow Charts -->
+          <div class="hand-box p-1 bg-emerald-50/30" style="border-color: #059669;">
+            <b class="text-emerald-900 text-[11px]">2. Flow Charts ➔</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Draw the packet flow: <code>Browser ➔ Public IP ➔ Security Group Inbound (Port 80) ➔ EC2 Instance ➔ Apache httpd ➔ index.html</code>. If any block breaks, website fails!
+            </p>
+          </div>
+
+          <!-- 3. Formula Box -->
+          <div class="hand-box p-1 bg-amber-50/30">
+            <b class="text-amber-900 text-[11px]">3. Formula Box 📦</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Memorize the 3 architectural analogies: <code>AMI = Blueprint</code>, <code>EC2 = Built House</code>, <code>EBS = External Hard Drive</code>, and <code>Security Group = Security Gate</code>.
+            </p>
+          </div>
+
+          <!-- 4. Revision Section -->
+          <div class="hand-box p-1 bg-purple-50/30" style="border-color: #9333ea;">
+            <b class="text-purple-900 text-[11px]">4. Revision Section ⏱️</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Do a 30-sec pre-lab checklist: <i>"Am I in the right Region? Is SSH restricted to My IP? Did I terminate yesterday's instances to avoid billing?"</i>
+            </p>
+          </div>
+
+          <!-- 5. Highlighted Keywords -->
+          <div class="hand-box p-1 bg-pink-50/30" style="border-color: #db2777;">
+            <b class="text-pink-900 text-[11px]">5. Highlighted Keywords 🖍️</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Examiners listen for trigger keywords: <span class="hl">"Stateful"</span>, <span class="hl">"Allow-list only"</span>, <span class="hl">"Bootstrap Automation"</span>, <span class="hl">"EBS Block Storage"</span>, and <span class="hl">"Interruptible Spot"</span>.
+            </p>
+          </div>
+
+          <!-- 6. Colour Coding -->
+          <div class="hand-box p-1 bg-cyan-50/30" style="border-color: #0891b2;">
+            <b class="text-cyan-900 text-[11px]">6. Colour Coding 🎨</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Use <b>Red pen</b> for dangerous hazards (0.0.0.0/0 on port 22, losing .pem key), <b>Blue pen</b> for Linux commands and scripts, and <b>Yellow highlighter</b> for ports (22, 80, 443).
+            </p>
+          </div>
+
+          <!-- 7. Important Questions -->
+          <div class="hand-box p-1 bg-rose-50/30" style="border-color: #e11d48;">
+            <b class="text-rose-900 text-[11px]">7. Important Questions 🎯</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Practice the Top 3 viva questions out loud: <i>1. Stop vs Terminate?</i>, <i>2. Can a Security Group deny traffic? (No!)</i>, and <i>3. How does User Data automate setup?</i>
+            </p>
+          </div>
+
+          <!-- 8. Quick Summary -->
+          <div class="hand-box p-1 bg-indigo-50/30" style="border-color: #4f46e5;">
+            <b class="text-indigo-900 text-[11px]">8. Quick Summary 📝</b>
+            <p class="text-slate-700 text-[9.5px] mt-0.5">
+              <b>In simple terms:</b> Conclude any EC2 interview answer with: <i>"In summary, Amazon EC2 provides resizable, virtual compute servers in the cloud with attached EBS block storage and stateful security group firewalls."</i>
+            </p>
+          </div>
+        </div>
+
+        <!-- Student EC2 Lab Pre-Flight Checklist -->
+        <div class="hand-box p-1 bg-amber-50/40 mb-1 text-xs">
+          <span class="ink-red font-bold text-[11px]">✅ Student EC2 Lab Checklist:</span>
+          <div class="grid grid-cols-4 gap-1 mt-0.5 text-[9px] text-slate-800 text-center font-bold">
+            <div class="p-0.5 border border-amber-300 rounded bg-white">[ ] Correct Region Verified</div>
+            <div class="p-0.5 border border-amber-300 rounded bg-white">[ ] SSH Set to 'My IP'</div>
+            <div class="p-0.5 border border-amber-300 rounded bg-white">[ ] Private Key (.pem) Secured</div>
+            <div class="p-0.5 border border-amber-300 rounded bg-white">[ ] Test Instances Terminated</div>
+          </div>
+        </div>
+
+        <!-- Notebook Completion Stamp -->
+        <div class="flex justify-between items-center text-[10.5px] px-1 text-slate-500">
+          <span>✨ End of AWS EC2 Lecture Notes (100 Sections Complete)</span>
+          <span class="font-bold ink-red border border-red-400 px-2.5 py-0.5 rounded-full bg-red-50">100% COMPLETE &amp; VERIFIED</span>
+          <span>Next: Load Balancers &amp; Auto Scaling 🚀</span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 12 of 12</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

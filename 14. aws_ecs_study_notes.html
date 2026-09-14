@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS ECS - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 4px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS ECS (Elastic Container Service)</div>
+
+  <!-- 1. What is Amazon ECS? -->
+  <h2 class="sec-heading">1. What is Amazon ECS?</h2>
+  <p>Amazon ECS (Elastic Container Service) is a <span class="highlight">cloud-based container management service</span> provided by AWS.</p>
+  <p>It allows you to run and manage containerized applications, especially Docker containers, on AWS infrastructure.</p>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">Simple Definition</span>
+    <strong>Amazon ECS is a managed AWS service used to deploy, run, manage, and scale container-based applications.</strong>
+    <p style="margin-top: 4px;">ECS can work with: Docker containers, Container images stored in registries such as Amazon ECR, and other supported/private container registries.</p>
+  </div>
+
+  <!-- 2. Why Use Amazon ECS? -->
+  <h2 class="sec-heading">2. Why Use Amazon ECS?</h2>
+  <div class="two-col">
+    <div>
+      <p>Suppose you have developed an application and:</p>
+      <ul>
+        <li>Created the application</li>
+        <li>Containerized it using Docker</li>
+        <li>Built a Docker image</li>
+        <li>Uploaded the image to a container registry</li>
+        <li>Now want to deploy it</li>
+      </ul>
+    </div>
+    <div class="warn-box" style="margin-top: 0;">
+      <p style="font-weight: 700; color: #be123c; margin-top: 0;">Without ECS, manual work:</p>
+      <ul style="font-size: 13.5px; margin-bottom: 0;">
+        <li>Set up servers & Install Docker</li>
+        <li>Configure the application</li>
+        <li>Run & Monitor containers</li>
+        <li>Restart failed containers</li>
+        <li>Handle scaling & Manage instances</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">ECS simplifies this process.</h3>
+    <p>You provide ECS with information such as: Which container image to use, How much CPU/memory is required, Which ports to expose, Environment variables, and How many copies of the application should run.</p>
+    <p><strong>ECS then manages much of the container deployment and operation for you.</strong></p>
+  </div>
+
+  <!-- 3. Basic ECS Architecture -->
+  <h2 class="sec-heading">3. Basic ECS Architecture</h2>
+  <p>The three most important ECS terms are: <strong>Cluster, Service, Task</strong>.</p>
+  <p>And another important concept is: <strong>Task Definition</strong>.</p>
+  
+  <div class="ascii-tree" style="text-align: center;">ECS
+ │
+ └── Cluster
+      │
+      ├── Service
+      │    ├── Task
+      │    ├── Task
+      │    └── Task
+      │
+      └── Task Definition</div>
+
+  <!-- 4. ECS Cluster -->
+  <h2 class="sec-heading">4. ECS Cluster</h2>
+  <p><strong>What is a Cluster?</strong> An ECS Cluster is a logical grouping that contains the resources and infrastructure used to run your ECS workloads.</p>
+  
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#eab308; background:#fefce8; text-align:center;">
+      <p style="font-weight:700; color:#ca8a04; font-size:16px; margin:0;">Easy way to remember:</p>
+      <p><strong>Cluster = Place/group where your ECS workloads run.</strong></p>
+    </div>
+    <div class="ascii-tree" style="margin-top: 0;">My Cluster
+   │
+   ├── Service
+   │     ├── Task 1
+   │     └── Task 2
+   │
+   └── Other Services</div>
+  </div>
+  <p>A cluster can contain multiple services and tasks.</p>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. ECS Service -->
+  <h2 class="sec-heading">5. ECS Service</h2>
+  <p>An ECS Service is responsible for maintaining and managing the desired number of running tasks.</p>
+  <p>It helps with: Maintaining the desired number of tasks, Scaling, Deployments, Replacing failed tasks, Integration with load balancing.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+      <p style="font-size: 13.5px;">Suppose you want 2 copies of your app running. You configure: <strong>Desired Tasks = 2</strong></p>
+      <p style="font-size: 13.5px; font-weight: bold; margin-bottom: 2px;">Before:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px; border-color:#16a34a;">Task 1 → Running</span>
+        <span class="flow-node" style="padding:1px 4px; border-color:#16a34a;">Task 2 → Running</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <p style="font-size: 13.5px; font-weight: bold; color: #dc2626; margin-top: 0; margin-bottom: 2px;">Task 2 fails...</p>
+      <p style="font-size: 13.5px; font-weight: bold; margin-bottom: 2px;">After:</p>
+      <div class="flow-v" style="gap:2px; font-size:12px; align-items:flex-start;">
+        <span class="flow-node" style="padding:1px 4px; border-color:#16a34a;">Task 1 → Running</span>
+        <span class="flow-node" style="padding:1px 4px; border-color:#3b82f6; background:#eff6ff;">Task 2 → New replacement task</span>
+      </div>
+      <p style="font-size: 12px; margin-top: 4px;">The ECS service can maintain the desired number of tasks.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Remember</span>
+    <strong>Service = Manages how many tasks should be running and how they are deployed/scaled.</strong>
+  </div>
+
+  <!-- 6. ECS Task -->
+  <h2 class="sec-heading">6. ECS Task</h2>
+  <p>A Task represents a <span class="highlight">running instance</span> of your containerized application.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree">Task
+ └── Container
+      └── Nginx</div>
+    <div>
+      <p>If you run two copies:</p>
+      <ul style="font-size: 14px;">
+        <li>Task 1 → Nginx Container</li>
+        <li>Task 2 → Nginx Container</li>
+      </ul>
+      <p><strong>Therefore: Task = A running workload/container execution in ECS.</strong></p>
+    </div>
+  </div>
+
+  <!-- 7. Task Definition -->
+  <h2 class="sec-heading">7. Task Definition</h2>
+  <p>A Task Definition is a <span class="highlight">blueprint/configuration</span> that tells ECS how your container should run.</p>
+  
+  <div class="two-col">
+    <div>
+      <p style="margin-bottom: 2px;">It can specify things such as:</p>
+      <ul style="font-size: 13.5px; margin-top: 0;">
+        <li>Container image & name</li>
+        <li>CPU & Memory</li>
+        <li>Port mappings</li>
+        <li>Environment variables</li>
+        <li>Logging configuration</li>
+        <li>Storage & Health checks</li>
+      </ul>
+    </div>
+    <div class="hand-box" style="margin-top: 0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Docker comparison</h3>
+      <p style="font-size: 12px;">With Docker, you might run:</p>
+      <span class="code-term" style="font-size: 11px;">docker run -p 80:80 -e ENV=production nginx</span>
+      <p style="font-size: 12px;">In ECS, many of these configuration details are defined in the Task Definition.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-trick">Easy memory trick</span>
+    <strong>Task Definition = Blueprint | Task = Running instance created from that blueprint</strong>
+  </div>
+
+  <!-- 8. Cluster → Service → Task → Container -->
+  <h2 class="sec-heading">8. Cluster → Service → Task → Container</h2>
+  <p>This is one of the most important concepts.</p>
+  <div class="ascii-tree">ECS
+│
+└── Cluster
+     │
+     └── Service
+          │
+          ├── Task 1
+          │    └── Container
+          │
+          └── Task 2
+               └── Container</div>
+  <p>The Task Definition tells ECS how those tasks should be configured.</p>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 9. ECS Infrastructure Options -->
+  <h2 class="sec-heading">9. ECS Infrastructure Options</h2>
+  <p>When creating an ECS cluster, you need to decide where/how your containers will run. The transcript demonstrates two important options:</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">1. AWS Fargate</h3>
+      <p style="font-size: 13.5px;">Fargate is a <span class="highlight">serverless compute option</span> for containers. You don't have to manually manage the underlying EC2 servers.</p>
+      <div class="ascii-tree" style="margin-top: 4px; text-align: center;">Your Application
+      ↓
+  Container
+      ↓
+ECS + Fargate
+      ↓
+AWS-managed infra</div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">2. EC2</h3>
+      <p style="font-size: 13.5px;">With the EC2 option, you use EC2 instances as the compute infrastructure for your containers.</p>
+      <p style="font-size: 13.5px;">You have more control over the underlying instances, but also more infrastructure management responsibilities.</p>
+    </div>
+  </div>
+
+  <!-- 10. Fargate vs EC2 -->
+  <h2 class="sec-heading">10. Fargate vs EC2</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Fargate</th>
+        <th>EC2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Server management</strong></td>
+        <td>AWS manages underlying infra</td>
+        <td>You manage EC2 instances</td>
+      </tr>
+      <tr>
+        <td><strong>Infrastructure control</strong></td>
+        <td>Lower</td>
+        <td>Higher</td>
+      </tr>
+      <tr>
+        <td><strong>Operational effort</strong></td>
+        <td>Lower</td>
+        <td>Higher</td>
+      </tr>
+      <tr>
+        <td><strong>Good for</strong></td>
+        <td>Simpler container deployments</td>
+        <td>Workloads requiring more instance-level control</td>
+      </tr>
+      <tr>
+        <td><strong>Scaling</strong></td>
+        <td>ECS/Fargate handles capacity</td>
+        <td>You manage instance capacity + ECS</td>
+      </tr>
+      <tr>
+        <td><strong>Serverless experience</strong></td>
+        <td>Yes</td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Simple rule</span>
+    Want less infrastructure management → <strong>Fargate</strong> | Want more control over servers → <strong>EC2</strong>
+  </div>
+
+  <!-- 11 to 14. Practical Deployment -->
+  <h2 class="sec-heading">Practical ECS Deployment (11 - 14)</h2>
+  <p>The transcript demonstrates deploying an Nginx container using ECS Fargate.</p>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-weight: 700; margin-bottom: 2px;">Step 1: Open ECS</p>
+      <div class="flow-h" style="justify-content: flex-start; gap: 4px; font-size: 12px;">
+        <span class="flow-node">AWS Console</span><span class="flow-arrow">→</span><span class="flow-node">ECS</span>
+      </div>
+      
+      <p style="font-weight: 700; margin-bottom: 2px; margin-top: 8px;">Step 2: Create an ECS Cluster</p>
+      <p style="font-size: 13px;">Name: <span class="code-term" style="display:inline; padding:0 2px;">my-cluster</span> | Infra: <strong>AWS Fargate</strong></p>
+    </div>
+
+    <div>
+      <p style="font-weight: 700; margin-bottom: 2px;">Step 3: Create a Task Definition</p>
+      <p style="font-size: 13px;">Name: <span class="code-term" style="display:inline; padding:0 2px;">my-task</span> | Infra: <strong>AWS Fargate</strong></p>
+      
+      <p style="font-weight: 700; margin-bottom: 2px; margin-top: 8px;">14. Container Configuration</p>
+      <p style="font-size: 13px;">The task definition needs to know which container image should be executed.</p>
+      <span class="code-term" style="font-size: 12px;">Container Name: nginx<br>Image: nginx</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 15 to 20. Task Definition Details -->
+  <h2 class="sec-heading">Task Definition Details (15 - 20)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. Port Mapping</h3>
+      <p style="font-size: 13.5px;">Nginx is a web server, so HTTP traffic needs to reach the container. <span class="code-term" style="display:inline; padding:0 2px;">Container Port: 80</span></p>
+      <div class="flow-v" style="gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 2px;">Internet</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 2px;">HTTP :80</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 2px;">ECS Task</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="padding:1px 2px;">Nginx :80</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. CPU and Memory</h3>
+      <p style="font-size: 13.5px;">You can configure the resources allocated. Resource limits help prevent one workload from consuming unlimited resources, control costs, and improve resource planning.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">17. Env Variables & 18. Logging</h3>
+      <p style="font-size: 13.5px;"><strong>Env Vars:</strong> Allows configuration to be separated from app code. (e.g., <span class="code-term" style="display:inline; padding:0 2px;">ENV=prod</span>).</p>
+      <p style="font-size: 13.5px; margin-top: 4px;"><strong>Logging:</strong> Enable container logging (commonly to <span class="highlight">CloudWatch Logs</span>) for troubleshooting.</p>
+    </div>
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">19. Health Checks & 20. Create</h3>
+      <p style="font-size: 13.5px;"><strong>Health Checks:</strong> Determine if app is functioning. Unhealthy tasks can be replaced.</p>
+      <p style="font-size: 13.5px; margin-top: 4px;"><strong>20. Create:</strong> After configuring Image, Port, CPU, Memory, Env vars, Logs, Health checks, you create the Task Definition.</p>
+    </div>
+  </div>
+
+  <!-- 21 to 24. Creating ECS Service -->
+  <h2 class="sec-heading">Creating an ECS Service (21 - 24)</h2>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px; font-size: 13px;">
+    <span class="flow-node">Cluster</span><span class="flow-arrow">→</span><span class="flow-node">Create Service</span><span class="flow-arrow">→</span><span class="flow-node">Select Task Definition</span><span class="flow-arrow">→</span><span class="flow-node">Name: my-service</span>
+  </div>
+
+  <div class="two-col" style="margin-top: 8px;">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">22. Desired Tasks & 23. Why?</h3>
+      <p style="font-size: 13.5px;"><strong>Desired Tasks = 2</strong></p>
+      <p style="font-size: 13.5px;">Running multiple tasks improves availability. If Task 1 fails, the service attempts to start a replacement to maintain the desired count of 2.</p>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">24. Networking Config</h3>
+      <p style="font-size: 13.5px;">Configure VPC, Subnets, SG, Public IP. For HTTP app, allow HTTP Port 80. <strong>Best Practice:</strong> Don't blindly allow <span class="code-term" style="display:inline; padding:0 2px;">0.0.0.0/0</span> for every port. Only expose what's needed.</p>
+    </div>
+  </div>
+
+  <!-- 25 to 29. Running and Updating -->
+  <h2 class="sec-heading">Running and Updating (25 - 29)</h2>
+  
+  <div class="two-col">
+    <div>
+      <p><strong>25. Public IP:</strong> If task needs internet access, enable Public IP. <span class="code-term" style="font-size:11px;">Internet → Public IP → ECS Task</span></p>
+      <p><strong>26. Auto Start:</strong> Service automatically starts tasks to meet desired count. <span class="code-term" style="font-size:11px;">PENDING → RUNNING</span></p>
+      <p><strong>27. Checking:</strong> Service → Tasks tab shows status, IP, logs, etc.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">28. Accessing & 29. Updating</h3>
+      <p style="font-size: 13px;">If HTTP 80 is allowed, <span class="code-term" style="display:inline; padding:0 2px;">http://&lt;PUBLIC-IP&gt;</span> shows the Nginx page.</p>
+      <p style="font-size: 13px;"><strong>29. Updating:</strong> You can change service config. Update Desired Count 2 → 1, and ECS will reduce running tasks to match.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 30. Scaling & 31. Load Balancer -->
+  <h2 class="sec-heading">30. Scaling &nbsp;|&nbsp; 31. ECS + Load Balancer</h2>
+  <p>ECS services can be configured for scaling according to workload requirements.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">                 Internet
+                    ↓
+              Load Balancer
+                    ↓
+          ┌─────────┴─────────┐
+          ↓                   ↓
+       Task 1              Task 2
+          ↓                   ↓
+      Container           Container</div>
+      
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Why a Load Balancer?</h3>
+      <p style="font-size: 13.5px;">If many users access your application, the load balancer can distribute requests across healthy tasks.</p>
+      <p style="font-size: 13.5px; margin-bottom: 0;">This improves: Availability, Scalability, Traffic distribution.</p>
+    </div>
+  </div>
+
+  <!-- 32. ECS Logging & 33. Quick Table -->
+  <h2 class="sec-heading">32. ECS Logging</h2>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px;">
+    <span class="flow-node">Container</span><span class="flow-arrow">→</span><span class="flow-node">ECS</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">CloudWatch Logs</span>
+  </div>
+  <p>Logs are useful for debugging, error analysis, monitoring, and troubleshooting.</p>
+
+  <h3 class="subsec-heading">33. Important ECS Concepts — Quick Table</h3>
+  <table class="hand-table" style="font-size: 12.5px;">
+    <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ECS</strong></td><td>AWS container orchestration service</td></tr>
+      <tr><td><strong>Cluster</strong></td><td>Logical grouping for ECS workloads</td></tr>
+      <tr><td><strong>Service</strong></td><td>Maintains and manages running tasks</td></tr>
+      <tr><td><strong>Task</strong></td><td>Running workload/container execution</td></tr>
+      <tr><td><strong>Task Definition</strong></td><td>Blueprint describing how a task should run</td></tr>
+      <tr><td><strong>Fargate</strong></td><td>Serverless container compute option</td></tr>
+      <tr><td><strong>EC2</strong></td><td>Customer-managed compute infrastructure</td></tr>
+      <tr><td><strong>Desired Count</strong></td><td>Number of tasks the service should maintain</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 34 & 35 & 36. Architecture and Comparisons -->
+  <h2 class="sec-heading">34. ECS Architecture Memory Diagram</h2>
+  <div class="two-col">
+    <div class="ascii-tree" style="font-size: 11px; text-align: center;">                 AWS ECS
+                    │
+             ┌──────┴──────┐
+             │   Cluster   │
+             └──────┬──────┘
+                    │
+                 Service
+                    │
+          ┌─────────┴─────────┐
+          │                   │
+       Task 1              Task 2
+          │                   │
+      Container           Container</div>
+      
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">35. ECS vs EC2</h3>
+      <p style="font-size: 13.5px;">EC2 = Virtual Machine. ECS = Container Management.</p>
+      <h3 class="subsec-heading">36. ECS vs Docker</h3>
+      <p style="font-size: 13.5px;">Docker builds/runs containers. ECS orchestrates/scales them on AWS.</p>
+      <div class="flow-h" style="font-size: 11px; gap: 2px;">
+        <span class="flow-node" style="padding:1px 2px;">Docker Image</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Registry</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">ECS</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">Running Tasks</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 37 & 38. Fargate Arch & Workflow -->
+  <h2 class="sec-heading">37. ECS Fargate Arch &nbsp;|&nbsp; 38. Practical Workflow</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="ascii-tree" style="font-size: 11px; line-height: 1.2;">Docker Image
+    ↓
+Container Registry
+    ↓
+ECS Task Definition
+    ↓
+ECS Service
+    ↓
+Fargate (Serverless)
+    ↓
+Running Container</div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">38. Complete Workflow</h3>
+      <ol style="font-size: 12.5px; margin: 0; padding-left: 18px;">
+        <li>Create & Dockerize App</li>
+        <li>Build & Push Image to Registry</li>
+        <li>Create ECS Cluster</li>
+        <li>Create Task Definition</li>
+        <li>Create ECS Service</li>
+        <li>Set Desired Task Count</li>
+        <li>Configure Networking</li>
+        <li>Run Container</li>
+        <li>Monitor Logs/Metrics</li>
+        <li>Scale/Update as Required</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- 39. Cleanup & Best Practices -->
+  <h2 class="sec-heading">39. Cleanup &nbsp;|&nbsp; ⭐ Best Practices</h2>
+  
+  <div class="two-col">
+    <div class="warn-box" style="margin-top: 0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">39. Cleanup</h3>
+      <p style="font-size: 13.5px; margin: 2px 0;">Don't create resources and forget them. Flow:</p>
+      <div class="flow-v" style="font-size: 11px; gap: 2px; align-items: flex-start;">
+        <span class="flow-node">Delete/scale down Service</span>
+        <span class="flow-node">Stop running Tasks</span>
+        <span class="flow-node">Deregister Task Defs</span>
+        <span class="flow-node">Delete Cluster</span>
+      </div>
+    </div>
+    
+    <div>
+      <ul style="font-size: 13px; margin-top: 0;">
+        <li><strong>1. Prefer Fargate</strong> when you don't need server-level control.</li>
+        <li><strong>2. Least-privilege</strong> IAM permissions.</li>
+        <li><strong>3. Restrict Ports:</strong> Only allow required traffic via SGs.</li>
+        <li><strong>4. Use CloudWatch</strong> for proper logging.</li>
+        <li><strong>5. Multiple tasks</strong> for important apps (HA).</li>
+        <li><strong>6. Load Balancer</strong> for production web apps.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 🧠 Quick Revision & 🎯 Interview Questions -->
+  <h2 class="sec-heading">🧠 Quick Revision & 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div class="hand-box" style="background:#faf5ff; border-color:#a855f7;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#7e22ce;">Quick ECS summary</h3>
+      <ul style="font-size: 12.5px; margin-bottom: 0;">
+        <li>Managed container orchestration service.</li>
+        <li><strong>Cluster</strong> groups workloads.</li>
+        <li><strong>Service</strong> manages running tasks & capacity.</li>
+        <li><strong>Task</strong> = running workload.</li>
+        <li><strong>Task Definition</strong> = blueprint.</li>
+        <li><strong>Fargate</strong> = Serverless containers.</li>
+        <li><strong>EC2</strong> = More server control.</li>
+      </ul>
+    </div>
+    
+    <div>
+      <div class="qa-block" style="padding: 4px 8px; margin: 2px 0;">
+        <div class="qa-q" style="font-size: 13.5px;">Q1. Fargate vs EC2?</div>
+        <div class="qa-a" style="font-size: 13px;">Fargate: Serverless, AWS manages infra. EC2: You manage instances.</div>
+      </div>
+      <div class="qa-block" style="padding: 4px 8px; margin: 2px 0;">
+        <div class="qa-q" style="font-size: 13.5px;">Q2. Task vs Task Definition?</div>
+        <div class="qa-a" style="font-size: 13px;">Task Definition is the blueprint. Task is the running instance based on it.</div>
+      </div>
+      <div class="qa-block" style="padding: 4px 8px; margin: 2px 0;">
+        <div class="qa-q" style="font-size: 13.5px;">Q3. Why run multiple tasks?</div>
+        <div class="qa-a" style="font-size: 13px;">To improve availability and handle more traffic. Service maintains desired count.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 16px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ The Easiest Formula to Remember
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 2px 0; font-weight: 700;">
+      ECS → Cluster → Service → Tasks → Containers
+    </p>
+    <p style="font-size: 13.5px; color: #881337; margin: 0; font-weight: 700;">
+      Task Definition = Instructions/Blueprint for those Tasks.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

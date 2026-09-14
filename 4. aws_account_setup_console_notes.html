@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Account Setup &amp; AWS Management Console — Handwritten Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --ink-blue: #1b3a6b;
+      --ink-red: #c02128;
+      --ink-green: #1b663e;
+      --ink-dark: #1e293b;
+      --pencil-gray: #475569;
+      --paper-bg: #fffdf9;
+      --paper-texture: #fcf9f2;
+      --hl-yellow: rgba(254, 240, 138, 0.85);
+      --hl-green: rgba(187, 247, 208, 0.8);
+      --hl-pink: rgba(251, 207, 232, 0.8);
+      --hl-blue: rgba(186, 230, 253, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #1e2430;
+      font-family: 'Patrick Hand', 'Kalam', cursive;
+      color: var(--ink-blue);
+      line-height: 1.38;
+      font-size: 14px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Toolbar */
+    .controls-bar {
+      position: fixed;
+      top: 12px;
+      right: 18px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-action {
+      background: #ea580c;
+      color: #ffffff;
+      border: none;
+      padding: 6px 15px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+    }
+    .btn-action:hover {
+      background: #c2410c;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Notebook Page (210mm x 297mm) */
+    .notebook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      width: 100%;
+      margin-top: 28px;
+    }
+
+    .notebook-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      height: auto;
+      background-color: var(--paper-bg);
+      background-image: 
+        radial-gradient(var(--paper-texture) 25%, transparent 25%),
+        radial-gradient(#f7f3e8 15%, transparent 15%);
+      background-size: 16px 16px, 32px 32px;
+      box-shadow: 
+        -2px 0 6px rgba(0,0,0,0.2),
+        8px 14px 30px rgba(0,0,0,0.42),
+        0 0 0 1px rgba(0,0,0,0.08);
+      border-radius: 4px 16px 16px 4px;
+      padding: 16mm 16mm 15mm 28mm; /* Left margin accommodates spiral binding */
+      box-sizing: border-box;
+      overflow: visible;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Realistic Spiral Binding */
+    .spiral-spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 24mm;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+
+    .spiral-ring-unit {
+      position: relative;
+      width: 26mm;
+      height: 8.5mm;
+      display: flex;
+      align-items: center;
+      margin-left: 2mm;
+    }
+
+    .spiral-hole {
+      width: 4.6mm;
+      height: 4.6mm;
+      background-color: #1e2430;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.85);
+      position: absolute;
+      left: 10mm;
+    }
+
+    .spiral-wire {
+      position: absolute;
+      left: -2mm;
+      width: 16mm;
+      height: 7.2mm;
+      border: 2.2mm solid #a6afba;
+      border-top-color: #f1f5f9;
+      border-left-color: #64748b;
+      border-bottom-color: #334155;
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+      box-shadow: -2px 3px 6px rgba(0,0,0,0.45);
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    }
+
+    /* Ink & Handwritten Accents */
+    .ink-red {
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      letter-spacing: -0.2px;
+    }
+
+    .ink-blue {
+      color: var(--ink-blue);
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    .ink-green {
+      color: var(--ink-green);
+    }
+
+    .ink-bold {
+      font-weight: 700;
+      font-family: 'Kalam', cursive;
+    }
+
+    .hl {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0.45) 0.9%, var(--hl-yellow) 98.4%);
+      border-radius: 3px 8px 4px 9px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-grn {
+      background: linear-gradient(104deg, rgba(187, 247, 208, 0.35) 0.9%, var(--hl-green) 98.4%);
+      border-radius: 4px 7px 3px 8px;
+      padding: 1px 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-pink {
+      background: linear-gradient(104deg, rgba(251, 207, 232, 0.35) 0.9%, var(--hl-pink) 98.4%);
+      border-radius: 5px 8px 3px 6px;
+      padding: 1px 4px;
+    }
+
+    .hand-box {
+      border: 2px solid var(--ink-blue);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 7px 11px;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.03);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-box-red {
+      border: 2px solid var(--ink-red);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 7px 11px;
+      background: rgba(254, 242, 242, 0.55);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-badge {
+      display: inline-block;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.1);
+      transform: rotate(-1.5deg);
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .badge-important {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .badge-trick {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .badge-faq {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #a5b4fc;
+    }
+
+    .badge-tip {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .badge-aws {
+      background: #ffedd5;
+      color: #9a3412;
+      border: 1px solid #fb923c;
+    }
+
+    .sticky-note {
+      background: #fef9c3;
+      border-left: 5px solid #eab308;
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.07);
+      padding: 6px 10px;
+      border-radius: 3px 8px 8px 3px;
+      transform: rotate(-0.3deg);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4px 0;
+      font-size: 12.5px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table th {
+      border-bottom: 2.2px solid var(--ink-red);
+      padding: 4px 6px;
+      text-align: left;
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      font-size: 13px;
+    }
+
+    .hand-table td {
+      border-bottom: 1.5px dashed #cbd5e1;
+      padding: 4px 6px;
+      color: var(--ink-blue);
+    }
+
+    .hand-table tr:last-child td {
+      border-bottom: 2px solid var(--ink-blue);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 3px;
+      margin-bottom: 8px;
+      font-family: 'Caveat', cursive;
+      font-size: 15.5px;
+      color: #64748b;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 3px;
+      margin-top: 6px;
+      font-family: 'Caveat', cursive;
+      font-size: 14.5px;
+      color: #94a3b8;
+    }
+
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram-box {
+      background: #fafaf9;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 9px;
+      padding: 6px;
+      margin: 4px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .notebook-container {
+        gap: 0 !important;
+        margin-top: 0 !important;
+      }
+      .notebook-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print & Nav Controls -->
+  <div class="controls-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Export PDF / Print Notes
+    </button>
+    <button class="btn-action" style="background:#0284c7;" onclick="window.scrollTo({top: 0, behavior:'smooth'})">
+      ⬆️ Top
+    </button>
+  </div>
+
+  <div class="notebook-container">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: INTRODUCTION, REQUIREMENTS & WHY PAYMENT INFO -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-1">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Account Setup &amp; AWS Console</span>
+          <span>Sheet No: 01</span>
+        </div>
+
+        <!-- Banner Title -->
+        <div class="hand-box-red text-center mb-2" style="background: rgba(254, 242, 242, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-aws">AWS FOUNDATIONS</span>
+            <h1 class="ink-red text-2xl font-bold tracking-wide">
+              ☁️ AWS Account Setup &amp; AWS Management Console
+            </h1>
+          </div>
+          <p class="text-xs text-slate-500 font-sans uppercase tracking-wider mt-0.5">Comprehensive, Step-by-Step Hands-on Setup Guide</p>
+        </div>
+
+        <!-- 1. Introduction -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">GETTING STARTED</span>
+            <h2 class="ink-red text-base font-bold">1. Introduction</h2>
+          </div>
+          <div class="hand-box p-2 bg-amber-50/20 text-xs">
+            <p class="ink-blue font-bold">
+              Before starting hands-on practice with AWS, the first step is to create and configure an AWS account.
+            </p>
+            <p class="text-slate-700 font-bold mt-1">An AWS account allows you to:</p>
+            <div class="grid grid-cols-2 gap-1 mt-1 text-[11px] text-slate-800">
+              <div>• Access AWS services</div>
+              <div>• Create cloud resources</div>
+              <div>• Practice services such as EC2, S3, VPC, IAM, etc.</div>
+              <div>• Monitor resource usage and costs</div>
+              <div>• Deploy applications</div>
+              <div>• Learn AWS through the AWS Management Console</div>
+            </div>
+            <div class="sticky-note mt-1.5 text-[10.5px]">
+              <b class="text-red-900">⚠️ Important Warning:</b> AWS may require valid payment and identity verification. Never use fake identity or payment information.
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Requirements for Creating an AWS Account -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-tip">PREREQUISITES</span>
+            <h2 class="ink-red text-base font-bold">2. Requirements for Creating an AWS Account</h2>
+          </div>
+          <p class="ink-blue text-xs mb-1">You generally need the following four items:</p>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <!-- 1. Working Email -->
+            <div class="hand-box p-2 bg-white">
+              <b class="text-blue-900 text-xs">1. Working Email Address 📧</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">Your email address should:</p>
+              <ul class="text-[10.5px] text-slate-800 list-disc ml-4 space-y-0.5 mt-0.5">
+                <li>Be accessible to you</li>
+                <li>Be a valid email address</li>
+                <li>Be available for verification</li>
+                <li>Be used to receive AWS account notifications</li>
+              </ul>
+              <p class="text-[10px] text-slate-500 italic mt-0.5">AWS sends verification emails during account creation.</p>
+            </div>
+
+            <!-- 2. Working Mobile Number -->
+            <div class="hand-box p-2 bg-white">
+              <b class="text-emerald-900 text-xs">2. Working Mobile Number 📱</b>
+              <p class="text-[11px] text-slate-700 mt-0.5">A valid mobile number is required for verification.</p>
+              <p class="text-[10.5px] text-slate-800 mt-0.5">AWS may send an OTP or use phone verification to confirm your identity.</p>
+              <div class="diagram-box mt-1 py-0.5 text-center text-[10.5px] font-mono">
+                Enter Mobile ➔ Receive SMS/Call OTP ➔ Verified ✓
+              </div>
+            </div>
+
+            <!-- 3. Valid Identity Document -->
+            <div class="hand-box p-2 bg-white">
+              <b class="text-purple-900 text-xs">3. Valid Identity Document 🪪</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">AWS may require identity verification. Depending on the verification process and country, an accepted government-issued ID may include:</p>
+              <div class="grid grid-cols-2 gap-1 text-[10.5px] text-slate-800 font-bold mt-1">
+                <div>• Driving License</div>
+                <div>• Passport</div>
+                <div class="col-span-2">• Other supported government-issued ID</div>
+              </div>
+              <p class="text-[10px] text-slate-500 italic mt-0.5">Note: The exact documents accepted can vary depending on AWS's current verification process and your location.</p>
+            </div>
+
+            <!-- 4. Credit/Debit Card -->
+            <div class="hand-box p-2 bg-white">
+              <b class="text-rose-900 text-xs">4. Credit/Debit Card 💳</b>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">AWS requires valid payment information for account verification and billing. You should provide:</p>
+              <div class="text-[11px] text-slate-800 font-bold mt-1">
+                • Valid debit card, or<br>
+                • Valid credit card
+              </div>
+              <div class="sticky-note text-[10.5px] mt-1">
+                <b class="text-red-900">Security Rule:</b> Do not use fake card details.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Why Does AWS Ask for Payment Information? -->
+        <div class="hand-box-red p-2 bg-amber-50/30 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-base font-bold">3. Why Does AWS Ask for Payment Information?</h2>
+            <span class="callout-badge badge-faq">COMMON FAQ</span>
+          </div>
+          <p class="ink-blue text-[11px] italic font-bold">
+            A common beginner question is: "If AWS has a Free Tier, why does it ask for my card?"
+          </p>
+          <p class="ink-blue text-[11px] mt-0.5">
+            <b>Answer:</b> Because <span class="hl font-bold">AWS is a paid cloud platform.</span> The Free Tier allows eligible customers to use certain services/resources within specified limits, but AWS still needs a valid payment method for account verification and for situations where chargeable usage occurs.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-[10.5px]">
+            <div class="border border-amber-300 rounded p-1 bg-white">
+              <b class="text-amber-900 font-sans">EC2 Example:</b><br>
+              Suppose you create an EC2 instance:<br>
+              • If usage remains within an applicable free allowance ➔ You may not be charged.<br>
+              • But if you exceed allowance, run longer than allowed, or choose paid features ➔ <span class="text-red-800 font-bold">Charges may occur!</span>
+            </div>
+            <div class="border border-amber-300 rounded p-1 bg-white">
+              <b class="text-red-900 font-sans">Important Rule to Remember:</b><br>
+              Do not assume: <i>"AWS Free Tier = Everything is free."</i><br>
+              Instead remember:<br>
+              <span class="hl font-bold">Free Tier = Specific services + specific usage limits + specific eligibility conditions.</span><br>
+              Always check current AWS pricing/free-tier terms before creating resources.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 1 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: ACCOUNT CREATION FLOW & STEPS 1 TO 6 -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-2">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Account Creation Flow &amp; Steps 1 to 6</span>
+          <span>Sheet No: 02</span>
+        </div>
+
+        <!-- 4. AWS Account Creation — Basic Flow -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">FULL LIFECYCLE</span>
+              <h2 class="ink-red text-base font-bold">4. AWS Account Creation — Basic Flow</h2>
+            </div>
+            <span class="text-[11px] text-blue-900 font-bold">The Complete Signup Pipeline</span>
+          </div>
+
+          <p class="ink-blue text-[11px] mb-1">The general signup process is structured as follows:</p>
+
+          <div class="diagram-box bg-white text-center py-1 font-mono text-[10px] text-slate-800">
+            <div class="grid grid-cols-4 gap-1">
+              <span class="p-1 border rounded bg-slate-50">AWS Website</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Create AWS Account</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Enter Email</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Verify Email</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1 mt-1">
+              <span class="p-1 border rounded bg-slate-50">➔ Create Password</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Account Info</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Payment Info</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Identity Verification</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1 mt-1">
+              <span class="p-1 border rounded bg-slate-50">➔ Phone Verification</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Select Support Plan</span>
+              <span class="p-1 border rounded bg-slate-50">➔ Complete Signup</span>
+              <span class="p-1 border border-emerald-400 rounded bg-emerald-50 text-emerald-900 font-bold">➔ Sign in to Console ✓</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Steps 1 to 6 Grid -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- Step 1 & 2 -->
+          <div class="space-y-2">
+            <!-- Step 1 -->
+            <div class="hand-box p-2 bg-white">
+              <div class="flex items-center justify-between mb-0.5">
+                <h3 class="ink-red text-sm font-bold">5. Step 1 — Visit AWS</h3>
+                <span class="text-[10px] font-mono bg-blue-100 text-blue-900 px-1 rounded">URL</span>
+              </div>
+              <p class="ink-blue text-[11px]">
+                Go to the official AWS website: <span class="hl font-mono font-bold">aws.amazon.com</span>
+              </p>
+              <p class="text-[10.5px] text-slate-700 mt-0.5">
+                Choose the option to create/sign up for an AWS account. Look for the button:
+              </p>
+              <div class="text-center my-0.5">
+                <span class="bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded border border-amber-300 text-[10.5px]">Create an AWS Account / Create a Free Account</span>
+              </div>
+              <p class="text-[10px] text-slate-500 italic">AWS may change the wording or signup interface over time.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="hand-box p-2 bg-white">
+              <div class="flex items-center justify-between mb-0.5">
+                <h3 class="ink-red text-sm font-bold">6. Step 2 — Enter Your Email Address</h3>
+                <span class="text-[10px] font-mono bg-amber-100 text-amber-900 px-1 rounded">COMMUNICATION</span>
+              </div>
+              <p class="ink-blue text-[11px]">
+                Enter a valid email address. AWS will use this email for:
+              </p>
+              <div class="grid grid-cols-2 gap-0.5 text-[10.5px] text-slate-800 mt-0.5">
+                <div>• Verification</div>
+                <div>• Account communication</div>
+                <div>• Billing notifications</div>
+                <div>• Security alerts</div>
+                <div class="col-span-2">• Important AWS notifications</div>
+              </div>
+              <div class="sticky-note text-[10.5px] mt-1">
+                <b class="text-amber-900">Important:</b> Use an email account that you regularly access.
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 & 4 -->
+          <div class="space-y-2">
+            <!-- Step 3 -->
+            <div class="hand-box p-2 bg-white">
+              <div class="flex items-center justify-between mb-0.5">
+                <h3 class="ink-red text-sm font-bold">7. Step 3 — Verify Email</h3>
+                <span class="text-[10px] font-mono bg-emerald-100 text-emerald-900 px-1 rounded">SECURITY</span>
+              </div>
+              <p class="ink-blue text-[11px]">
+                AWS sends a verification code/link to your email.
+              </p>
+              <div class="diagram-box my-1 py-1 text-center font-mono text-[10px]">
+                Enter Email ➔ AWS sends code ➔ Open Email ➔ Enter Code ➔ <b>Email Verified ✓</b>
+              </div>
+              <p class="text-[10.5px] text-slate-600">After successful verification, you can continue the signup process.</p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="hand-box p-2 bg-white">
+              <div class="flex items-center justify-between mb-0.5">
+                <h3 class="ink-red text-sm font-bold">8. Step 4 — Create AWS Account Password</h3>
+                <span class="text-[10px] font-mono bg-purple-100 text-purple-900 px-1 rounded">CREDENTIALS</span>
+              </div>
+              <p class="ink-blue text-[10.5px]">
+                Create a strong password according to AWS's current password requirements.
+              </p>
+              <div class="grid grid-cols-2 gap-1 mt-0.5 text-[10px]">
+                <div class="p-1 border border-emerald-300 rounded bg-emerald-50">
+                  <b class="text-emerald-900 font-sans">Good Practice:</b><br>
+                  • Uppercase letters<br>
+                  • Lowercase letters<br>
+                  • Numbers<br>
+                  • Special characters
+                </div>
+                <div class="p-1 border border-red-300 rounded bg-red-50">
+                  <b class="text-red-900 font-sans">Avoid:</b><br>
+                  • Your name<br>
+                  • Birthday<br>
+                  • Simple passwords<br>
+                  • Reused passwords
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 & Step 6 -->
+        <div class="grid grid-cols-2 gap-2 text-xs mt-2">
+          <!-- Step 5 -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">9. Step 5 — Provide Account Information</h3>
+            <p class="ink-blue text-[11px]">
+              AWS asks for information required to create the account. You may need to provide details such as:
+            </p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10.5px] text-slate-800 my-0.5">
+              <div>• Name</div>
+              <div>• Contact information</div>
+              <div>• Address</div>
+              <div>• Country / region</div>
+              <div>• Phone number</div>
+              <div>• Account type / purpose</div>
+            </div>
+            <p class="text-[10.5px] text-slate-600 italic">
+              👉 For learning purposes, select the appropriate <b>personal option</b> if that accurately describes your use.
+            </p>
+          </div>
+
+          <!-- Step 6 -->
+          <div class="hand-box p-2 bg-amber-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">10. Step 6 — Add Payment Information</h3>
+            <p class="ink-blue text-[11px]">
+              Enter your valid <b>Debit card</b>, or <b>Credit card</b>. AWS uses this information for billing and account verification.
+            </p>
+            <div class="hand-box-red p-1 bg-white text-[10.5px] mt-1">
+              <b class="text-rose-900">Temporary Verification Charge:</b><br>
+              AWS may place a small temporary authorization/verification charge on the card. The exact amount and whether/how quickly it is reversed can vary by region, bank, card network, and AWS's current verification process.
+            </div>
+            <p class="text-[10px] text-red-800 font-bold mt-1">
+              ⚠️ Important: Do not rely on a specific amount such as ₹2 as a universal rule.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 2 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 3: STEPS 7 TO 10 & AWS MANAGEMENT CONSOLE BASICS -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-3">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Verification, Activation &amp; Console Overview</span>
+          <span>Sheet No: 03</span>
+        </div>
+
+        <!-- Steps 7 to 10 -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- Step 7: Identity Verification -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">11. Step 7 — Identity Verification</h3>
+              <span class="callout-badge badge-important">SECURITY</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              AWS may ask you to verify your identity. You may be asked to provide an accepted government-issued ID.
+            </p>
+            <p class="text-[10px] text-slate-600 mt-0.5">Process varies by Country, Account type, and AWS requirements.</p>
+            <div class="hand-box-red p-1 bg-red-50/40 text-[10px] mt-1">
+              <b class="text-red-900">🚨 Important Security Rule:</b><br>
+              Never share your: <b>AWS password, OTP, Card PIN, CVV, or MFA codes</b> with another person!
+            </div>
+          </div>
+
+          <!-- Step 8: Phone Verification -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">12. Step 8 — Phone Verification</h3>
+              <span class="callout-badge badge-tip">OTP CHECK</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              AWS may require phone verification. Make sure the phone number is working and accessible.
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px]">
+              Enter Phone Number ➔ Receive OTP / Verification ➔ Enter Code ➔ <b>Phone Verified ✓</b>
+            </div>
+          </div>
+
+          <!-- Step 9: Choose Support Plan -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">13. Step 9 — Choose a Support Plan</h3>
+              <span class="callout-badge badge-trick">COST FREE</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              During signup, AWS may ask you to choose a support plan. For basic learning and experimentation, the <span class="hl font-bold">Basic Support</span> option is generally sufficient when available.
+            </p>
+            <p class="text-[10px] text-slate-700 mt-0.5"><b>Basic Support:</b> Suitable for learning AWS, practicing services, basic experimentation, personal projects, beginner study.</p>
+            <p class="text-[9.5px] text-slate-500 italic mt-0.5">Paid support plans provide additional features and 24/7 technical support response.</p>
+          </div>
+
+          <!-- Step 10: Account Completed -->
+          <div class="hand-box p-2 bg-emerald-50/30" style="border-color: #059669;">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">14. Step 10 — Account Creation Completed</h3>
+              <span class="callout-badge badge-tip">ACTIVATED</span>
+            </div>
+            <p class="ink-blue text-[11px]">
+              After completing all required verification steps, AWS activates the account.
+            </p>
+            <p class="text-[10.5px] text-slate-800 mt-0.5">
+              You will receive an email confirming that your: <span class="hl-grn font-bold">AWS services are ready to use</span>.
+            </p>
+            <p class="text-[10px] text-slate-600 mt-1">You can then immediately sign in to the AWS Management Console!</p>
+          </div>
+        </div>
+
+        <!-- 15. AWS Management Console -->
+        <div class="hand-box p-2 mb-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-aws">PORTAL</span>
+              <h2 class="ink-red text-base font-bold">15. AWS Management Console</h2>
+            </div>
+            <span class="text-[11px] text-slate-600 font-bold">Graphical Web-Based Portal</span>
+          </div>
+
+          <p class="ink-blue text-[11px]">
+            The <b>AWS Management Console</b> is a web-based graphical interface used to manage AWS resources and services. Instead of using commands, you can perform many AWS operations through the browser.
+          </p>
+
+          <p class="text-[11px] font-bold ink-red mt-1">Using the console, you can:</p>
+          <div class="grid grid-cols-4 gap-1 text-[10px] font-bold text-center mt-0.5">
+            <span class="p-1 border bg-white rounded">Launch EC2 instances</span>
+            <span class="p-1 border bg-white rounded">Create S3 buckets</span>
+            <span class="p-1 border bg-white rounded">Configure VPCs</span>
+            <span class="p-1 border bg-white rounded">Create IAM users &amp; roles</span>
+            <span class="p-1 border bg-white rounded">View CloudWatch metrics</span>
+            <span class="p-1 border bg-white rounded">Manage databases (RDS)</span>
+            <span class="p-1 border bg-white rounded">Configure load balancers</span>
+            <span class="p-1 border bg-white rounded">Monitor billing &amp; costs</span>
+          </div>
+        </div>
+
+        <!-- 16 & 17. Dashboard & Recently Visited Services -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 16. Console Dashboard -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">16. AWS Console — Dashboard</h3>
+            <p class="ink-blue text-[11px]">After signing in, you see the AWS Console. The dashboard provides access to:</p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10.5px] text-slate-800 mt-0.5">
+              <div>• Recently visited services</div>
+              <div>• AWS services catalog</div>
+              <div>• Region selection</div>
+              <div>• Cost and usage info</div>
+              <div class="col-span-2">• Account-related shortcuts &amp; resources</div>
+            </div>
+            <p class="text-[10px] text-slate-500 italic mt-0.5">For a new AWS account, dashboard looks empty initially because you haven't used services yet.</p>
+          </div>
+
+          <!-- 17. Recently Visited Services -->
+          <div class="hand-box p-2 bg-white">
+            <h3 class="ink-red text-sm font-bold mb-0.5">17. Recently Visited Services</h3>
+            <p class="ink-blue text-[11px]">AWS Console keeps track of services you recently accessed. For example:</p>
+            <div class="flex justify-around text-center text-[10.5px] font-mono font-bold my-1 text-blue-900">
+              <span class="bg-blue-50 border border-blue-200 px-1 rounded">EC2</span>
+              <span class="bg-blue-50 border border-blue-200 px-1 rounded">S3</span>
+              <span class="bg-blue-50 border border-blue-200 px-1 rounded">IAM</span>
+              <span class="bg-blue-50 border border-blue-200 px-1 rounded">VPC</span>
+              <span class="bg-blue-50 border border-blue-200 px-1 rounded">RDS</span>
+            </div>
+            <p class="text-[10px] text-slate-600">This makes it fast and easy to return to frequently used services without searching.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 3 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: SERVICES MENU, REGIONS & REGION SELECTION -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-4">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Service Categories, Region Selection &amp; Criteria</span>
+          <span>Sheet No: 04</span>
+        </div>
+
+        <!-- 18. AWS Services Menu & 19. Searching -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-base font-bold">18. AWS Services Menu &amp; 19. Searching for Services</h2>
+            <span class="callout-badge badge-faq">NAVIGATING AWS</span>
+          </div>
+          <p class="ink-blue text-[11px]">
+            You can select <b>Services</b> to browse the catalog across many categories:
+          </p>
+
+          <table class="hand-table text-[11px] my-1">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Category</th>
+                <th style="width: 75%;">Examples</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Compute</b></td><td>EC2, Lambda</td></tr>
+              <tr><td><b>Storage</b></td><td>S3, EBS</td></tr>
+              <tr><td><b>Database</b></td><td>RDS, DynamoDB</td></tr>
+              <tr><td><b>Networking</b></td><td>VPC, Route 53</td></tr>
+              <tr><td><b>Security</b></td><td>IAM, KMS</td></tr>
+              <tr><td><b>Monitoring</b></td><td>CloudWatch</td></tr>
+              <tr><td><b>Containers</b></td><td>ECS, EKS</td></tr>
+              <tr><td><b>Content Delivery</b></td><td>CloudFront</td></tr>
+              <tr><td><b>Automation</b></td><td>CloudFormation</td></tr>
+              <tr><td><b>AI / ML</b></td><td>Various AWS AI/ML services</td></tr>
+            </tbody>
+          </table>
+
+          <div class="flex items-center justify-between mt-1 text-[11px] bg-slate-50 p-1 rounded border">
+            <span><b>19. Searching for Services:</b> Instead of manually browsing, use the Console Search bar.</span>
+            <span class="font-mono text-blue-900 font-bold">AWS Console ➔ Search "EC2" ➔ Click Elastic Compute Cloud</span>
+          </div>
+        </div>
+
+        <!-- 20 & 21. AWS Region Selection & What is an AWS Region? -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 20. Region Selection -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">20. AWS Region Selection</h3>
+            <p class="ink-blue text-[11px]">
+              One of the most important concepts in the AWS Console is the <span class="hl font-bold">Region</span>. The console displays the currently selected AWS Region in the top-right corner:
+            </p>
+            <div class="space-y-0.5 text-[10.5px] font-mono text-slate-800 my-1">
+              <div>• Europe (Stockholm)</div>
+              <div>• ap-northeast-1 (Tokyo)</div>
+              <div>• Asia Pacific (Mumbai)</div>
+            </div>
+            <p class="text-[10px] text-slate-500 italic">The exact selected region depends on your session and what you choose.</p>
+          </div>
+
+          <!-- 21. What is an AWS Region? -->
+          <div class="hand-box p-2 bg-amber-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">21. What is an AWS Region?</h3>
+            <p class="ink-blue text-[11px]">
+              <b>Definition:</b> An AWS Region is a geographical area where AWS operates infrastructure (India, US, Europe, Asia Pacific, Middle East, Canada, Australia).
+            </p>
+            <div class="border border-amber-300 rounded p-1 bg-white mt-1 text-center font-mono text-[11px]">
+              Mumbai Region Identifier:<br>
+              <b class="text-amber-900 text-xs">Asia Pacific (Mumbai) = ap-south-1</b>
+            </div>
+            <p class="text-[10px] text-slate-600 mt-0.5">Each region has a distinct, standardized alphanumeric identifier code.</p>
+          </div>
+        </div>
+
+        <!-- 22. Why Does Region Matter? & 23. Choosing a Region -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 22. Why Region Matters -->
+          <div class="hand-box-red p-2 bg-red-50/30">
+            <div class="flex items-center gap-1 mb-0.5">
+              <span class="callout-badge badge-important">VERY IMPORTANT</span>
+              <h3 class="ink-red text-sm font-bold">22. Why Does Region Matter?</h3>
+            </div>
+            <p class="ink-blue text-[10.5px]">
+              When creating AWS resources, you select a region. The resource is created in that selected region!
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center font-mono text-[10px] text-red-900">
+              Created in Mumbai ➔ Switch to Singapore ➔ EC2 Instance disappears from view! 😱
+            </div>
+            <div class="sticky-note text-[10px]">
+              <b class="text-red-900">Common Beginner Panic:</b> <i>"I created my EC2 instance, but now I can't find it!"</i><br>
+              ➔ You didn't lose it! You are simply looking at a different region in the console dropdown.
+            </div>
+          </div>
+
+          <!-- 23. Choosing a Region -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h3 class="ink-red text-sm font-bold mb-0.5">23. Choosing a Region (5 Factors)</h3>
+            <p class="ink-blue text-[10.5px]">Region selection depends on application requirements:</p>
+            <div class="space-y-0.5 text-[10px] text-slate-800 mt-0.5">
+              <div><b>1. Latency:</b> Choose geographically closer regions to users (Indian Users ➔ Mumbai Region = low latency).</div>
+              <div><b>2. Compliance:</b> Strict legal data-residency laws requiring data to remain inside the country.</div>
+              <div><b>3. Service Availability:</b> Not every AWS service/feature is available in every region.</div>
+              <div><b>4. Cost:</b> Pricing differs slightly across AWS regions.</div>
+              <div><b>5. Disaster Recovery:</b> Multi-region strategies for high availability.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 4 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: REGION VS AZ, COST MONITORING & BEGINNER WORKFLOW -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-5">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Infrastructure Hierarchy, Cost Tracking &amp; Workflow</span>
+          <span>Sheet No: 05</span>
+        </div>
+
+        <!-- 24. Region vs Availability Zone -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">HIERARCHY</span>
+              <h2 class="ink-red text-base font-bold">24. Region vs Availability Zone (AZ)</h2>
+            </div>
+            <span class="text-[11px] text-blue-900 font-bold">Resilience &amp; Isolation</span>
+          </div>
+
+          <p class="ink-blue text-[11px] mb-1">Remember this fundamental architecture hierarchy:</p>
+
+          <div class="diagram-box bg-white text-center py-1 font-mono text-[10.5px]">
+            <div>AWS Global Infrastructure ➔ Region ➔ [ Availability Zone 1 | Availability Zone 2 | Availability Zone 3 ]</div>
+            <div class="text-slate-500 text-[10px] mt-0.5">Example: Mumbai Region (ap-south-1) ➔ [ ap-south-1a | ap-south-1b | ap-south-1c ]</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-[10.5px]">
+            <div class="border border-blue-200 rounded p-1 bg-white">
+              <b class="text-blue-900 font-sans">Region:</b><br>
+              A geographical area containing multiple Availability Zones. Used for geographic deployment.
+            </div>
+            <div class="border border-emerald-200 rounded p-1 bg-white">
+              <b class="text-emerald-900 font-sans">Availability Zone (AZ):</b><br>
+              A separate, isolated infrastructure location / data center within a Region. Designed for high availability, auto-scaling &amp; disaster recovery.
+            </div>
+          </div>
+        </div>
+
+        <!-- 25 & 26. Cost & Usage Monitoring -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 25. Cost & Usage Monitoring -->
+          <div class="hand-box p-2 bg-amber-50/20">
+            <h3 class="ink-red text-sm font-bold mb-0.5">25. Cost &amp; Usage Monitoring</h3>
+            <p class="ink-blue text-[10.5px]">
+              AWS provides tools and dashboards to help you monitor your spending. You can see:
+            </p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10px] text-slate-800 my-0.5">
+              <div>• Current costs</div>
+              <div>• Usage metrics</div>
+              <div>• Billing breakdown</div>
+              <div>• Cost trends</div>
+              <div>• Forecasts</div>
+              <div>• Service-level charges</div>
+            </div>
+            <div class="diagram-box my-0.5 py-0.5 text-center font-mono text-[9.5px]">
+              EC2 ➔ Running Instance ➔ Usage Generated ➔ Possible Charges ➔ Billing Dashboard
+            </div>
+            <p class="text-[10px] font-bold text-amber-900">A beginner should make cost monitoring an everyday habit!</p>
+          </div>
+
+          <!-- 26. Why Cost Monitoring Is Important & 27. Console Theme -->
+          <div class="hand-box-red p-2 bg-red-50/30">
+            <h3 class="ink-red text-sm font-bold mb-0.5">26. Why Cost Monitoring is Crucial ⚠️</h3>
+            <p class="ink-blue text-[10.5px]">
+              Cloud resources can continue running even when you are not actively using them!
+            </p>
+            <div class="diagram-box my-0.5 py-0.5 text-center text-[9.5px] font-mono text-red-900">
+              Create EC2 ➔ Finish Practice ➔ Forget to Stop/Delete ➔ Keeps Running ➔ Charges on Card! 💸
+            </div>
+            <div class="sticky-note text-[10px]">
+              <b class="text-red-900">Golden Habit:</b> Always clean up (Stop/Terminate) resources after practice!
+            </div>
+            <div class="mt-1 pt-0.5 border-t border-red-200 text-[10px] text-slate-700">
+              <b>27. AWS Console Theme:</b> Supports <b>Light Theme</b> and <b>Dark Theme</b> for comfort during long sessions.
+            </div>
+          </div>
+        </div>
+
+        <!-- 28. Practical Beginner Workflow -->
+        <div class="hand-box p-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">28. Practical Beginner Workflow (Make This Your Daily Habit)</h3>
+            <span class="callout-badge badge-tip">DISCIPLINE</span>
+          </div>
+          <p class="ink-blue text-[10.5px] mb-1">Once your AWS account is ready, strictly follow this sequential workflow every single lab session:</p>
+
+          <div class="grid grid-cols-5 gap-1 text-[10px] font-bold font-mono text-center">
+            <span class="p-1 border rounded bg-white">1. Login</span>
+            <span class="p-1 border rounded bg-white">2. Check Region</span>
+            <span class="p-1 border rounded bg-white">3. Check Billing</span>
+            <span class="p-1 border rounded bg-white">4. Open Service</span>
+            <span class="p-1 border rounded bg-white">5. Create Resource</span>
+            <span class="p-1 border rounded bg-white">6. Configure</span>
+            <span class="p-1 border rounded bg-white">7. Test</span>
+            <span class="p-1 border rounded bg-white">8. Monitor</span>
+            <span class="p-1 border border-red-400 text-red-900 rounded bg-red-50">9. Stop/Delete</span>
+            <span class="p-1 border border-emerald-400 text-emerald-900 rounded bg-emerald-50">10. Check Cost</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 5 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 6: SECURITY PRACTICES, ROOT VS IAM & COMMON MISTAKES -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-6">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Account Security, Root vs IAM &amp; Pitfalls</span>
+          <span>Sheet No: 06</span>
+        </div>
+
+        <!-- 29. Security Practices & 30. Root User vs IAM User -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 29. Security Practices -->
+          <div class="hand-box p-2 bg-white">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">29. Important Security Practices</h3>
+              <span class="callout-badge badge-important">CRITICAL</span>
+            </div>
+            <p class="ink-blue text-[10.5px]">After creating your account, security is top priority:</p>
+            <div class="mt-0.5 space-y-1 text-[10px] text-slate-800">
+              <div class="p-1 border border-red-300 rounded bg-red-50/40">
+                <b class="text-red-900 font-sans">1. Enable MFA:</b> Multi-Factor Authentication adds an essential second defense layer beyond passwords.<br>
+                <span class="font-mono text-[9.5px]">Password + MFA Code ➔ Strong Security</span>
+              </div>
+              <div class="p-1 border border-amber-300 rounded bg-amber-50/40">
+                <b class="text-amber-900 font-sans">2. Never Share Credentials:</b> Never share Password, Access keys, Secret access keys, MFA codes, or OTPs.
+              </div>
+              <div class="p-1 border border-blue-300 rounded bg-blue-50/40">
+                <b class="text-blue-900 font-sans">3. Use IAM Properly:</b> Avoid using the root user for everyday administrative or lab tasks.
+              </div>
+            </div>
+          </div>
+
+          <!-- 30. Root User vs IAM User -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="ink-red text-sm font-bold">30. Root User vs IAM User</h3>
+              <span class="callout-badge badge-faq">KEY DISTINCTION</span>
+            </div>
+            <div class="space-y-1 text-[10.5px] text-slate-800 mt-1">
+              <div class="p-1 border border-red-300 rounded bg-white">
+                <b class="text-red-900 font-sans">Root User:</b><br>
+                The original AWS account identity created with email. Has unrestricted, complete permissions over everything in the account.
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-white">
+                <b class="text-emerald-900 font-sans">IAM User / Role:</b><br>
+                Identities created inside IAM with strictly controlled, granular permissions to specific resources.
+              </div>
+            </div>
+            <div class="sticky-note text-[10px] mt-1">
+              <b class="text-amber-900">Industry Best Practice:</b> Use the root user ONLY when root-level setup is required, and use IAM identities for all regular tasks.
+            </div>
+          </div>
+        </div>
+
+        <!-- 31. Common Beginner Mistakes -->
+        <div class="hand-box-red p-2 bg-red-50/20 text-xs mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">31. Common Beginner Mistakes (Avoid These Traps!)</h3>
+            <span class="callout-badge badge-important">WATCH OUT</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-800 mt-0.5">
+            <div class="p-1 border border-red-300 rounded bg-white">
+              <b class="text-red-900 font-sans">Mistake 1 — Assuming Everything Is Free</b><br>
+              ❌ "AWS is free."<br>
+              ✅ "Some AWS usage may be free within applicable limits &amp; conditions."
+            </div>
+            <div class="p-1 border border-red-300 rounded bg-white">
+              <b class="text-red-900 font-sans">Mistake 2 — Forgetting the Region</b><br>
+              Create EC2 in Mumbai, then switch to Oregon.<br>
+              <i>"My EC2 disappeared!"</i> No, it's just in Mumbai!
+            </div>
+            <div class="p-1 border border-red-300 rounded bg-white">
+              <b class="text-red-900 font-sans">Mistake 3 — Leaving Resources Running</b><br>
+              EC2 launched ➔ practice done ➔ forgot to terminate ➔ bills pile up silently on your credit card.
+            </div>
+            <div class="p-1 border border-red-300 rounded bg-white col-span-2">
+              <b class="text-red-900 font-sans">Mistake 4 — Creating Unnecessary Expensive Resources</b><br>
+              Creating multiple EC2 instances, Elastic IPs (charged when unattached!), NAT Gateways, Load Balancers, or RDS without understanding costs. <i>Start small!</i>
+            </div>
+            <div class="p-1 border border-red-300 rounded bg-white">
+              <b class="text-red-900 font-sans">Mistake 5 — Ignoring Billing</b><br>
+              Never checking AWS Billing &amp; Cost Management dashboard until an invoice notification arrives.
+            </div>
+          </div>
+        </div>
+
+        <!-- 32. Real-World Example: Practicing EC2 -->
+        <div class="hand-box p-2 bg-slate-50 text-xs">
+          <h3 class="ink-red text-sm font-bold mb-0.5">32. Real-World Example — Practicing EC2</h3>
+          <p class="ink-blue text-[10.5px]">Imagine you are learning AWS and want to practice launching an EC2 instance:</p>
+
+          <div class="grid grid-cols-4 gap-1 text-[10px] text-slate-800 font-mono mt-1">
+            <div class="p-1 border rounded bg-white">Step 1: Login to AWS</div>
+            <div class="p-1 border rounded bg-white">Step 2: Select Mumbai Region</div>
+            <div class="p-1 border rounded bg-white">Step 3: Open EC2</div>
+            <div class="p-1 border rounded bg-white">Step 4: Launch small instance (Free-tier eligible)</div>
+            <div class="p-1 border rounded bg-white">Step 5: Connect and practice</div>
+            <div class="p-1 border rounded bg-white">Step 6: Finish your exercise</div>
+            <div class="p-1 border border-red-400 text-red-900 rounded bg-red-50">Step 7: Stop or Terminate instance</div>
+            <div class="p-1 border border-emerald-400 text-emerald-900 rounded bg-emerald-50">Step 8: Check cost dashboard</div>
+          </div>
+          <p class="text-[10px] text-slate-500 italic mt-0.5 text-center">This is the correct, disciplined cloud-learning mindset.</p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 6 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 7: KEY CONCEPTS, ONE-MINUTE REVISION & INTERVIEW Q&A (1-6) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-7">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Summary Table &amp; Interview Questions (Part 1)</span>
+          <span>Sheet No: 07</span>
+        </div>
+
+        <!-- 33. Key Concepts to Remember Table -->
+        <div class="hand-box p-2 mb-2 bg-white text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-base font-bold">33. Key Concepts to Remember</h2>
+            <span class="callout-badge badge-faq">QUICK REVISION TABLE</span>
+          </div>
+
+          <table class="hand-table text-[11px]">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Concept</th>
+                <th style="width: 75%;">Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><b>AWS Account</b></td><td>Your account for accessing AWS resources</td></tr>
+              <tr><td><b>AWS Console</b></td><td>Web interface for managing AWS</td></tr>
+              <tr><td><b>Region</b></td><td>Geographical AWS infrastructure area</td></tr>
+              <tr><td><b>Availability Zone</b></td><td>Isolated infrastructure location within a region</td></tr>
+              <tr><td><b>Free Tier</b></td><td>Eligible AWS usage available under specified limits/conditions</td></tr>
+              <tr><td><b>Billing</b></td><td>Tracks charges generated by AWS usage</td></tr>
+              <tr><td><b>IAM</b></td><td>Identity and access management</td></tr>
+              <tr><td><b>MFA</b></td><td>Additional authentication/security layer</td></tr>
+              <tr><td><b>Root User</b></td><td>Original AWS account identity with highly privileged access</td></tr>
+              <tr><td><b>Support Plan</b></td><td>Defines available AWS support capabilities</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 34. One-Minute Revision -->
+        <div class="hand-box-red p-2 bg-amber-50/30 text-xs mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">34. One-Minute Revision — Account Setup Pipeline</h3>
+            <span class="callout-badge badge-trick">60 SECONDS</span>
+          </div>
+
+          <div class="diagram-box bg-white text-center py-0.5 font-mono text-[9.5px] text-slate-800">
+            Email ➔ Email Verification ➔ Password ➔ Account Info ➔ Payment Method ➔ Identity Verification ➔ Phone Verification ➔ Support Plan ➔ Account Activated ➔ AWS Console ➔ Select Region ➔ Choose Service ➔ Create Resources ➔ Monitor Cost ➔ Clean Up Resources
+          </div>
+
+          <div class="mt-1 pt-1 border-t border-red-200">
+            <b class="text-rose-900 font-sans text-[11px]">⭐ 5 Golden Rules:</b>
+            <div class="grid grid-cols-5 gap-1 text-[10px] text-slate-800 font-bold text-center mt-0.5">
+              <span class="p-0.5 border rounded bg-white">🔐 Secure account (MFA)</span>
+              <span class="p-0.5 border rounded bg-white">🌍 Always check Region</span>
+              <span class="p-0.5 border rounded bg-white">💰 Always monitor costs</span>
+              <span class="p-0.5 border rounded bg-white">🧹 Delete unused resources</span>
+              <span class="p-0.5 border rounded bg-white">👤 Learn IAM (Avoid root)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 35. Interview Questions 1 to 6 -->
+        <div class="mb-1 text-xs">
+          <div class="flex items-center gap-1 mb-1">
+            <span class="callout-badge badge-important">VIVA / SCREENING</span>
+            <h2 class="ink-red text-base font-bold">35. Interview Questions &amp; Exact Answers (Part 1)</h2>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q1. What is the AWS Management Console?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> A web-based graphical interface that allows users to access, configure, monitor, and manage AWS services and resources through a browser.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q2. Why does AWS require payment information?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> For identity verification and billing. Even with Free Tier, charges occur when paid resources or usage beyond free allowances are consumed.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q3. Is AWS completely free?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> <span class="text-red-700 font-bold">No.</span> AWS is a paid platform. Free Tier offers exist under specified limits/conditions, but usage outside those conditions generates charges.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q4. What is an AWS Region?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> A geographical area containing AWS infrastructure and multiple isolated Availability Zones (e.g. Mumbai <code>ap-south-1</code>).</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q5. Why is region selection important?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> It determines where resources are created and directly impacts network latency, service availability, compliance laws, and pricing.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q6. What happens if you switch AWS Regions?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> Region-specific resources won't appear in the new region's console view. An EC2 instance created in Mumbai won't show in Singapore.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 7 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 8: INTERVIEW Q&A (7-11) & FINAL MEMORY TRICK -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-8">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Interview Questions (Part 2) &amp; Final Memory Trick</span>
+          <span>Sheet No: 08</span>
+        </div>
+
+        <!-- Interview Questions 7 to 10 -->
+        <div class="mb-2 text-xs">
+          <div class="flex items-center gap-1 mb-1">
+            <span class="callout-badge badge-important">INTERVIEW FINALE</span>
+            <h2 class="ink-red text-base font-bold">35. Interview Questions &amp; Answers (Part 2)</h2>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q7. What is an Availability Zone?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> An isolated infrastructure location containing one or more discrete data centers within an AWS Region, designed to provide resilience and support high availability.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q8. Why should AWS resources be stopped or deleted after practice?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> AWS resources generate ongoing charges while they remain active or provisioned. Cleaning up unused resources prevents unexpected monthly billing charges.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q9. What is MFA?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> Multi-Factor Authentication. It adds a crucial second verification factor (such as a time-based TOTP code) beyond the password, dramatically improving account defense.</p>
+            </div>
+            <div class="hand-box p-1.5 bg-white">
+              <b class="ink-red text-[11px]">Q10. What is IAM?</b>
+              <p class="ink-blue text-[10px] mt-0.5"><b>Ans:</b> Identity and Access Management. It controls authentication (who can sign in) and authorization (what permissions and resources they can access) in AWS.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q11. Region vs AZ Table -->
+        <div class="hand-box p-2 bg-blue-50/20 text-xs mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <b class="ink-red text-sm font-bold">Q11. What is the difference between a Region and an Availability Zone?</b>
+            <span class="callout-badge badge-faq">TOP QUESTION</span>
+          </div>
+
+          <table class="hand-table text-[11px]">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Feature</th>
+                <th style="width: 37%;">Region</th>
+                <th style="width: 38%;">Availability Zone (AZ)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Definition</b></td>
+                <td>Geographical AWS area</td>
+                <td>Infrastructure location within a Region</td>
+              </tr>
+              <tr>
+                <td><b>Composition</b></td>
+                <td>Contains multiple AZs</td>
+                <td>Belongs to one Region</td>
+              </tr>
+              <tr>
+                <td><b>Example</b></td>
+                <td>Mumbai (<code>ap-south-1</code>)</td>
+                <td>Individual AZ within Mumbai (<code>ap-south-1a</code>)</td>
+              </tr>
+              <tr>
+                <td><b>Primary Use</b></td>
+                <td>Geographical deployment, latency &amp; compliance</td>
+                <td>Resilience, high availability &amp; fault isolation</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 36. Final Memory Trick -->
+        <div class="hand-box-red p-2 bg-amber-50/35 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-trick">MASTER FORMULA</span>
+              <h2 class="ink-red text-base font-bold">36. Final Memory Trick 🧠</h2>
+            </div>
+          </div>
+
+          <div class="text-center font-bold text-red-900 text-xs tracking-wider bg-white p-1 rounded border border-amber-300">
+            "VERIFY ➔ LOGIN ➔ REGION ➔ SERVICE ➔ MONITOR ➔ CLEAN UP"
+          </div>
+
+          <div class="grid grid-cols-6 gap-1 text-[9.5px] font-mono mt-1 text-slate-800">
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-blue-900 font-sans">VERIFY</b><br>
+              Email + Phone + Identity + Payment
+            </div>
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-blue-900 font-sans">LOGIN</b><br>
+              AWS Management Console
+            </div>
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-blue-900 font-sans">REGION</b><br>
+              Choose correct AWS Region
+            </div>
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-blue-900 font-sans">SERVICE</b><br>
+              EC2 / S3 / VPC / IAM / etc.
+            </div>
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-blue-900 font-sans">MONITOR</b><br>
+              Usage + Billing + Security
+            </div>
+            <div class="p-1 border rounded bg-white text-center">
+              <b class="text-emerald-900 font-sans">CLEAN UP</b><br>
+              Stop/Delete resources when done
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-600 italic text-center mt-1">
+            This is the essential operational workflow you should follow whenever you work with AWS.
+          </p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 8 of 9</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 9: BONUS TOPPER STUDY TIPS (CLEAN NEW A4 PAGE) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-9">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: AWS Cloud Computing</span>
+          <span>Topic: Bonus Topper Study Guide (Explained Simply!)</span>
+          <span>Sheet No: 09</span>
+        </div>
+
+        <!-- Banner Callout -->
+        <div class="hand-box-red text-center mb-2" style="background: rgba(254, 243, 199, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-tip">TOPPER STRATEGY</span>
+            <h2 class="ink-red text-xl font-bold tracking-wide">
+              💡 8 Bonus Study Tips for AWS Account &amp; Console (Plain English!)
+            </h2>
+          </div>
+          <p class="text-xs text-slate-600 font-sans tracking-wide mt-0.5">Simple, practical methods to master account configuration and avoid costly exam &amp; lab mistakes.</p>
+        </div>
+
+        <!-- 8 Bonus Tips Grid -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+          <!-- 1. Mind Maps -->
+          <div class="hand-box p-2 bg-blue-50/30">
+            <b class="ink-red text-sm">1. Mind Maps 🗺️</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Put <b>"AWS Account Setup"</b> in the middle circle. Branch out to 4 legs: <i>Requirements (Email, Card, ID, Phone)</i>, <i>Sign-up Steps (1 to 10)</i>, <i>Console Layout (Region, Services, Billing)</i>, and <i>Security (MFA, IAM, Root)</i>. Seeing the whole setup on one page stops confusion immediately.
+            </p>
+          </div>
+
+          <!-- 2. Flow Charts -->
+          <div class="hand-box p-2 bg-emerald-50/30" style="border-color: #059669;">
+            <b class="text-emerald-900 text-sm">2. Flow Charts ➔</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Draw an arrow chart on your desk: <code>Login ➔ Check Region (ap-south-1) ➔ Check Billing ➔ Create Resource ➔ Stop/Terminate ➔ Re-check Cost</code>. Following this visual sequence guarantees you will never wake up to an accidental $100 AWS bill!
+            </p>
+          </div>
+
+          <!-- 3. Formula Box -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <b class="text-amber-900 text-sm">3. Formula / Rule Box 📦</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Memorize the two core rules: <code>AWS Free Tier ≠ Unlimited Free Usage</code> and <code>Region Selection = Latency + Compliance + Pricing + Availability</code>. Keep these in a neat box on your notes cover!
+            </p>
+          </div>
+
+          <!-- 4. Revision Section -->
+          <div class="hand-box p-2 bg-purple-50/30" style="border-color: #9333ea;">
+            <b class="text-purple-900 text-sm">4. Revision Section ⏱️</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Before each hands-on lab, spend just 45 seconds reviewing the <i>5 Golden Rules</i> on Page 7. Making a mental checklist of MFA and Region verification prevents 99% of beginner errors.
+            </p>
+          </div>
+
+          <!-- 5. Highlighted Keywords -->
+          <div class="hand-box p-2 bg-pink-50/30" style="border-color: #db2777;">
+            <b class="text-pink-900 text-sm">5. Highlighted Keywords 🖍️</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Cloud interviewers listen for key vocabulary. Always highlight terms like <span class="hl">"Root Account"</span>, <span class="hl">"ap-south-1"</span>, <span class="hl">"Multi-Factor Authentication (MFA)"</span>, <span class="hl">"Billing Dashboard"</span>, and <span class="hl">"Basic Support"</span>.
+            </p>
+          </div>
+
+          <!-- 6. Colour Coding -->
+          <div class="hand-box p-2 bg-cyan-50/30" style="border-color: #0891b2;">
+            <b class="text-cyan-900 text-sm">6. Colour Coding 🎨</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Use 3 distinct colors: <b>Red pen</b> for dangerous actions (sharing OTP/CVV, root login, leaving servers running), <b>Blue pen</b> for account steps and settings, and <b>Yellow highlighter</b> for region codes and exam answers.
+            </p>
+          </div>
+
+          <!-- 7. Important Questions -->
+          <div class="hand-box p-2 bg-rose-50/30" style="border-color: #e11d48;">
+            <b class="text-rose-900 text-sm">7. Important Questions 🎯</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> Practice answering the big 3 screening questions out loud: <i>1. Why does AWS need a card for Free Tier?</i>, <i>2. What is the difference between Region and AZ?</i>, and <i>3. Why shouldn't you use the root account for daily work?</i>
+            </p>
+          </div>
+
+          <!-- 8. Quick Summary -->
+          <div class="hand-box p-2 bg-indigo-50/30" style="border-color: #4f46e5;">
+            <b class="text-indigo-900 text-sm">8. Quick Summary 📝</b>
+            <p class="text-slate-700 text-[11px] mt-0.5">
+              <b>In simple terms:</b> End every interview question with a 1-sentence punchline: <i>"In summary, setting up AWS safely requires enabling MFA on root, creating IAM identities, selecting the closest Region, and constantly monitoring billing."</i>
+            </p>
+          </div>
+        </div>
+
+        <!-- Lab Readiness Checklist -->
+        <div class="hand-box p-2 bg-amber-50/40 mb-2 text-xs">
+          <span class="ink-red font-bold text-sm">✅ Student Lab Pre-Flight Checklist:</span>
+          <div class="grid grid-cols-4 gap-1 mt-1 text-[10px] text-slate-800 text-center font-bold">
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] MFA Enabled on Root
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Correct Region Selected
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Free-Tier Eligible Tag Checked
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              [ ] Stop / Terminate Plan Ready
+            </div>
+          </div>
+        </div>
+
+        <!-- Notebook Completion Stamp -->
+        <div class="mt-1 flex justify-between items-center text-xs px-2 text-slate-500">
+          <span>✨ End of AWS Account Setup &amp; Console Notes</span>
+          <span class="font-bold ink-red border border-red-400 px-3 py-0.5 rounded-full bg-red-50">100% COMPLETE &amp; VERIFIED</span>
+          <span>Prepared for AWS Cloud Mastery ✍️</span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 9 of 9</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

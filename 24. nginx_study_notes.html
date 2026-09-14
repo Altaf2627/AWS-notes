@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGINX - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: inline-block;
+    margin: 2px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .code-block {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 6px 10px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">⚙️ NGINX — Detailed & Structured Notes</div>
+
+  <!-- 1. What is NGINX? -->
+  <h2 class="sec-heading">1. What is NGINX?</h2>
+  <p><strong>NGINX</strong> (pronounced "Engine-X") is a web server used to serve and deliver web content to users.</p>
+  <p>However, it is not limited to being just a web server. It can also work as a:</p>
+  <div class="two-col" style="margin-top: 6px;">
+    <ul>
+      <li>Reverse Proxy</li>
+      <li>Load Balancer</li>
+      <li>Caching Server</li>
+    </ul>
+    <ul>
+      <li>HTTP/HTTPS Server</li>
+      <li>TCP/UDP Proxy (with stream config)</li>
+    </ul>
+  </div>
+  
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">⭐ Key Point</span>
+    <p style="margin:2px 0;"><strong>NGINX = Web Server + Reverse Proxy + Load Balancer + Caching + More</strong></p>
+  </div>
+
+  <!-- 2. What is a Web Server? -->
+  <h2 class="sec-heading">2. What is a Web Server?</h2>
+  <p>A web server is software that receives requests from clients (usually web browsers) and sends back web content.</p>
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Basic Flow</h3>
+    <div class="ascii-tree" style="text-align: center;">User / Browser
+      ↓
+   Internet
+      ↓
+   Web Server
+      ↓
+Website Files (HTML/CSS/JS)
+      ↓
+   Response
+      ↓
+User / Browser</div>
+  </div>
+
+  <!-- 3. Why Do We Need NGINX? -->
+  <h2 class="sec-heading">3. Why Do We Need NGINX?</h2>
+  <p>If you create <span class="code-inline">index.html</span> and <span class="code-inline">style.css</span>, how does a user access them? NGINX receives the HTTP request and returns the requested files based on its configuration.</p>
+
+  <!-- 4 & 5. Practical Setup -->
+  <h2 class="sec-heading">4. Practical Setup &nbsp;|&nbsp; 5. Launching an EC2 Instance</h2>
+  <p>To practice, you need a server. An AWS EC2 instance is perfect.</p>
+  
+  <div class="two-col">
+    <div>
+      <ul style="font-size:14px; margin-top:0;">
+        <li><strong>Step 1:</strong> Give instance a name (e.g., <span class="code-inline">nginx-server</span>)</li>
+        <li><strong>Step 2:</strong> Select OS (Amazon Linux)</li>
+        <li><strong>Step 3:</strong> Configure Key Pair for SSH</li>
+      </ul>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Step 4: Network Access</h3>
+      <p style="font-size:13.5px; margin:2px 0;">AWS Security Groups act as a virtual firewall. To view an HTTP site, you MUST allow <strong>TCP Port 80</strong>.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 6 to 9. Installation and Commands -->
+  <h2 class="sec-heading">6 - 9. Installing and Managing NGINX</h2>
+  <p>Connect to your EC2 server using EC2 Instance Connect or SSH. Since the default user isn't root, use <span class="highlight">sudo</span> for admin commands.</p>
+
+  <div class="code-block"># Install on Amazon Linux
+sudo yum install nginx -y
+
+# Start the service
+sudo systemctl start nginx
+
+# Check status
+sudo systemctl status nginx</div>
+
+  <table class="hand-table">
+    <thead>
+      <tr><th>Command</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="code-inline">sudo systemctl start nginx</span></td><td>Start NGINX</td></tr>
+      <tr><td><span class="code-inline">sudo systemctl stop nginx</span></td><td>Stop NGINX</td></tr>
+      <tr><td><span class="code-inline">sudo systemctl restart nginx</span></td><td>Restart NGINX (full stop/start)</td></tr>
+      <tr><td><span class="code-inline">sudo systemctl reload nginx</span></td><td>Reload configuration smoothly</td></tr>
+      <tr><td><span class="code-inline">sudo systemctl enable nginx</span></td><td>Start automatically at boot</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 10. Accessing & 11. IP and Ports -->
+  <h2 class="sec-heading">10. Accessing &nbsp;|&nbsp; 11. IP Address and Port</h2>
+  <div class="two-col">
+    <div>
+      <p>If installed correctly, entering <span class="code-inline">http://&lt;PUBLIC-IP&gt;</span> in your browser will show the default NGINX welcome page.</p>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Important Ports</h3>
+      <p style="margin:2px 0;"><strong>HTTP</strong> → Port 80</p>
+      <p style="margin:2px 0;"><strong>HTTPS</strong> → Port 443</p>
+      <p style="font-size:13px; margin:2px 0;">An IP Address + Port identifies exactly where a network service is listening.</p>
+    </div>
+  </div>
+
+  <!-- 12. HTTP Request Flow -->
+  <h2 class="sec-heading">12. How the HTTP Request Works</h2>
+  <div class="flow-v" style="gap:2px; font-size:13px;">
+    <span class="flow-node" style="padding:1px 8px;">Browser</span>
+    <span class="flow-arrow" style="font-size:14px;">↓ HTTP Request</span>
+    <span class="flow-node" style="padding:1px 8px;">Public IP : 80</span>
+    <span class="flow-arrow" style="font-size:14px;">↓</span>
+    <span class="flow-node" style="padding:1px 8px; border-color:#047857; background:#d1fae5;">NGINX</span>
+    <span class="flow-arrow" style="font-size:14px;">↓</span>
+    <span class="flow-node" style="padding:1px 8px;">Website Content → HTTP Response → Browser</span>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 13 & 14. Configuration Structure -->
+  <h2 class="sec-heading">13. NGINX Configuration &nbsp;|&nbsp; 14. Structure</h2>
+  <p>The main NGINX config file is typically located at: <span class="highlight">/etc/nginx/nginx.conf</span></p>
+  
+  <p>The configuration is organized into hierarchical blocks:</p>
+  <div class="ascii-tree">events {
+    ...
+}
+
+http {
+    server {
+        location / {
+            ...
+        }
+    }
+}</div>
+
+  <!-- 15 to 18. Blocks Breakdown -->
+  <h2 class="sec-heading">Blocks Breakdown (15 - 18)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. events</h3>
+      <p style="font-size:13.5px;">Handles connection processing. Can be empty for basic setups: <span class="code-inline">events {}</span>. <em>(Make sure it's plural!)</em></p>
+      
+      <h3 class="subsec-heading">16. http</h3>
+      <p style="font-size:13.5px;">Contains all HTTP traffic configs: server blocks, logging, MIME types.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">17. server</h3>
+      <p style="font-size:13.5px;">Defines how to handle requests for a specific virtual server/site. Contains <span class="code-inline">listen</span>, <span class="code-inline">server_name</span>, etc.</p>
+      
+      <h3 class="subsec-heading">18. location</h3>
+      <p style="font-size:13.5px;">Determines how requests for specific URI paths (e.g., <span class="code-inline">/</span> or <span class="code-inline">/about/</span>) are processed.</p>
+    </div>
+  </div>
+
+  <!-- 19 & 20. Listen and Root -->
+  <h2 class="sec-heading">19. listen &nbsp;|&nbsp; 20. root</h2>
+  <div class="two-col">
+    <div>
+      <p><strong><span class="code-inline">listen 80;</span></strong><br>Tells NGINX to listen for HTTP traffic on port 80. You can change this to 8080 or 443.</p>
+    </div>
+    <div>
+      <p><strong><span class="code-inline">root /usr/share/nginx/html;</span></strong><br>Tells NGINX the physical directory on the server where the website files are stored.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 22 & 23. Backup and Minimal Config -->
+  <h2 class="sec-heading">22. Creating Your Own Website</h2>
+  <p>Before editing <span class="code-inline">nginx.conf</span>, <span class="highlight">always create a backup!</span></p>
+  <span class="code-term">sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup</span>
+
+  <h3 class="subsec-heading">23. Minimal NGINX Configuration</h3>
+  <div class="code-block">events {}
+
+http {
+    server {
+        listen 80;
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}</div>
+
+  <!-- 24 & 25. Testing and Reloading -->
+  <h2 class="sec-heading">24. Testing Config &nbsp;|&nbsp; 25. Reloading</h2>
+  
+  <div class="sticky-note" style="border-left-color: #eab308; background: #fef9c3;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#ca8a04;">⭐ The Golden Rule</h3>
+    <div class="flow-h" style="font-size:12px; gap:4px; justify-content:flex-start;">
+      <span class="flow-node">Edit Config</span> <span class="flow-arrow">→</span>
+      <span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">sudo nginx -t</span> <span class="flow-arrow">→</span>
+      <span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">If OK</span> <span class="flow-arrow">→</span>
+      <span class="flow-node">sudo systemctl reload nginx</span>
+    </div>
+  </div>
+  <p>Never blindly reload. Always test syntax with <span class="code-inline">nginx -t</span>. Reloading applies changes gracefully without dropping active connections.</p>
+
+  <!-- 29 & 30 & 31. Port Changes & Security Groups -->
+  <h2 class="sec-heading">Changing Ports & Security Groups (29 - 31)</h2>
+  <p>If you change <span class="code-inline">listen 80;</span> to <span class="code-inline">listen 8080;</span>, your website won't work immediately. Why?</p>
+  
+  <div class="two-col">
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">Two Layers to Allow</h3>
+      <ol style="font-size:13px; margin:0; padding-left:16px;">
+        <li><strong>NGINX:</strong> Must listen on 8080.</li>
+        <li><strong>AWS Security Group:</strong> Must allow inbound TCP 8080 from the internet.</li>
+      </ol>
+    </div>
+    <div class="ascii-tree" style="margin-top:0;">Internet
+   ↓
+AWS Security Group (Allows 8080?)
+   ↓
+NGINX Server (Listening on 8080?)</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 32 to 35. Logging -->
+  <h2 class="sec-heading">32 - 35. NGINX Logging</h2>
+  <p>Logs are stored under <span class="code-inline">/var/log/nginx/</span>. They are critical for troubleshooting.</p>
+  
+  <table class="hand-table" style="margin-top:8px;">
+    <thead>
+      <tr><th>Log File</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>access.log</strong></td>
+        <td>Records all incoming client requests (IP, time, URI, status).</td>
+      </tr>
+      <tr>
+        <td><strong>error.log</strong></td>
+        <td>Records internal errors, warnings, and missing files.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">Memory Trick</span>
+    <strong>ACCESS</strong> → Who requested what? &nbsp;|&nbsp; <strong>ERROR</strong> → What went wrong?
+  </div>
+
+  <!-- 36 & 37. Multiple Sites & server_name -->
+  <h2 class="sec-heading">36. Hosting Multiple Websites &nbsp;|&nbsp; 37. server_name</h2>
+  <p>NGINX uses <strong>multiple server blocks</strong> and the <span class="highlight">server_name</span> directive to host multiple websites on one server.</p>
+
+  <div class="two-col">
+    <div class="code-block" style="font-size:11px;">server {
+  listen 80;
+  server_name example.com;
+  root /usr/share/nginx/html/example.com;
+}
+
+server {
+  listen 80;
+  server_name myapp.com;
+  root /usr/share/nginx/html/myapp.com;
+}</div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">DNS vs server_name</h3>
+      <p style="font-size:13px; margin:2px 0;"><strong>DNS</strong> routes both <span class="code-inline">example.com</span> and <span class="code-inline">myapp.com</span> to your EC2 IP.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>NGINX</strong> looks at the HTTP Host header and uses <span class="code-inline">server_name</span> to pick the right block!</p>
+    </div>
+  </div>
+
+  <!-- 38 & 39. MIME Types -->
+  <h2 class="sec-heading">38 & 39. MIME Types</h2>
+  <p>Browsers need to know file types to render them correctly (e.g., HTML vs CSS vs JS). You must include MIME types in your config:</p>
+  <span class="code-term">include /etc/nginx/mime.types;<br>default_type application/octet-stream;</span>
+  <p>Without this, your CSS files might load as plain text, breaking your site's styling!</p>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 44 & 45. 404 and try_files -->
+  <h2 class="sec-heading">44. Custom 404 Page &nbsp;|&nbsp; 45. try_files</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Custom 404 Page</h3>
+      <span class="code-term" style="font-size:12px;">error_page 404 /404.html;</span>
+      <p style="font-size:13px; margin-top:4px;">Returns a friendly HTML page instead of NGINX's default "Not Found" error.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">try_files Directive</h3>
+      <span class="code-term" style="font-size:12px;">try_files $uri $uri/ =404;</span>
+      <p style="font-size:13px; margin-top:4px;">Instructs NGINX to: Check for file → Check for directory → Return 404 if neither exists.</p>
+    </div>
+  </div>
+
+  <!-- 47 to 49. HTTPS and SSL/TLS -->
+  <h2 class="sec-heading">HTTPS and SSL/TLS (47 - 49)</h2>
+  <p>HTTPS (HTTP over TLS) encrypts data between the client and the server, protecting sensitive information like passwords.</p>
+  <ul style="margin-bottom:8px;">
+    <li><strong>SSL vs TLS:</strong> TLS (Transport Layer Security) is the modern, secure protocol. SSL is obsolete, though people still say "SSL certificate."</li>
+  </ul>
+  
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px;">
+    <span class="flow-node">Browser</span> <span class="flow-arrow">→</span> 
+    <span class="flow-node" style="border-color:#16a34a;">HTTPS :443</span> <span class="flow-arrow">→</span> 
+    <span class="flow-node">NGINX (TLS decrypts)</span> <span class="flow-arrow">→</span> 
+    <span class="flow-node">App</span>
+  </div>
+
+  <!-- 50 to 53. Let's Encrypt and Certbot -->
+  <h2 class="sec-heading">50 - 53. Let's Encrypt & Certbot</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-size:14px;"><strong>Let's Encrypt</strong> is a free, automated Certificate Authority. <strong>Certbot</strong> is the tool used to fetch and renew these certs.</p>
+      <span class="code-term" style="font-size:11px;">sudo certbot certonly --standalone -d example.com</span>
+      <p style="font-size:13px; color:#b91c1c; font-weight:700; margin-top:4px;">⚠️ Standalone mode requires Port 80 to be free, meaning NGINX must temporarily be stopped.</p>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Certificate Files</h3>
+      <p style="font-size:13px; margin:2px 0;">Stored in <span class="code-inline">/etc/letsencrypt/live/...</span></p>
+      <ul style="font-size:12.5px; margin-bottom:0;">
+        <li><strong>fullchain.pem:</strong> The public cert.</li>
+        <li><strong>privkey.pem:</strong> The private key. <em>Never expose this!</em></li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 54 to 56. HTTPS Configuration -->
+  <h2 class="sec-heading">54. NGINX HTTPS Config &nbsp;|&nbsp; 56. HTTP → HTTPS Redirect</h2>
+  <div class="code-block" style="font-size:12px;"># Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name example.com;
+    return 301 https://$host$request_uri;
+}
+
+# Secure HTTPS Server
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/.../fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/.../privkey.pem;
+
+    root /usr/share/nginx/html/example.com;
+}</div>
+
+  <!-- 57 to 59. Reverse Proxy -->
+  <h2 class="sec-heading">57 - 59. Reverse Proxy & Benefits</h2>
+  <p>Instead of the client directly contacting a backend server (Node.js, Tomcat, etc.), NGINX sits in front of it.</p>
+  <div class="flow-h" style="font-size:13px; gap:4px; justify-content:flex-start;">
+    <span class="flow-node">Client</span> <span class="flow-arrow">→</span> <span class="flow-node" style="background:#eff6ff; border-color:#3b82f6;">NGINX (Reverse Proxy)</span> <span class="flow-arrow">→</span> <span class="flow-node">Backend Server</span>
+  </div>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Key Benefits</h3>
+    <ul style="font-size:14px; margin-bottom:0; column-count:2;">
+      <li><strong>Security:</strong> Backend stays private</li>
+      <li><strong>Load Balancing:</strong> Distribute traffic</li>
+      <li><strong>Caching:</strong> Store responses</li>
+      <li><strong>Centralized HTTPS:</strong> Terminate TLS once</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 61 to 63. proxy_pass, headers, security -->
+  <h2 class="sec-heading">61. proxy_pass & Headers &nbsp;|&nbsp; 63. Security</h2>
+  
+  <div class="two-col">
+    <div>
+      <span class="code-term" style="font-size:12px;">location / {
+  proxy_pass http://10.0.1.10:80;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+}</span>
+      <p style="font-size:13.5px; margin-top:6px;"><strong>proxy_pass</strong> tells NGINX where to forward traffic. Headers like <span class="code-inline">X-Real-IP</span> help the backend know the original client's IP, instead of just seeing NGINX's IP.</p>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">63. Reverse Proxy Security</h3>
+      <p style="font-size:13px; margin:2px 0;">Never leave your backend server open to the public internet (<span class="code-inline">0.0.0.0/0</span>). Restrict its AWS Security Group to only accept traffic from the NGINX server's private IP/SG.</p>
+    </div>
+  </div>
+
+  <!-- 64 & 66. Load Balancing and Upstream -->
+  <h2 class="sec-heading">64. Load Balancing &nbsp;|&nbsp; 66. upstream Block</h2>
+  <p>When traffic grows, one backend server isn't enough. NGINX can distribute traffic among a group of servers using the <span class="highlight">upstream</span> block.</p>
+  
+  <div class="code-block" style="font-size:12px;">upstream backend_pool {
+    server 10.0.1.10:80;
+    server 10.0.1.11:80;
+}
+
+server {
+    location / {
+        proxy_pass http://backend_pool;
+    }
+}</div>
+
+  <div class="ascii-tree" style="text-align:center;">      Clients
+         ↓
+       NGINX
+         ↓
+  backend_pool
+  /          \
+ ↓            ↓
+Web 1        Web 2</div>
+
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 67 to 71. Load Balancing Algorithms -->
+  <h2 class="sec-heading">Load Balancing Algorithms & Failover (67 - 71)</h2>
+  
+  <table class="hand-table">
+    <thead>
+      <tr><th>Algorithm / Feature</th><th>How it works</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Round Robin (Default)</strong></td>
+        <td>Takes turns evenly. (Req1→Srv1, Req2→Srv2, Req3→Srv1)</td>
+      </tr>
+      <tr>
+        <td><strong>Least Connections</strong></td>
+        <td>Sends new request to the server with the fewest active connections. Great for varying request durations.</td>
+      </tr>
+      <tr>
+        <td><strong>Weighted</strong></td>
+        <td><span class="code-inline">weight=3;</span> Higher weight = gets more traffic proportionally. Best when servers have unequal CPU/RAM.</td>
+      </tr>
+      <tr>
+        <td><strong>Backup / Failover</strong></td>
+        <td><span class="code-inline">backup;</span> Only receives traffic if the primary servers are down/unavailable. High Availability redundancy!</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 72 to 76. Timeouts -->
+  <h2 class="sec-heading">72 - 76. Timeouts</h2>
+  <p>Tune timeouts based on your application's workload to prevent hanging connections or premature disconnects.</p>
+  
+  <div class="two-col">
+    <ul style="font-size:13.5px; margin-bottom:0;">
+      <li><strong>keepalive_timeout:</strong> Max idle time for a keep-alive connection.</li>
+      <li><strong>proxy_connect_timeout:</strong> Max time to establish connection to backend.</li>
+    </ul>
+    <ul style="font-size:13.5px; margin-bottom:0;">
+      <li><strong>proxy_read_timeout:</strong> Max time waiting for backend response.</li>
+      <li><strong>proxy_send_timeout:</strong> Max time to send data to backend.</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 10 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 10</span>
+  </div>
+
+  <!-- 77 to 80. Caching -->
+  <h2 class="sec-heading">77 - 80. Caching</h2>
+  <p>Caching stores copies of responses at the NGINX layer so future identical requests don't hit the backend. This provides <span class="highlight-green">faster responses</span> and <span class="highlight-green">reduced backend load</span>.</p>
+  
+  <div class="ascii-tree">Request 1: Client → NGINX → Backend → Response → Cache at NGINX → Client
+Request 2: Client → NGINX Cache → Client (Backend completely skipped!)</div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Basic Cache Config</h3>
+    <span class="code-term" style="font-size:12px;">proxy_cache_path /var/cache/nginx keys_zone=my_cache:10m max_size=1g inactive=60m;
+
+server {
+    location / {
+        proxy_cache my_cache;
+        proxy_pass http://backend;
+    }
+}</span>
+  </div>
+  
+  <div class="warn-box" style="margin-top:0;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">⚠️ Warning</h3>
+    <p style="font-size:13px; margin:2px 0;">Do NOT cache everything blindly! Do not cache sensitive user data (like logged-in profiles or checkout pages). Incorrect caching serves the wrong data to the wrong user.</p>
+  </div>
+
+  <!-- 82 to 86. Architectures -->
+  <h2 class="sec-heading">NGINX Architectures (82 - 86)</h2>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align:center;">STATIC WEB SERVER
+Internet
+  ↓
+NGINX
+  ↓
+/usr/share/nginx/html</div>
+    <div class="ascii-tree" style="text-align:center;">REVERSE PROXY
+Client
+  ↓
+NGINX Server
+  ↓
+Backend Server (App)</div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 11 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 11</span>
+  </div>
+
+  <!-- 87 & 88. Troubleshooting and Best Practices -->
+  <h2 class="sec-heading">87. Troubleshooting Checklist</h2>
+  <div class="two-col">
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">Site Doesn't Load?</p>
+      <ul style="font-size:13.5px; margin-top:0;">
+        <li>Check <span class="code-inline">systemctl status nginx</span></li>
+        <li>Test config <span class="code-inline">nginx -t</span></li>
+        <li>AWS Security Group allows 80/443?</li>
+        <li>EC2 Public IP correct?</li>
+      </ul>
+    </div>
+    <div>
+      <p style="font-weight:700; margin-bottom:2px;">404 Error?</p>
+      <ul style="font-size:13.5px; margin-top:0;">
+        <li>Check <span class="code-inline">root</span> path and <span class="code-inline">index</span></li>
+        <li>Check <span class="code-inline">try_files</span> config</li>
+        <li>File permissions</li>
+      </ul>
+    </div>
+  </div>
+  
+  <p style="font-weight:700; margin-bottom:2px; margin-top:6px;">CSS Not Loading?</p>
+  <p style="font-size:14px; margin-top:0;">Check <span class="code-inline">include /etc/nginx/mime.types;</span>. Hard refresh browser (Ctrl+Shift+R).</p>
+
+  <h2 class="sec-heading">88. Best Practices</h2>
+  <ul style="font-size:14px;">
+    <li>Always run <span class="code-inline">sudo nginx -t</span> before reloading!</li>
+    <li>Keep backups of <span class="code-inline">nginx.conf</span> before editing.</li>
+    <li>Use HTTPS for production. Protect <span class="code-inline">privkey.pem</span>.</li>
+    <li>Monitor <span class="code-inline">access.log</span> and <span class="code-inline">error.log</span>.</li>
+    <li>Keep backend servers private (only accessible by NGINX).</li>
+  </ul>
+
+  <!-- 89. Commands Cheat Sheet -->
+  <div class="sticky-note" style="border-left-color: #3b82f6; background: #eff6ff;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#1d4ed8;">89. Commands Cheat Sheet</h3>
+    <div class="two-col" style="font-size:13px; font-family:monospace;">
+      <div>
+        systemctl start nginx<br>
+        systemctl stop nginx<br>
+        systemctl restart nginx<br>
+        systemctl reload nginx<br>
+        systemctl status nginx
+      </div>
+      <div>
+        nginx -t<br>
+        systemctl enable nginx<br>
+        tail -f /var/log/nginx/access.log<br>
+        tail -f /var/log/nginx/error.log
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 12 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>SYSTEM ADMINISTRATION & DEVOPS // STUDY NOTES</span>
+    <span>PAGE 12</span>
+  </div>
+
+  <!-- 95. Interview Questions -->
+  <h2 class="sec-heading">95. 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is NGINX?</div><div class="qa-a">A high-performance web server, reverse proxy, load balancer, and caching server.</div></div>
+      <div class="qa-block"><div class="qa-q">Q5. Where is the config file?</div><div class="qa-a"><span class="code-inline">/etc/nginx/nginx.conf</span></div></div>
+      <div class="qa-block"><div class="qa-q">Q8. What is a reverse proxy?</div><div class="qa-a">A server that sits in front of backend servers and forwards client requests to them.</div></div>
+    </div>
+    <div>
+      <div class="qa-block"><div class="qa-q">Q9. What does proxy_pass do?</div><div class="qa-a">Specifies the backend destination where NGINX forwards requests.</div></div>
+      <div class="qa-block"><div class="qa-q">Q11. What is round-robin?</div><div class="qa-a">Distributes load sequentially across backend servers.</div></div>
+      <div class="qa-block"><div class="qa-q">Q18. DNS vs server_name?</div><div class="qa-a">DNS gets request to IP. <span class="code-inline">server_name</span> tells NGINX which config block to use.</div></div>
+    </div>
+  </div>
+
+  <!-- 96 & 97. Final Model & Takeaways -->
+  <h2 class="sec-heading">96. Final Mental Model</h2>
+  <div class="ascii-tree" style="text-align:center; font-size:12px; line-height:1.2;">                      INTERNET
+                         │
+                    DOMAIN / DNS
+                         │
+                         ↓
+                 ┌───────────────┐
+                 │     NGINX     │
+                 │               │
+                 │ Web Server    │
+                 │ Reverse Proxy │
+                 │ Load Balancer │
+                 │ Cache / TLS   │
+                 └───────┬───────┘
+                         │
+              ┌──────────┼──────────┐
+              ↓          ↓          ↓
+           Backend 1  Backend 2  Backend 3</div>
+
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align:center;">
+      🔥 One-Line Revision
+    </div>
+    <p style="font-size: 14px; color: #881337; margin: 4px 0 0 0; font-weight: 700; text-align:center;">
+      NGINX receives requests, checks its config, serves static content or forwards requests to backends, providing HTTPS, load balancing, and caching.
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

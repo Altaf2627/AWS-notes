@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS Route 53 - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a;
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS Route 53 — Detailed English Notes</div>
+
+  <!-- 1. What is Amazon Route 53? -->
+  <h2 class="sec-heading">1. What is Amazon Route 53?</h2>
+  <p>Amazon Route 53 is AWS's <span class="highlight">scalable DNS (Domain Name System) web service</span>.</p>
+  <p>Its main purpose is to translate a domain name into the destination required to reach your application.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Simple example</h3>
+    <p style="margin-bottom: 2px;">Instead of accessing your website using: <span class="code-term">http://54.123.45.67</span></p>
+    <p style="margin-bottom: 2px;">You can use: <span class="code-term">http://www.example.com</span></p>
+    <p style="margin-top: 6px;">The user enters the domain name, and DNS helps direct the request to the appropriate server or AWS resource.</p>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-imp">⭐ Key Point</span>
+    <p style="margin-top: 4px;">Route 53 is mainly used for DNS, domain registration, health checks, and traffic routing.</p>
+  </div>
+
+  <!-- 2. What is DNS? -->
+  <h2 class="sec-heading">2. What is DNS?</h2>
+  <p><strong>DNS = Domain Name System</strong></p>
+  <p>DNS translates human-readable domain names into IP addresses or other DNS destinations.</p>
+
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">Without DNS</h3>
+      <div class="flow-v" style="gap:4px; font-size:13px;">
+        <span class="flow-node">Browser</span>
+        <span class="flow-arrow" style="font-size:14px;">↓</span>
+        <span class="flow-node">IP Address (54.x.x.x)</span>
+        <span class="flow-arrow" style="font-size:14px;">↓</span>
+        <span class="flow-node">EC2 Server</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:6px;">The user needs to remember the IP address.</p>
+    </div>
+    
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4; text-align:center;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">With DNS</h3>
+      <div class="flow-v" style="gap:2px; font-size:13px;">
+        <span class="flow-node">Browser</span>
+        <span class="flow-arrow" style="font-size:14px;">↓</span>
+        <span class="flow-node">example.com</span>
+        <span class="flow-arrow" style="font-size:14px;">↓</span>
+        <span class="flow-node" style="border-color:#047857; background:#d1fae5;">DNS</span>
+        <span class="flow-arrow" style="font-size:14px;">↓</span>
+        <span class="flow-node">IP / AWS Resource</span>
+      </div>
+      <p style="font-size:12.5px; margin-top:6px;">This makes accessing applications much easier.</p>
+    </div>
+  </div>
+
+  <!-- 3. Why is it called Route 53? -->
+  <h2 class="sec-heading">3. Why is it called Route 53?</h2>
+  <p>The number 53 refers to the standard DNS port: <strong>DNS → Port 53</strong></p>
+  <p>Hence: <span class="highlight">Route + 53 = Route 53</span></p>
+
+  <div class="sticky-note" style="border-left-color: #3b82f6; background: #eff6ff; padding: 4px 8px;">
+    <span class="tag-badge badge-trick">🧠 Remember</span> DNS commonly uses port 53.
+  </div>
+
+  <!-- 4. Basic Route 53 Architecture -->
+  <h2 class="sec-heading">4. Basic Route 53 Architecture</h2>
+  <p>A simple Route 53 setup can look like this:</p>
+  
+  <div class="ascii-tree" style="text-align: center;">User
+  │
+  ▼
+Browser
+  │
+  ▼
+example.com
+  │
+  ▼
+Route 53 DNS
+  │
+  ▼
+IP Address / AWS Resource
+  │
+  ▼
+EC2 / S3 / ALB / Other Endpoint</div>
+  <p style="font-size: 14.5px;">Route 53 determines where the DNS request should resolve based on the records and routing policies you configure.</p>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Route 53 — Important Components -->
+  <h2 class="sec-heading">5. Route 53 — Important Components</h2>
+  <div class="hand-box">
+    <p style="margin:2px 0; font-weight:700;">The major concepts covered here are:</p>
+    <div class="two-col" style="font-size: 14.5px;">
+      <ul style="margin-bottom:0;">
+        <li>Domain Registration</li>
+        <li>Hosted Zones</li>
+        <li>DNS Records</li>
+        <li>Routing Policies</li>
+        <li>Health Checks</li>
+      </ul>
+      <ul style="margin-bottom:0;">
+        <li>Traffic Routing</li>
+        <li>Multi-Region Routing</li>
+        <li>Failover</li>
+        <li>Alias Records</li>
+        <li>DNS Queries</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 6. Domain Name Registration -->
+  <h2 class="sec-heading">6. Domain Name Registration</h2>
+  <p>Before using a custom domain, you need to have a domain. There are two common approaches:</p>
+
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Option 1 — Register through AWS</h3>
+      <p style="font-size: 14px;">You can register a domain using Route 53.</p>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">AWS Route 53</span>
+        <span class="flow-arrow" style="font-size:12px;">↓</span>
+        <span class="flow-node" style="padding:1px 4px;">Register Domain</span>
+        <span class="flow-arrow" style="font-size:12px;">↓</span>
+        <span class="flow-node" style="padding:1px 4px;">example.com</span>
+      </div>
+      <p style="font-size: 13.5px; margin-top:4px;">Domain registration generally involves a fee, usually based on the domain extension and registration period.</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Option 2 — Register somewhere else</h3>
+      <p style="font-size: 14px;">You can purchase/register the domain from another registrar, such as a third-party domain provider. Then you can configure that domain to use Route 53 for DNS management.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="padding:4px 8px;">
+    <span class="tag-badge badge-imp">⭐ Important</span> Domain registration and DNS hosting are related but separate concepts.
+  </div>
+
+  <!-- 7. Hosted Zone -->
+  <h2 class="sec-heading">7. Hosted Zone</h2>
+  <p>A Hosted Zone is a <span class="highlight">container in Route 53 that stores DNS records</span> for a domain.</p>
+  
+  <div class="ascii-tree">example.com
+     │
+     └── Hosted Zone
+          │
+          ├── A Record
+          ├── AAAA Record
+          ├── CNAME Record
+          └── Other Records</div>
+  <p>You can think of a hosted zone as: <em>The DNS configuration area for your domain.</em></p>
+
+  <!-- 8 & 9. External Domains & Name Servers -->
+  <h2 class="sec-heading">8 & 9. Hosted Zone for External Domains & Name Servers</h2>
+  <p>Suppose your domain is registered with another provider.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size: 12.5px;">
+    <span class="flow-node">Domain Registrar</span><span class="flow-arrow">→</span><span class="flow-node">example.com</span>
+  </div>
+  <p>You create a hosted zone in Route 53. Route 53 provides name servers for the hosted zone. You then configure the domain registrar to use those Route 53 name servers.</p>
+
+  <div class="ascii-tree" style="text-align: center;">Domain Registrar
+       │
+       ▼
+Route 53 Name Servers
+       │
+       ▼
+Hosted Zone
+       │
+       ▼
+DNS Records</div>
+
+  <div class="warn-box">
+    <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">DNS propagation</h3>
+    <p style="font-size:14px; margin-bottom: 2px;">After changing name-server information, the change may not become visible everywhere immediately. Propagation/caching can take time.</p>
+    <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Note</span> <span style="font-size: 13.5px;">The exact time is not guaranteed to be exactly 24 hours. It depends on DNS caching and TTLs.</span>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 10. DNS Records -->
+  <h2 class="sec-heading">10. DNS Records</h2>
+  <p>A DNS record tells Route 53 how to handle a particular name.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:13px;">
+    <span class="flow-node">www.example.com</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Record</span><span class="flow-arrow">→</span><span class="flow-node">IP / AWS endpoint</span>
+  </div>
+  <p>Common record types include: <span class="code-term">A</span>, <span class="code-term">AAAA</span>, <span class="code-term">CNAME</span>, <span class="code-term">MX</span>, <span class="code-term">TXT</span>, <span class="code-term">NS</span>, and <span class="highlight">Alias records</span>.</p>
+
+  <!-- 11, 12, 13, 14. Record Types -->
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">11. A Record</h3>
+      <p style="font-size: 14px;">An A record maps a domain name to an <span class="highlight">IPv4 address</span>.</p>
+      <span class="code-term" style="font-size: 12.5px;">Name: www<br>Type: A<br>Value: 54.123.45.67</span>
+      <div class="flow-h" style="justify-content:flex-start; margin-top:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">www.example.com</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">54.123.45.67</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">12. AAAA Record</h3>
+      <p style="font-size: 14px;">An AAAA record maps a domain name to an <span class="highlight">IPv6 address</span>.</p>
+      <div class="flow-h" style="justify-content:flex-start; margin-top:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">Domain</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">IPv6 Address</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">13. CNAME Record</h3>
+      <p style="font-size: 14px;">A CNAME (Canonical Name) record maps one domain name to another domain name.</p>
+      <div class="flow-h" style="justify-content:flex-start; margin-top:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">www.example.com</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px;">app.example.com</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">14. Alias Records</h3>
+      <p style="font-size: 14px;">Route 53 supports Alias records for supported AWS resources (like S3 websites, ALB, CloudFront). Instead of an IP, you point to the AWS resource directly.</p>
+      <div class="flow-h" style="justify-content:flex-start; margin-top:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">example.com</span><span class="flow-arrow" style="font-size:12px;">→</span><span class="flow-node" style="padding:1px 4px; border-color:#047857; background:#d1fae5;">AWS Resource</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">⭐ Quick Summary</span>
+    <ul style="margin-bottom:0;">
+      <li><strong>A record:</strong> Domain → IPv4</li>
+      <li><strong>AAAA record:</strong> Domain → IPv6</li>
+      <li><strong>CNAME:</strong> Domain → Domain</li>
+      <li><strong>Alias:</strong> Domain → Supported AWS Resource</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 15. Simple Routing Policy & 16. Why Routing Policies Are Important -->
+  <h2 class="sec-heading">15. Simple Routing Policy</h2>
+  <p>The simplest routing policy is <strong>Simple Routing</strong>.</p>
+  <div class="flow-v" style="gap:2px; font-size:13px; align-items:flex-start;">
+    <span class="flow-node" style="padding:1px 6px;">User</span>
+    <span class="flow-arrow" style="font-size:14px; margin-left:20px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">example.com</span>
+    <span class="flow-arrow" style="font-size:14px; margin-left:20px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">Route 53</span>
+    <span class="flow-arrow" style="font-size:14px; margin-left:20px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">One destination (e.g. EC2 Instance)</span>
+  </div>
+  <p>This is suitable when you have a simple setup with one primary destination.</p>
+
+  <h2 class="sec-heading">16. Why Routing Policies Are Important</h2>
+  <p>Suppose you have multiple servers: <span class="code-term">Server 1 → Europe</span> and <span class="code-term">Server 2 → Mumbai</span>.</p>
+  <p>You may want Route 53 to decide:</p>
+  <ul style="font-size: 14.5px;">
+    <li>Which server should receive the request?</li>
+    <li>Which region is closest?</li>
+    <li>Which server is healthy?</li>
+    <li>How much traffic should each server receive?</li>
+    <li>What should happen if one server fails?</li>
+  </ul>
+  <p>Route 53 provides different routing policies for these requirements.</p>
+
+  <!-- 17 & 18. Latency-Based Routing -->
+  <h2 class="sec-heading">17 & 18. Latency-Based Routing</h2>
+  <p><strong>Goal:</strong> Send users to the AWS region that provides the <span class="highlight">lowest network latency</span> among your configured destinations.</p>
+
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">             Route 53
+             /      \
+            /        \
+       Europe       Mumbai
+         EC2          EC2</div>
+    
+    <div class="hand-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0;">Concept</h3>
+      <p style="font-size:13.5px; margin-bottom:2px;"><strong>European User</strong> → Route 53 → Europe EC2</p>
+      <p style="font-size:13.5px; margin-bottom:2px;"><strong>Indian User</strong> → Route 53 → Mumbai EC2</p>
+      <p style="font-size:12.5px; margin-top:6px;">This can improve user experience when the regional endpoint is healthy and offers lower latency.</p>
+    </div>
+  </div>
+  <div class="sticky-note" style="padding:4px 8px; margin:2px 0;">
+    <span class="tag-badge badge-imp">⭐ Important</span> Latency-based routing is based on measured network latency, not simply "nearest on the map."
+  </div>
+
+  <!-- 19. Weighted Routing -->
+  <h2 class="sec-heading">19. Weighted Routing</h2>
+  <p>It allows you to distribute traffic according to assigned weights.</p>
+  <div class="ascii-tree" style="text-align: center;">                Route 53
+                /      \
+              50%      50%
+              /          \
+          Mumbai        Delhi</div>
+  <p>This can be useful for: Traffic distribution, Testing, Gradual deployments, Blue/green deployment strategies.</p>
+  
+  <div class="warn-box" style="padding:4px 8px; margin-top:4px;">
+    <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Note</span> <span style="font-size:13.5px;">Weighted routing does not mean that every small batch of requests will be split with mathematically exact percentages. It represents the intended distribution over time.</span>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 20. Failover Routing -->
+  <h2 class="sec-heading">20. Failover Routing</h2>
+  <p>Failover Routing is used when you have a <span class="highlight">primary and backup destination</span>.</p>
+
+  <div class="ascii-tree">Primary Server
+     │
+     ▼
+Health Check
+     │
+     ├── Healthy → Continue using Primary
+     │
+     └── Unhealthy
+              ↓
+        Backup Server</div>
+  
+  <p style="font-weight:700; margin-bottom:2px;">Example:</p>
+  <p style="font-size:14px; margin-top:0;">Primary: Europe EC2 | Secondary: Mumbai EC2</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px; font-size:12.5px;">
+    <span class="flow-node">User</span><span class="flow-arrow">→</span><span class="flow-node">Route 53</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#ef4444; background:#fee2e2;">Primary ❌</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#10b981; background:#d1fae5;">Secondary ✅</span>
+  </div>
+
+  <!-- 21 & 22. Health Checks -->
+  <h2 class="sec-heading">21 & 22. Health Checks & Failover</h2>
+  <p>A Route 53 Health Check monitors the health of an endpoint. It can check whether the endpoint is responding according to the health-check configuration.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Health Check Success</h3>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Europe Server</span><span class="flow-arrow">→</span><span class="flow-node">Health Check</span><span class="flow-arrow">→</span><span class="flow-node" style="color:#047857;">Healthy ✅</span>
+      </div>
+      <p style="font-size:13px; margin-top:4px;">Route traffic to Europe.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Health Check Failure</h3>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Europe Server</span><span class="flow-arrow">→</span><span class="flow-node">Health Check</span><span class="flow-arrow">→</span><span class="flow-node" style="color:#be123c;">Unhealthy ❌</span>
+      </div>
+      <p style="font-size:13px; margin-top:4px;">Route traffic to Mumbai.</p>
+    </div>
+  </div>
+
+  <!-- 23. Zero Downtime Warning -->
+  <h2 class="sec-heading">23. Health Checks ≠ Zero Downtime</h2>
+  <div class="warn-box" style="padding:6px 10px;">
+    <p style="font-weight:700; color:#b91c1c; margin-top:0;">Health checks can improve resilience, but there can still be:</p>
+    <ul style="font-size:14px; margin-bottom:0;">
+      <li>Detection time</li>
+      <li>DNS caching</li>
+      <li>TTL effects</li>
+      <li>Application-level failures that aren't detected by the chosen check</li>
+    </ul>
+    <p style="font-size:14px; margin-bottom:0; margin-top:4px;">Therefore, don't interpret Route 53 failover as an absolute guarantee of zero downtime.</p>
+  </div>
+
+  <!-- 24. Multi-Region Architecture -->
+  <h2 class="sec-heading">24. Multi-Region Architecture</h2>
+  <p>A common global architecture for globally distributed applications:</p>
+  <div class="ascii-tree" style="text-align: center;">                  Route 53
+                 /        \
+                /          \
+          Europe Region   Mumbai Region
+               │               │
+              EC2             EC2
+               │               │
+           Application     Application</div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 25. Complete Practical Flow -->
+  <h2 class="sec-heading">25. Complete Practical Flow</h2>
+  <p>The complete setup demonstrated can be remembered as:</p>
+  
+  <div class="ascii-tree">STEP 1: Register Domain
+       ↓
+STEP 2: Create Hosted Zone
+       ↓
+STEP 3: Configure Name Servers
+       ↓
+STEP 4: Create DNS Record
+       ↓
+STEP 5: Point Record to Destination
+       ↓
+STEP 6: Configure Routing Policy
+       ↓
+STEP 7: Configure Health Check
+       ↓
+STEP 8: Test the Domain</div>
+
+  <!-- 26 & 27. Concrete Examples -->
+  <h2 class="sec-heading">Concrete Examples (26 & 27)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">26. EC2 + Route 53</h3>
+      <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">Without Route 53:</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:2px; font-size:11px; margin-bottom:6px;">
+        <span class="flow-node" style="padding:1px 2px;">Browser</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">54.x.x.x</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 2px;">EC2</span>
+      </div>
+      <p style="font-size:13.5px; font-weight:bold; margin-bottom:2px;">With Route 53:</p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px; font-size:11px;">
+        <span class="flow-node" style="padding:1px 4px;">Browser</span>
+        <span class="flow-node" style="padding:1px 4px;">www.example.com</span>
+        <span class="flow-node" style="padding:1px 4px;">Route 53 (A Record)</span>
+        <span class="flow-node" style="padding:1px 4px;">54.x.x.x</span>
+        <span class="flow-node" style="padding:1px 4px;">EC2</span>
+      </div>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">27. Two Regions + Latency</h3>
+      <p style="font-size:13px; margin:2px 0;">Europe EC2 → 1.1.1.1<br>Mumbai EC2 → 2.2.2.2</p>
+      <p style="font-size:13px; margin:2px 0; font-weight:bold;">Records:</p>
+      <ul style="font-size:12px; margin:0;">
+        <li>example.com → 1.1.1.1</li>
+        <li>example.com → 2.2.2.2</li>
+      </ul>
+      <p style="font-size:13px; margin:4px 0 0 0; font-weight:bold;">Policy: Latency-Based</p>
+      <p style="font-size:12.5px; margin:2px 0;">European User → Route 53 → Europe EC2<br>Indian User → Route 53 → Mumbai EC2</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 28. Route 53 Routing Policies — Quick Comparison -->
+  <h2 class="sec-heading">28. Route 53 Routing Policies — Quick Comparison</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Routing Policy</th>
+        <th>Main Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Simple</strong></td>
+        <td>Basic routing to a destination</td>
+      </tr>
+      <tr>
+        <td><strong>Weighted</strong></td>
+        <td>Distribute traffic using weights</td>
+      </tr>
+      <tr>
+        <td><strong>Latency-based</strong></td>
+        <td>Route based on lowest latency</td>
+      </tr>
+      <tr>
+        <td><strong>Failover</strong></td>
+        <td>Primary/secondary disaster recovery</td>
+      </tr>
+      <tr>
+        <td><strong>Geolocation</strong></td>
+        <td>Route based on user's geographic location</td>
+      </tr>
+      <tr>
+        <td><strong>Geoproximity</strong></td>
+        <td>Route based on geographic proximity, with optional bias</td>
+      </tr>
+      <tr>
+        <td><strong>Multivalue answer</strong></td>
+        <td>Return multiple healthy records</td>
+      </tr>
+      <tr>
+        <td><strong>IP-based</strong></td>
+        <td>Route based on client IP ranges</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 29, 30, 31. Use Cases & Billing -->
+  <h2 class="sec-heading">29 & 30 & 31. Use Cases & Billing</h2>
+  
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">29. Disaster Recovery</h3>
+      <p style="font-size:14px;">Primary Server → Mumbai<br>Backup Server → Singapore</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">Mumbai ❌</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Health Check</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Route 53</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px; border-color:#047857; background:#d1fae5;">Singapore ✅</span>
+      </div>
+      <p style="font-size:13px; margin-top:4px;">This provides a useful DNS-based failover mechanism.</p>
+    </div>
+    
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">30. Route 53 + S3</h3>
+      <p style="font-size:14px;">Route 53 can be used with supported S3 website endpoints through an Alias configuration.</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node" style="padding:1px 4px;">example.com</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">Route 53</span><span class="flow-arrow">→</span><span class="flow-node" style="padding:1px 4px;">S3 Website</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top:8px;">
+    <h3 class="subsec-heading" style="margin-top:0; color:#b91c1c;">31. Route 53 Billing</h3>
+    <p style="font-size:14px; margin-bottom:2px;">Route 53 is a billable AWS service. Potential charges can include: Hosted zones, DNS queries, Health checks, Domain registration.</p>
+    <span class="tag-badge badge-imp" style="font-size:12px;">⚠️ Note</span> <span style="font-size:13.5px;">Don't assume Route 53 has a general always-free tier covering all features. Pricing depends on usage/configuration.</span>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 32. Cleanup After Practice -->
+  <h2 class="sec-heading">32. Cleanup After Practice</h2>
+  <p>When doing AWS practicals, always clean up resources you no longer need. Check EC2 instances in every region used.</p>
+  
+  <div class="flow-v" style="gap:2px; align-items:flex-start; margin-left: 10px;">
+    <span class="flow-node" style="padding:1px 6px;">Delete unnecessary records</span>
+    <span class="flow-arrow" style="margin-left:20px; font-size:14px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">Delete health checks</span>
+    <span class="flow-arrow" style="margin-left:20px; font-size:14px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">Delete hosted zone</span>
+    <span class="flow-arrow" style="margin-left:20px; font-size:14px;">↓</span>
+    <span class="flow-node" style="padding:1px 6px;">Terminate test EC2 instances</span>
+  </div>
+  <p style="font-size:14px; margin-top:8px;"><strong>⭐ Important:</strong> A domain registered through an external registrar remains registered there even after you delete its Route 53 hosted zone.</p>
+
+  <!-- Super-Important Revision -->
+  <h2 class="sec-heading" style="margin-top:15px;">🧠 Super-Important Revision</h2>
+  <table class="hand-table" style="font-size: 14.5px;">
+    <tbody>
+      <tr><td><strong>Route 53</strong></td><td>AWS DNS Service</td></tr>
+      <tr><td><strong>DNS</strong></td><td>Domain → Destination</td></tr>
+      <tr><td><strong>Hosted Zone</strong></td><td>Container for DNS records</td></tr>
+      <tr><td><strong>A Record</strong></td><td>Domain → IPv4</td></tr>
+      <tr><td><strong>AAAA Record</strong></td><td>Domain → IPv6</td></tr>
+      <tr><td><strong>CNAME</strong></td><td>Domain → Another Domain</td></tr>
+      <tr><td><strong>Alias</strong></td><td>Domain → Supported AWS Resource</td></tr>
+      <tr><td><strong>Latency Routing</strong></td><td>User → Lowest-latency configured region</td></tr>
+      <tr><td><strong>Weighted Routing</strong></td><td>Traffic → Distributed according to weights</td></tr>
+      <tr><td><strong>Failover</strong></td><td>Primary ❌ → Secondary ✅</td></tr>
+      <tr><td><strong>Health Check</strong></td><td>Monitor endpoint health</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Final Architecture to Memorize -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 18px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align: center;">
+      🔥 Final Architecture to Memorize
+    </div>
+    <div class="ascii-tree" style="text-align: center; background: transparent; border: none; font-size: 12.5px; padding: 4px; margin-bottom: 0;">                         USER
+                           │
+                           ▼
+                    www.example.com
+                           │
+                           ▼
+                      ROUTE 53
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+           Simple       Latency       Failover
+              │            │            │
+              ▼            ▼            ▼
+             EC2      Best Region    Primary/Backup
+              │
+              ▼
+          APPLICATION</div>
+    <p style="font-size: 14.5px; color: #881337; margin: 4px 0 0 0; font-weight: 700; text-align: center;">
+      One-line formula:<br>
+      Domain → Route 53 → DNS Record → Routing Policy → Healthy/Best Endpoint → Application
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>

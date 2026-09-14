@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS EBS - Detailed & Revision-Friendly Handwritten Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 29px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .subtitle {
+    font-family: 'Caveat', cursive;
+    color: #047857;
+    font-size: 20px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 17.5px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .badge-note {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1.5px solid #6366f1;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS EBS — ELASTIC BLOCK STORE</div>
+  <div class="subtitle">Detailed & Revision-Friendly Notes</div>
+
+  <!-- 1. Introduction to EBS -->
+  <h2 class="sec-heading">1. Introduction to EBS</h2>
+  <p><span class="highlight">EBS = Elastic Block Store</span></p>
+  <p>Amazon EBS (Elastic Block Store) is a cloud-based storage service designed to work with EC2 instances.</p>
+
+  <div class="hand-box">
+    <div style="font-weight: 700; color: #b91c1c; font-family: 'Caveat', cursive; font-size: 17px;">Simple Definition</div>
+    <p>EBS is like a <span class="highlight">virtual hard drive</span> that can be attached to an EC2 instance.</p>
+    <p>It can be used to:</p>
+    <ul>
+      <li>Store application data</li>
+      <li>Store files</li>
+      <li>Provide additional disk space</li>
+      <li>Maintain persistent data</li>
+      <li>Take backups using snapshots</li>
+      <li>Attach additional storage to an EC2 instance</li>
+    </ul>
+  </div>
+
+  <div class="sticky-note">
+    <div style="font-weight: 700; color: #b45309; font-family: 'Caveat', cursive; font-size: 17px;">Real-Life Example</div>
+    <p>Think of EBS like an external hard drive.</p>
+    <div class="flow-h" style="justify-content: flex-start;">
+      <div class="flow-node">Laptop</div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-node">External Hard Drive</div>
+    </div>
+    <p>Similarly:</p>
+    <div class="flow-h" style="justify-content: flex-start;">
+      <div class="flow-node" style="background:#eff6ff;">EC2 Instance</div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-node" style="background:#eff6ff;">EBS</div>
+    </div>
+    <p>You can attach storage to an EC2 instance and use it for storing data.</p>
+  </div>
+
+  <!-- 2. Why is EBS Important? -->
+  <h2 class="sec-heading">2. Why is EBS Important?</h2>
+  <p>Suppose you have an EC2 instance containing important data.</p>
+
+  <div class="flow-h" style="justify-content: flex-start; margin: 4px 0;">
+    <div class="flow-node">EC2 Instance</div>
+    <span class="flow-arrow">| ↓</span>
+    <div class="flow-node">Application + Data</div>
+  </div>
+
+  <p>If the EC2 instance is terminated, you may still want the data to remain available.</p>
+  <p>EBS can provide <span class="highlight">persistent storage separate from the compute instance</span>, depending on how the volume is configured.</p>
+
+  <div class="hand-box" style="background: #f0fdf4; border-color: #16a34a;">
+    <div style="font-weight: 700; color: #15803d; font-family: 'Caveat', cursive; font-size: 17px;">Important Benefits</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+      <ul>
+        <li>Additional storage</li>
+        <li>Persistent storage</li>
+        <li>Backup through snapshots</li>
+        <li>Ability to attach multiple volumes</li>
+      </ul>
+      <ul>
+        <li>Ability to increase volume size</li>
+        <li>Encryption support</li>
+        <li>Data redundancy within an Availability Zone</li>
+        <li>Useful for database workloads</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 3. EBS and EC2 -->
+  <h2 class="sec-heading">3. EBS and EC2</h2>
+  <p>EBS is closely associated with EC2.</p>
+  <p>When launching an EC2 instance, storage can be configured.</p>
+  <p>Example:</p>
+  <div class="ascii-tree">EC2 Instance
+|
+└── EBS Volume
+    └── 8 GB</div>
+  <p>The transcript demonstrates an EC2 instance launched with an <span class="highlight">8 GB GP3 EBS volume</span>.</p>
+
+  <!-- 4. EBS as a Virtual Hard Drive -->
+  <h2 class="sec-heading">4. EBS as a Virtual Hard Drive</h2>
+  <p>A useful way to understand EBS is: <span class="highlight">EBS ≈ Virtual Hard Drive</span></p>
+  <p>For example:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Physical Computer</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Hard Drive</div>
+    <span style="font-size: 16px; margin: 0 8px; color: #475569; font-weight: bold;">| AWS:</span>
+    <div class="flow-node">EC2</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">EBS Volume</div>
+  </div>
+  <p>EBS provides storage that can be connected to EC2 over the AWS infrastructure.</p>
+
+  <!-- 5. Multiple EBS Volumes -->
+  <h2 class="sec-heading">5. Multiple EBS Volumes</h2>
+  <p>An EC2 instance can have multiple EBS volumes attached to it.</p>
+  <p>Example:</p>
+  <div class="ascii-tree">EC2
+ |
+ ┌──────┴──────┐
+ ↓             ↓
+EBS 1         EBS 2
+8 GB          5 GB</div>
+  <p>This can be useful when an application requires additional storage.</p>
+
+  <!-- 6. EBS Use Case — Database -->
+  <h2 class="sec-heading">6. EBS Use Case — Database</h2>
+  <p>EBS can be useful when hosting databases that require reliable storage.</p>
+  <p>Examples mentioned in the transcript include:</p>
+  <ul>
+    <li><span class="highlight">MySQL</span></li>
+    <li><span class="highlight">PostgreSQL</span></li>
+  </ul>
+  <p>For database workloads, storage performance can be important because databases can perform many input/output operations.</p>
+
+  <!-- 7. Important EBS Characteristics -->
+  <h2 class="sec-heading">7. Important EBS Characteristics</h2>
+  <h3 class="subsec-heading">7.1 Region and Availability Zone Specific</h3>
+  <p>One of the most important concepts is that an <span class="highlight">EBS volume is associated with a specific Availability Zone</span>.</p>
+  <p>Example:</p>
+  <div class="ascii-tree">Region
+|
+├── AZ-A
+├── AZ-B
+└── AZ-C</div>
+  <p>Suppose: <span class="code-term">EBS → AZ-B</span></p>
+  <p>If you create an EC2 instance in: <span class="code-term">AZ-C</span>, you <span style="color:#b91c1c; font-weight:700;">cannot</span> directly attach that EBS volume to the instance because they are in different Availability Zones.</p>
+
+  <div class="sticky-note" style="border-left-color: #dc2626; background: #fff5f5;">
+    <span class="tag-badge badge-imp">Key Point</span>
+    <strong>EC2 instance and EBS volume need to be in the same Availability Zone for direct attachment.</strong>
+  </div>
+
+  <!-- 8. EBS Built-in Redundancy -->
+  <h2 class="sec-heading">8. EBS Built-in Redundancy</h2>
+  <p>EBS provides redundancy within its Availability Zone.</p>
+  <p>The transcript explains that data is replicated within the Availability Zone so that failure of an individual storage block does not necessarily result in data loss.</p>
+
+  <div class="warn-box">
+    <div style="font-weight: 700; color: #be123c;">Important Limitation</div>
+    <p>This does not mean that your data is automatically protected from an entire Availability Zone failure.</p>
+    <p>If the entire Availability Zone fails, additional backup mechanisms are needed.</p>
+  </div>
+
+  <p>Therefore:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS Redundancy</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Protection within AZ</div>
+  </div>
+
+  <p>For stronger disaster recovery:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Backup / Other AZ / Other Region</div>
+  </div>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 9. EBS Volume Types -->
+  <h2 class="sec-heading">9. EBS Volume Types</h2>
+  <p>AWS provides different EBS volume types for different workloads.</p>
+  <p>The transcript discusses examples such as:</p>
+  <ul>
+    <li><span class="highlight">GP2</span></li>
+    <li><span class="highlight">GP3</span></li>
+    <li><span class="highlight">io1</span></li>
+    <li><span class="highlight">io2</span></li>
+  </ul>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">9.1 GP2 / GP3</h3>
+      <p><strong>GP = General Purpose</strong></p>
+      <p>General-purpose volumes are suitable for many common workloads.</p>
+      <p>The transcript demonstrates GP3 while launching an EC2 instance.</p>
+      <p><strong>Suitable for:</strong></p>
+      <ul>
+        <li>Normal applications</li>
+        <li>General workloads</li>
+        <li>Common EC2 storage requirements</li>
+      </ul>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">9.2 io1 / io2</h3>
+      <p>These are designed for workloads requiring high I/O performance.</p>
+      <p><strong>Suitable for:</strong></p>
+      <ul>
+        <li>High-performance applications</li>
+        <li>Heavy input/output workloads</li>
+        <li>Workloads requiring high IOPS</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sticky-note" style="margin-top: 6px;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <p><strong>GP → General Purpose</strong></p>
+    <p><strong>io → High I/O performance</strong></p>
+  </div>
+
+  <!-- 10. Performance and Cost -->
+  <h2 class="sec-heading">10. Performance and Cost</h2>
+  <p>Higher performance generally comes with higher cost.</p>
+  <p>For example, if an application performs a very large number of I/O operations, a high-performance EBS volume may be appropriate.</p>
+  <div class="hand-box" style="background:#fef2f2; border-color:#f87171;">
+    <span class="tag-badge badge-imp">Remember</span>
+    <p style="margin: 2px 0;"><strong>More performance → potentially higher cost</strong></p>
+    <p style="margin: 2px 0;">Always choose storage based on the actual workload.</p>
+  </div>
+
+  <!-- 11. EBS Encryption -->
+  <h2 class="sec-heading">11. EBS Encryption</h2>
+  <p>EBS volumes can be encrypted.</p>
+  <p><strong>Purpose:</strong> Encryption helps protect data and provides additional security.</p>
+  <p>The transcript explains encryption for:</p>
+  <ul>
+    <li>Data stored on the volume</li>
+    <li>Data transferred between the EBS volume and EC2</li>
+    <li>Snapshots</li>
+    <li>Volumes created from encrypted snapshots</li>
+  </ul>
+
+  <!-- 12. EBS Encryption — Concept -->
+  <h2 class="sec-heading">12. EBS Encryption — Concept</h2>
+  <div class="ascii-tree">EC2
+ ↕
+Encrypted Transfer
+ ↕
+EBS Volume
+ |
+Encrypted Data</div>
+  <p>When encryption is enabled, data is protected while stored and during relevant transfers.</p>
+  <p>The transcript refers to <span class="highlight">AES-256 encryption</span> and <span class="highlight">AWS Key Management Service (KMS)</span> for key management.</p>
+
+  <!-- 13. Resizing an EBS Volume -->
+  <h2 class="sec-heading">13. Resizing an EBS Volume</h2>
+  <p>One of the useful features of EBS is that the volume size can be increased.</p>
+  <div class="hand-box">
+    <p><strong>Example:</strong> Initial size: <span class="highlight">5 GB</span> &nbsp;→&nbsp; Increase it to: <span class="highlight">6 GB</span></p>
+    <p>The transcript demonstrates this through: <span class="highlight-green">Volumes → Actions → Modify Volume</span></p>
+    <p><strong>Important Points (According to the transcript):</strong></p>
+    <ul>
+      <li>The volume size can be increased.</li>
+      <li>The EC2 instance does not need to be restarted for the volume modification itself.</li>
+      <li>The change can be detected quickly by the operating system.</li>
+    </ul>
+    <p><strong>Example:</strong></p>
+    <div class="flow-h" style="justify-content: flex-start;">
+      <div class="flow-node">Before: EBS = 5 GB</div>
+      <span class="flow-arrow">↓ Modify</span>
+      <div class="flow-node">After: EBS = 6 GB</div>
+    </div>
+  </div>
+
+  <!-- 14. Important: Resizing vs Filesystem -->
+  <h2 class="sec-heading">14. Important: Resizing vs Filesystem</h2>
+  <p>Increasing the EBS volume size does not automatically mean every filesystem/application immediately uses the newly available space.</p>
+  <p>Depending on the operating system and filesystem, additional filesystem-level steps may be required.</p>
+  <p>The transcript mentions <span class="highlight">LVM (Logical Volume Manager)</span> as another topic for managing storage.</p>
+
+  <!-- 15. Delete on Termination -->
+  <h2 class="sec-heading">15. Delete on Termination</h2>
+  <p>This is a very important EC2 + EBS concept.</p>
+  <p>When you launch an EC2 instance, its attached EBS volume can have a setting called: <span class="highlight">Delete on Termination</span></p>
+  <p>It determines whether the EBS volume is deleted when the EC2 instance is terminated.</p>
+
+  <div class="two-col">
+    <div class="warn-box" style="margin: 2px 0;">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">If Delete on Termination = YES</p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px;">
+        <div class="flow-node" style="border-color:#ef4444;">EC2 Terminated</div>
+        <span class="flow-arrow" style="margin:0 0 0 10px;">↓</span>
+        <div class="flow-node" style="border-color:#ef4444;">EBS Deleted</div>
+        <span class="flow-arrow" style="margin:0 0 0 10px;">↓</span>
+        <div class="flow-node" style="border-color:#ef4444; background:#fee2e2;">Data Lost</div>
+      </div>
+      <p style="font-size:13px; margin-top:4px;">The transcript demonstrates this behavior.</p>
+    </div>
+
+    <div class="hand-box" style="background:#f0fdf4; border-color:#22c55e; margin:2px 0;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">If Delete on Termination = NO</p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px;">
+        <div class="flow-node" style="border-color:#16a34a;">EC2 Terminated</div>
+        <span class="flow-arrow" style="margin:0 0 0 10px;">↓</span>
+        <div class="flow-node" style="border-color:#16a34a;">EBS Remains</div>
+        <span class="flow-arrow" style="margin:0 0 0 10px;">↓</span>
+        <div class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Data/Volume Available</div>
+      </div>
+      <p style="font-size:13px; margin-top:4px;">The EBS volume remains available and can potentially be attached to another appropriate EC2 instance.</p>
+    </div>
+  </div>
+
+  <!-- 16. How to Change Delete on Termination -->
+  <h2 class="sec-heading">16. How to Change Delete on Termination</h2>
+  <p>During EC2 launch:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Launch EC2</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Configure Storage</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Advanced Options</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Delete on Termination</div>
+  </div>
+  <p>You can turn the setting off when you want the volume to remain after EC2 termination.</p>
+
+  <!-- 17. Creating an EBS Volume Separately -->
+  <h2 class="sec-heading">17. Creating an EBS Volume Separately</h2>
+  <p>EBS volumes don't have to be created only while launching an EC2 instance.</p>
+  <p>You can create an additional EBS volume separately.</p>
+  <p><strong>Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EC2 Dashboard</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Volumes</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select Size</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select Availability Zone</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create</div>
+  </div>
+  <p>Example from the transcript: <span class="highlight">New EBS Volume | Size = 5 GB | AZ = same AZ as EC2</span></p>
+
+  <!-- 18. Attaching an EBS Volume -->
+  <h2 class="sec-heading">18. Attaching an EBS Volume</h2>
+  <p>After creating an EBS volume, it can be attached to an EC2 instance.</p>
+  <p><strong>Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select EC2 Instance</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select Device Name</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach</div>
+  </div>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">Important</span>
+    The EBS volume and EC2 instance must be compatible in terms of Availability Zone.
+  </div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 19. Multiple Disks on EC2 -->
+  <h2 class="sec-heading">19. Multiple Disks on EC2</h2>
+  <p>After attaching another EBS volume, the EC2 instance can have multiple storage devices.</p>
+  <p>Example:</p>
+  <div class="ascii-tree">EC2
+|
+├── Root EBS
+│   └── 8 GB
+│
+└── Additional EBS
+    └── 5 GB</div>
+  <p>The transcript demonstrates that the additional disk can be attached without restarting the EC2 instance.</p>
+
+  <!-- 20. Mounting an EBS Volume -->
+  <h2 class="sec-heading">20. Mounting an EBS Volume</h2>
+  <p>Attaching an EBS volume to EC2 is not necessarily the final step.</p>
+  <p>The operating system may need the disk to be:</p>
+  <ul>
+    <li>Detected</li>
+    <li>Partitioned/filesystem prepared if needed</li>
+    <li>Mounted</li>
+  </ul>
+  <p><strong>Concept:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">OS detects device</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Mount</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Use storage</div>
+  </div>
+
+  <!-- 21. Linux Storage Commands Mentioned -->
+  <h2 class="sec-heading">21. Linux Storage Commands Mentioned</h2>
+  <p>The transcript uses several Linux commands while demonstrating EBS.</p>
+
+  <div class="hand-box">
+    <p><strong>lsblk</strong><br>
+    Used to view block devices and storage devices.<br>
+    <span class="code-term">lsblk</span><br>
+    It helps identify disks and partitions.</p>
+
+    <p style="margin-top: 6px;"><strong>df -h</strong><br>
+    Used to view filesystem disk usage in a human-readable format.<br>
+    <span class="code-term">df -h</span></p>
+
+    <p style="margin-top: 6px;"><strong>mkdir</strong><br>
+    Used to create a directory.<br>
+    Example: <span class="code-term">sudo mkdir /mount/mybackup</span><br>
+    The exact directory name can be chosen according to the requirement.</p>
+
+    <p style="margin-top: 6px;"><strong>mount</strong><br>
+    Used to mount a filesystem.<br>
+    Conceptually: <span class="code-term">sudo mount &lt;device&gt; &lt;mount-point&gt;</span></p>
+
+    <p style="margin-top: 6px;"><strong>umount</strong><br>
+    Used to unmount a filesystem.<br>
+    <span class="code-term">sudo umount &lt;mount-point&gt;</span></p>
+  </div>
+
+  <!-- 22. Mount Point -->
+  <h2 class="sec-heading">22. Mount Point</h2>
+  <p>A mount point is a directory through which a filesystem becomes accessible.</p>
+  <p>Example:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Mount</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">/mybackup</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Files accessible</div>
+  </div>
+  <p>Once mounted, you can navigate to that directory and access the stored files.</p>
+
+  <!-- 23. Example of Accessing Backup Data -->
+  <h2 class="sec-heading">23. Example of Accessing Backup Data</h2>
+  <p>The transcript creates sample data such as:</p>
+  <div class="ascii-tree">myfolder
+|
+└── myfile</div>
+  <p>The file contains simple test data.</p>
+  <p>After creating a snapshot, creating a new volume, attaching it to another EC2 instance and mounting it, the transcript demonstrates that the old data is still accessible.</p>
+  <p><strong>This proves:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start; margin: 4px 0;">
+    <div class="flow-node">Original EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">New EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Mount</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#ecfdf5; border-color:#10b981;">Original Data Available</div>
+  </div>
+
+  <!-- 24. Detaching an EBS Volume -->
+  <h2 class="sec-heading">24. Detaching an EBS Volume</h2>
+  <p>When an EBS volume is no longer needed by an EC2 instance, it can be detached.</p>
+  <p><strong>Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Detach Volume</div>
+  </div>
+  <p>After detaching, the volume can become available and may be attached to another suitable instance.</p>
+
+  <!-- 25. Deleting an EBS Volume -->
+  <h2 class="sec-heading">25. Deleting an EBS Volume</h2>
+  <p>After detaching a volume, it can be deleted if it is no longer needed.</p>
+  <p><strong>Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Detach</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Volume becomes Available</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Delete Volume</div>
+  </div>
+  <div class="warn-box">
+    <div style="font-weight: 700; color: #be123c;">Warning</div>
+    <p>Deleting the volume permanently removes the data stored on that volume.</p>
+    <p>Always confirm that you have a backup if the data is important.</p>
+  </div>
+
+  <!-- 26. EBS Snapshot -->
+  <h2 class="sec-heading">26. EBS Snapshot</h2>
+  <p><strong>What is a Snapshot?</strong></p>
+  <p>An EBS Snapshot is a <span class="highlight">point-in-time backup</span> of an EBS volume.</p>
+  <p><strong>Main Purpose:</strong></p>
+  <div class="sticky-note" style="padding: 4px 10px;">
+    <span class="highlight-pink">Snapshot = Backup of an EBS volume</span>
+  </div>
+
+  <!-- 27. Why Use Snapshots? -->
+  <h2 class="sec-heading">27. Why Use Snapshots?</h2>
+  <p>Suppose your EBS volume contains important data:</p>
+  <div class="ascii-tree">EBS
+|
+├── Files
+├── Application Data
+└── Database Data</div>
+  <p>You create a snapshot:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Snapshot</div>
+  </div>
+  <p>If the original volume is later damaged or deleted, the snapshot can be used to create a new EBS volume.</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">New EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">New EC2</div>
+  </div>
+
+  <!-- 28. Snapshot Use Cases -->
+  <h2 class="sec-heading">28. Snapshot Use Cases</h2>
+  <p>Snapshots can be used for:</p>
+  <p><strong>1. Backup</strong><br>Protect data against accidental deletion or volume failure.</p>
+  <p><strong>2. Recovery</strong><br>Create a new EBS volume from the snapshot.</p>
+  <p><strong>3. Moving Data Between Availability Zones</strong><br>Create a snapshot and use it to create a volume in another Availability Zone.</p>
+  <p><strong>4. Moving Data Between Regions</strong><br>Copy the snapshot to another AWS Region.</p>
+
+  <!-- 29. Creating an EBS Snapshot -->
+  <h2 class="sec-heading">29. Creating an EBS Snapshot</h2>
+  <p><strong>Basic Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Add Description</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create Snapshot</div>
+  </div>
+  <p>After creating the snapshot, check its status.</p>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">Important</span>
+    The snapshot should reach an appropriate completed state before relying on it for subsequent operations.
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 30. Creating a Volume from a Snapshot -->
+  <h2 class="sec-heading">30. Creating a Volume from a Snapshot</h2>
+  <p>Once a snapshot is available:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create Volume from Snapshot</div>
+  </div>
+  <p>You can specify the target Availability Zone.</p>
+  <div class="hand-box">
+    <p><strong>Example:</strong></p>
+    <p>Original: <span class="code-term">EBS → AZ-B</span></p>
+    <p>Snapshot <span class="flow-arrow">↓</span> <span class="code-term">New Volume → AZ-C</span></p>
+    <p>This is useful when you need the data in another Availability Zone.</p>
+  </div>
+
+  <!-- 31. Moving EBS Data to Another Availability Zone -->
+  <h2 class="sec-heading">31. Moving EBS Data to Another Availability Zone</h2>
+  <p><strong>Remember:</strong> EBS itself is AZ-specific.</p>
+  <p>Therefore, to use the data in another AZ:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Original EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create New EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Choose New AZ</div>
+  </div>
+
+  <!-- 32. Moving EBS Data to Another Region -->
+  <h2 class="sec-heading">32. Moving EBS Data to Another Region</h2>
+  <p>This is another important interview/exam concept.</p>
+  <p>Suppose:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Region 1</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">EBS</div>
+  </div>
+  <p>You want the same data in: <span class="code-term">Region 2</span></p>
+  <p>You cannot simply attach the original EBS volume to an EC2 instance in the other region.</p>
+  <p><strong>Instead:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Copy Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Destination Region</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach to EC2</div>
+  </div>
+
+  <!-- 33. Copy Snapshot -->
+  <h2 class="sec-heading">33. Copy Snapshot</h2>
+  <p>AWS provides an option to copy an EBS snapshot to another Region.</p>
+  <p><strong>Flow:</strong></p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Copy Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Destination Region</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Copy</div>
+  </div>
+  <p>Example from the transcript: <span class="highlight">Stockholm Region → Snapshot → Copy Snapshot → Mumbai Region</span></p>
+  <p>After the snapshot is copied, you can switch to the destination region and create a new EBS volume from it.</p>
+
+  <!-- 34. Snapshot vs Volume -->
+  <h2 class="sec-heading">34. Snapshot vs Volume</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>EBS Volume</th>
+        <th>EBS Snapshot</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Storage volume used by EC2</td>
+        <td>Backup of an EBS volume</td>
+      </tr>
+      <tr>
+        <td>Can be attached to EC2</td>
+        <td>Can be used to create a new volume</td>
+      </tr>
+      <tr>
+        <td>Used for active storage</td>
+        <td>Mainly used for backup/recovery</td>
+      </tr>
+      <tr>
+        <td>AZ-specific</td>
+        <td>Can be copied across Regions</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding: 4px 10px;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <strong>Volume = Working Storage &nbsp;|&nbsp; Snapshot = Backup</strong>
+  </div>
+
+  <!-- 35. Snapshot → Volume → EC2 -->
+  <h2 class="sec-heading">35. Snapshot → Volume → EC2</h2>
+  <p>A very important workflow:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create EBS Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Choose Availability Zone</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Attach Volume</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">EC2</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Mount</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#ecfdf5;">Access Data</div>
+  </div>
+
+  <!-- 36. EBS Snapshot Across Regions -->
+  <h2 class="sec-heading">36. EBS Snapshot Across Regions</h2>
+  <p>Example:</p>
+  <div class="ascii-tree">Region A
+|
+└── EBS
+    ↓
+ Snapshot
+    ↓
+ Copy Snapshot
+    ↓
+Region B
+|
+└── Snapshot
+    ↓
+ New EBS
+    ↓
+ EC2</div>
+  <p>This can be useful for: <span class="highlight">Disaster recovery</span>, <span class="highlight">Regional migration</span>, <span class="highlight">Data availability</span>, <span class="highlight">Backup strategies</span>.</p>
+
+  <!-- 37. EBS Snapshot Encryption -->
+  <h2 class="sec-heading">37. EBS Snapshot Encryption</h2>
+  <p>If an EBS volume is encrypted, snapshots and volumes created from encrypted snapshots follow the applicable encryption behavior.</p>
+  <p>The transcript emphasizes that encryption can protect:</p>
+  <ul>
+    <li>Data on the volume</li>
+    <li>Data transferred between EC2 and EBS</li>
+    <li>Snapshot data</li>
+    <li>Volumes created from encrypted snapshots</li>
+  </ul>
+
+  <!-- 38. EBS Lifecycle Manager -->
+  <h2 class="sec-heading">38. EBS Lifecycle Manager</h2>
+  <p><strong>What is EBS Lifecycle Manager?</strong><br>
+  EBS Lifecycle Manager can automate the management of EBS snapshots.</p>
+  <p>The transcript describes it as a way to automate: <span class="highlight">Snapshot creation</span>, <span class="highlight">Snapshot retention</span>, <span class="highlight">Snapshot copying</span>, <span class="highlight">Snapshot deletion</span>.</p>
+
+  <!-- 39. Why Use Lifecycle Manager? -->
+  <h2 class="sec-heading">39. Why Use Lifecycle Manager?</h2>
+  <p>Imagine you have important data and want: <span class="highlight">Daily backups</span><br>Doing this manually every day is inconvenient.</p>
+  <p>Instead:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EBS</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Lifecycle Manager</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#f0fdf4;">Automatic Snapshots</div>
+  </div>
+  <p>This makes backup management easier.</p>
+
+  <!-- 40. Snapshot Frequency -->
+  <h2 class="sec-heading">40. Snapshot Frequency</h2>
+  <p>A lifecycle policy can define how frequently snapshots should be created.</p>
+  <p>Examples: Daily, Based on a defined schedule.</p>
+  <p>The transcript demonstrates a schedule involving <span class="highlight">snapshot creation every 12 hours</span>.</p>
+
+  <!-- 41. Snapshot Retention -->
+  <h2 class="sec-heading">41. Snapshot Retention</h2>
+  <p>Retention determines how long snapshots should be kept.</p>
+  <p>Example:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Create Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Keep for 10 days</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Delete after retention period</div>
+  </div>
+  <p>This prevents unlimited accumulation of old snapshots.</p>
+
+  <!-- 42. Retention by Count or Age -->
+  <h2 class="sec-heading">42. Retention by Count or Age</h2>
+  <p>The transcript describes retention options based on:</p>
+  <p><strong>Count:</strong> Keep a certain number of snapshots.</p>
+  <p><strong>Age:</strong> Keep snapshots for a defined period. Examples of periods can include: Days, Weeks, Months, Years.</p>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 43. Cross-Region Snapshot Copy -->
+  <h2 class="sec-heading">43. Cross-Region Snapshot Copy</h2>
+  <p>Lifecycle policies can also support copying snapshots to another Region.</p>
+  <p>Example:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Region A</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Copy</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Region B</div>
+  </div>
+  <div class="sticky-note" style="padding: 4px 8px;">
+    <span class="tag-badge badge-imp">Important</span>
+    Cross-Region copying can involve additional charges, so the required destination and purpose should be considered.
+  </div>
+
+  <!-- 44. Tags and Lifecycle Policies -->
+  <h2 class="sec-heading">44. Tags and Lifecycle Policies</h2>
+  <p>The transcript demonstrates using tags to identify volumes.</p>
+  <p>Example: <span class="highlight">Key: Environment | Value: Test</span></p>
+  <p>A lifecycle policy can then target resources based on their tags.</p>
+
+  <div class="hand-box">
+    <div style="font-weight:700; color:#1e40af; font-size:16px;">Why Tags Are Useful</div>
+    <p>Tags help identify resources based on: Environment, Application, Team, Purpose, Project.</p>
+    <p>Example: <span class="code-term">Environment = Test</span> → Then a policy can target volumes with that tag.</p>
+  </div>
+
+  <!-- 45. EBS Snapshot Recycle Bin -->
+  <h2 class="sec-heading">45. EBS Snapshot Recycle Bin</h2>
+  <p>The transcript also introduces the <span class="highlight">EBS Snapshot Recycle Bin</span>.</p>
+  <p><strong>Purpose:</strong> It helps protect snapshots from accidental deletion.</p>
+  <p>Think of it like a computer's recycle bin.</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="border-color:#e11d48;">Accidental Delete</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#fef3c7;">Recycle Bin</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#ecfdf5;">Restore if still retained</div>
+  </div>
+
+  <!-- 46. Recycle Bin Retention Rules -->
+  <h2 class="sec-heading">46. Recycle Bin Retention Rules</h2>
+  <p>You can define retention rules that determine how long deleted snapshots remain recoverable in the Recycle Bin.</p>
+  <p>Example:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Snapshot Deleted</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Recycle Bin</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Retain for defined period</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Permanent deletion</div>
+  </div>
+  <p>This provides an additional layer of protection against accidental deletion.</p>
+
+  <!-- 47. EBS Cost Considerations -->
+  <h2 class="sec-heading">47. EBS Cost Considerations</h2>
+  <p>EBS and related storage features can incur charges depending on:</p>
+  <ul>
+    <li>Volume type</li>
+    <li>Storage size</li>
+    <li>Provisioned performance</li>
+    <li>Snapshots</li>
+    <li>Data transfer/copy operations</li>
+    <li>Cross-Region operations</li>
+    <li>Retained backups</li>
+  </ul>
+  <div class="hand-box" style="background:#fef2f2; border-color:#ef4444;">
+    <span class="tag-badge badge-imp">Important Principle</span>
+    <p><strong>More storage and higher performance can increase cost.</strong></p>
+    <p>Always remove unused resources when they are no longer required.</p>
+  </div>
+
+  <!-- 48. Practical EBS Workflow -->
+  <h2 class="sec-heading">48. Practical EBS Workflow</h2>
+  <p>A complete practical workflow from the transcript can be remembered like this:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px; line-height: 1.8;">
+    <span class="flow-node" style="padding:2px 6px;">CREATE EC2</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">EBS Volume Created</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Attach / Use Storage</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Increase Volume Size if Required</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Create Snapshot</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Create New Volume from Snapshot</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Attach to Another EC2</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Mount</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px; background:#ecfdf5;">Access Original Data</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px;">Detach</span> <span class="flow-arrow">↓</span>
+    <span class="flow-node" style="padding:2px 6px; background:#fee2e2;">Delete if No Longer Required</span>
+  </div>
+
+  <!-- 49. Disaster Recovery Workflow -->
+  <h2 class="sec-heading">49. Disaster Recovery Workflow</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>For another Availability Zone:</strong></p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px;">
+        <div class="flow-node">EBS</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">Snapshot</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">New AZ</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">New EBS</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node" style="background:#eff6ff;">Attach to EC2</div>
+      </div>
+    </div>
+
+    <div class="hand-box">
+      <p><strong>For another Region:</strong></p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px;">
+        <div class="flow-node">EBS</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">Snapshot</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">Copy Snapshot</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">Destination Region</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node">New EBS</div>
+        <span class="flow-arrow" style="margin-left:10px;">↓</span>
+        <div class="flow-node" style="background:#eff6ff;">New EC2</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 50. Most Important Interview Questions -->
+  <h2 class="sec-heading">50. Most Important Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is EBS?</div>
+        <div class="qa-a"><strong>Answer:</strong> EBS (Elastic Block Store) is a cloud-based block storage service used primarily with EC2 instances.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q2. What is EBS similar to?</div>
+        <div class="qa-a"><strong>Answer:</strong> It can be understood as a virtual hard drive for EC2.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q3. Can an EC2 instance have multiple EBS volumes?</div>
+        <div class="qa-a"><strong>Answer:</strong> Yes, an EC2 instance can have multiple EBS volumes attached, subject to applicable limits and configuration.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q4. Is EBS Region-specific or Availability Zone-specific?</div>
+        <div class="qa-a"><strong>Answer:</strong> An EBS volume is associated with a specific Availability Zone.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q5. How can you use EBS data in another Availability Zone?</div>
+        <div class="qa-a"><strong>Answer:</strong> EBS → Snapshot → New EBS in target AZ</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q6. How can you move EBS data to another Region?</div>
+        <div class="qa-a"><strong>Answer:</strong> EBS → Snapshot → Copy Snapshot → Target Region → New EBS</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is an EBS Snapshot?</div>
+        <div class="qa-a"><strong>Answer:</strong> It is a point-in-time backup of an EBS volume.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q8. Can you increase EBS volume size?</div>
+        <div class="qa-a"><strong>Answer:</strong> Yes. The transcript demonstrates modifying the volume to increase its size without restarting the EC2 instance for the volume modification.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q9. What is Delete on Termination?</div>
+        <div class="qa-a"><strong>Answer:</strong> It determines whether an EBS volume is automatically deleted when its associated EC2 instance is terminated.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q10. What is EBS Lifecycle Manager?</div>
+        <div class="qa-a"><strong>Answer:</strong> It helps automate snapshot creation, retention, copying and deletion according to policies.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q11. What is the purpose of EBS encryption?</div>
+        <div class="qa-a"><strong>Answer:</strong> It provides encryption to protect EBS data and related storage operations.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q12. What is the EBS Snapshot Recycle Bin?</div>
+        <div class="qa-a"><strong>Answer:</strong> It helps protect snapshots from accidental deletion by retaining deleted snapshots for a configured period.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 51. Super Quick Revision -->
+  <h2 class="sec-heading" style="margin-top: 8px;">51. Super Quick Revision</h2>
+  <p><strong>Remember these 15 points:</strong></p>
+  <div class="hand-box" style="background:#faf5ff; border-color:#a855f7;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 13.5px;">
+      <div>
+        1. EBS = Elastic Block Store<br>
+        2. EBS is block storage.<br>
+        3. EBS works primarily with EC2.<br>
+        4. Think of EBS as a virtual hard drive.<br>
+        5. An EC2 instance can have multiple EBS volumes.<br>
+        6. EBS is associated with an Availability Zone.<br>
+        7. EBS provides redundancy within its AZ.<br>
+        8. GP3 is a general-purpose volume type.
+      </div>
+      <div>
+        9. io1/io2 are designed for high I/O performance.<br>
+        10. EBS volume size can be increased.<br>
+        11. Snapshot = Backup.<br>
+        12. Snapshot can be used to create a new EBS volume.<br>
+        13. Snapshot can be copied to another Region.<br>
+        14. Lifecycle Manager = Automated snapshot management.<br>
+        15. Recycle Bin = Protection against accidental snapshot deletion.
+      </div>
+    </div>
+  </div>
+
+  <!-- 52. Final EBS Memory Map -->
+  <h2 class="sec-heading">52. Final EBS Memory Map</h2>
+  <div class="ascii-tree" style="font-size: 11.5px; line-height: 1.2;">EBS
+│
+┌───────────────┼────────────────┐
+↓               ↓                ↓
+STORAGE         SNAPSHOT         SECURITY
+│               │                │
+EC2 Disk        Backup           Encryption
+│               │
+┌────┴────┐     ↓ Recovery
+↓         ↓     │
+GP3    io1/io2  ↓
+             New EBS Volume
+                │
+                ↓
+             New EC2
+
+SNAPSHOT MOVEMENT
+│
+┌────────┴────────┐
+↓                 ↓
+Same Region       Other Region
+↓                 ↓
+Change AZ         Copy Snapshot
+↓                 ↓
+New EBS           New EBS</div>
+
+  <!-- Star Formula Box -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 6px;">
+    <div style="font-size: 18px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ One-Line Formula
+    </div>
+    <p style="font-size: 16px; color: #881337; margin: 2px 0; font-weight: 700;">
+      EBS → Storage | Snapshot → Backup | Lifecycle Manager → Automation | Recycle Bin → Accidental-deletion protection
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

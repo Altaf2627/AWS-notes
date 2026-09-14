@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS — Overview & Introduction Handwritten Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --ink-blue: #1b3a6b;
+      --ink-red: #c02128;
+      --ink-green: #1b663e;
+      --ink-dark: #1e293b;
+      --pencil-gray: #475569;
+      --paper-bg: #fffdf9;
+      --paper-texture: #fcf9f2;
+      --hl-yellow: rgba(254, 240, 138, 0.82);
+      --hl-green: rgba(187, 247, 208, 0.78);
+      --hl-pink: rgba(251, 207, 232, 0.78);
+      --hl-blue: rgba(186, 230, 253, 0.78);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #232733;
+      font-family: 'Patrick Hand', 'Kalam', cursive;
+      color: var(--ink-blue);
+      line-height: 1.4;
+      font-size: 15px;
+      padding: 24px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Floating Controls Bar */
+    .controls-bar {
+      position: fixed;
+      top: 12px;
+      right: 18px;
+      z-index: 999;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-action {
+      background: #ea580c;
+      color: #ffffff;
+      border: none;
+      padding: 6px 15px;
+      font-family: 'Patrick Hand', cursive;
+      font-size: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+    }
+    .btn-action:hover {
+      background: #c2410c;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Notebook Page (210mm x 297mm standard aspect ratio) */
+    .notebook-container {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      width: 100%;
+      margin-top: 32px;
+    }
+
+    .notebook-page {
+      position: relative;
+      width: 210mm;
+      min-height: 297mm;
+      height: auto;
+      background-color: var(--paper-bg);
+      background-image: 
+        radial-gradient(var(--paper-texture) 25%, transparent 25%),
+        radial-gradient(#f7f3e8 15%, transparent 15%);
+      background-size: 16px 16px, 32px 32px;
+      box-shadow: 
+        -2px 0 6px rgba(0,0,0,0.18),
+        8px 14px 30px rgba(0,0,0,0.38),
+        0 0 0 1px rgba(0,0,0,0.07);
+      border-radius: 4px 16px 16px 4px;
+      padding: 18mm 18mm 16mm 30mm; /* Left margin accommodates spiral */
+      box-sizing: border-box;
+      overflow: visible;
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Realistic Spiral Binding on Left Side */
+    .spiral-spine {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 24mm;
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+
+    .spiral-ring-unit {
+      position: relative;
+      width: 28mm;
+      height: 9mm;
+      display: flex;
+      align-items: center;
+      margin-left: 3mm;
+    }
+
+    /* Hole punched in paper */
+    .spiral-hole {
+      width: 4.8mm;
+      height: 4.8mm;
+      background-color: #232733;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.85);
+      position: absolute;
+      left: 11mm;
+    }
+
+    /* Metal wire loop */
+    .spiral-wire {
+      position: absolute;
+      left: -2mm;
+      width: 17mm;
+      height: 7.5mm;
+      border: 2.2mm solid #a6afba;
+      border-top-color: #f1f5f9;
+      border-left-color: #64748b;
+      border-bottom-color: #334155;
+      border-right: none;
+      border-radius: 50px 0 0 50px;
+      box-shadow: -2px 3px 6px rgba(0,0,0,0.45);
+      filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.25));
+    }
+
+    /* Typography & Handwritten Accents */
+    .ink-red {
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      letter-spacing: -0.2px;
+    }
+
+    .ink-blue {
+      color: var(--ink-blue);
+      font-family: 'Patrick Hand', cursive;
+    }
+
+    .ink-green {
+      color: var(--ink-green);
+    }
+
+    .ink-bold {
+      font-weight: 700;
+      font-family: 'Kalam', cursive;
+    }
+
+    .hl {
+      background: linear-gradient(104deg, rgba(254, 240, 138, 0.45) 0.9%, var(--hl-yellow) 98.4%);
+      border-radius: 3px 8px 4px 9px;
+      padding: 1px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-grn {
+      background: linear-gradient(104deg, rgba(187, 247, 208, 0.35) 0.9%, var(--hl-green) 98.4%);
+      border-radius: 4px 7px 3px 8px;
+      padding: 1px 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .hl-pink {
+      background: linear-gradient(104deg, rgba(251, 207, 232, 0.35) 0.9%, var(--hl-pink) 98.4%);
+      border-radius: 5px 8px 3px 6px;
+      padding: 1px 5px;
+    }
+
+    .hand-box {
+      border: 2px solid var(--ink-blue);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.65);
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.04);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-box-red {
+      border: 2px solid var(--ink-red);
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+      padding: 8px 12px;
+      background: rgba(254, 242, 242, 0.5);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .callout-badge {
+      display: inline-block;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.12);
+      transform: rotate(-1.5deg);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .badge-important {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #f87171;
+    }
+
+    .badge-trick {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .badge-faq {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #a5b4fc;
+    }
+
+    .badge-tip {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .badge-aws {
+      background: #ffedd5;
+      color: #9a3412;
+      border: 1px solid #fb923c;
+    }
+
+    .sticky-note {
+      background: #fef9c3;
+      border-left: 5px solid #eab308;
+      box-shadow: 2px 3px 8px rgba(0,0,0,0.08);
+      padding: 7px 11px;
+      border-radius: 3px 8px 8px 3px;
+      transform: rotate(-0.4deg);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 5px 0;
+      font-size: 13px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .hand-table th {
+      border-bottom: 2.5px solid var(--ink-red);
+      padding: 5px 7px;
+      text-align: left;
+      color: var(--ink-red);
+      font-family: 'Architects Daughter', cursive;
+      font-size: 13.5px;
+    }
+
+    .hand-table td {
+      border-bottom: 1.5px dashed #cbd5e1;
+      padding: 5px 7px;
+      color: var(--ink-blue);
+    }
+
+    .hand-table tr:last-child td {
+      border-bottom: 2px solid var(--ink-blue);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 9px;
+      font-family: 'Caveat', cursive;
+      font-size: 16px;
+      color: #64748b;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 4px;
+      margin-top: 8px;
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: #94a3b8;
+    }
+
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    .diagram-box {
+      background: #fafaf9;
+      border: 1.5px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 7px;
+      margin: 5px 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .notebook-container {
+        gap: 0 !important;
+        margin-top: 0 !important;
+      }
+      .notebook-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Print & View Toolbar -->
+  <div class="controls-bar">
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Export PDF / Print Notes
+    </button>
+    <button class="btn-action" style="background:#0284c7;" onclick="window.scrollTo({top: 0, behavior:'smooth'})">
+      ⬆️ Top
+    </button>
+  </div>
+
+  <div class="notebook-container">
+
+    <!-- ========================================== -->
+    <!-- PAGE 1: WHAT IS AWS, IN SIMPLE WORDS, HISTORY, EVOLUTION & MODERN TECH -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-1">
+      <!-- Spiral Spine Loop generator (21 metal loops) -->
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Overview &amp; Introduction</span>
+          <span>Sheet No: 01</span>
+        </div>
+
+        <!-- Main Title Header -->
+        <div class="hand-box-red text-center mb-2.5" style="background: rgba(254, 242, 242, 0.4);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-aws">AWS ESSENTIALS</span>
+            <h1 class="ink-red text-2xl font-bold tracking-wide">
+              ☁️ AWS — Overview &amp; Introduction Detailed Notes
+            </h1>
+          </div>
+          <p class="text-xs text-slate-500 font-sans tracking-wider uppercase mt-0.5">Comprehensive, Structured, Exam &amp; Interview-Ready Study Guide</p>
+        </div>
+
+        <!-- 1. What is AWS? -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="callout-badge badge-important">CORE DEFINITION</span>
+            <h2 class="ink-red text-lg font-bold">1. What is AWS?</h2>
+          </div>
+          
+          <div class="hand-box p-2 bg-amber-50/20">
+            <div class="flex justify-between items-center mb-0.5">
+              <span class="text-xs text-amber-900 font-bold uppercase tracking-wider">Full Form:</span>
+              <span class="bg-amber-100 text-amber-900 font-mono px-2 py-0.5 rounded text-xs font-bold">AWS = Amazon Web Services</span>
+            </div>
+            <p class="ink-blue text-xs font-bold">
+              AWS is a <span class="hl">Cloud Service Provider (CSP) offered by Amazon.</span>
+            </p>
+            <div class="mt-1 pl-1 border-l-2 border-amber-400 text-xs">
+              <b class="text-rose-800">Simple Definition:</b><br>
+              <span class="ink-blue font-bold">AWS is a cloud computing platform that provides a wide range of IT resources and services over the Internet on a pay-as-you-go basis.</span>
+              <p class="text-[11px] text-slate-600 mt-0.5">Instead of purchasing and maintaining physical servers, storage, networking equipment, databases, etc., organizations can use AWS services according to their requirements.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. AWS in Simple Words -->
+        <div class="mb-2">
+          <div class="flex items-center gap-2 mb-0.5">
+            <span class="callout-badge badge-tip">CONCEPTUAL SHIFT</span>
+            <h2 class="ink-red text-base font-bold">2. AWS in Simple Words</h2>
+          </div>
+          <p class="ink-blue text-xs">
+            Think of AWS as a <span class="hl font-bold">huge collection of IT infrastructure and services available through the Internet.</span>
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+            <div class="border border-red-300 rounded p-1.5 bg-red-50/40 text-center font-mono text-[11px]">
+              <b class="text-red-900 font-sans">Traditional Approach:</b><br>
+              Buy Hardware ➔ Install Servers ➔ Configure Networking ➔ Setup Storage ➔ Maintain Infrastructure
+            </div>
+            <div class="border border-emerald-300 rounded p-1.5 bg-emerald-50/40 text-center font-mono text-[11px]">
+              <b class="text-emerald-900 font-sans">Using AWS:</b><br>
+              Internet ➔ AWS ➔ [ Compute + Storage + Database + Networking + Security + Monitoring + AI/ML + etc. ]
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. History & 4. Evolution of AWS -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- 3. History of AWS -->
+          <div class="hand-box p-2">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-faq">ORIGINS</span>
+              <h2 class="ink-red text-base font-bold">3. History of AWS</h2>
+            </div>
+            <p class="ink-blue text-xs">
+              AWS was officially launched in <span class="hl font-bold">2006</span> as a commercial cloud platform.
+            </p>
+            <p class="text-[11px] ink-blue mt-1">It initially became known for foundational services such as:</p>
+            <div class="mt-1 space-y-1 text-[11px]">
+              <div class="p-1 bg-white border border-blue-200 rounded">
+                <b class="text-blue-900">Amazon S3 (Simple Storage Service):</b><br>
+                Used for storing data such as files, images, videos, backups, and application data.
+              </div>
+              <div class="p-1 bg-white border border-blue-200 rounded">
+                <b class="text-blue-900">Amazon EC2 (Elastic Compute Cloud):</b><br>
+                Used to provide scalable computing capacity, commonly through virtual servers/instances.
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Evolution of AWS -->
+          <div class="hand-box p-2">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-trick">ECOSYSTEM</span>
+              <h2 class="ink-red text-base font-bold">4. Evolution of AWS</h2>
+            </div>
+            <p class="ink-blue text-[11.5px]">
+              AWS started with a relatively small set of foundational services. Over time, AWS expanded into a very large cloud ecosystem covering areas such as:
+            </p>
+            <div class="grid grid-cols-2 gap-1 text-[10.5px] font-bold text-slate-800 my-1">
+              <div>• Compute</div>
+              <div>• Storage</div>
+              <div>• Databases</div>
+              <div>• Networking</div>
+              <div>• Security</div>
+              <div>• Containers</div>
+              <div>• Serverless</div>
+              <div>• Analytics</div>
+              <div>• Artificial Intelligence</div>
+              <div>• Machine Learning</div>
+              <div>• IoT</div>
+              <div>• Developer tools</div>
+              <div>• Monitoring</div>
+              <div>• Management</div>
+            </div>
+            <div class="sticky-note text-[10px]">
+              <b class="text-amber-900">Important:</b> The exact number of AWS services changes over time, so don't memorize a specific number such as "200 services." AWS's service catalog continues to evolve.
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. AWS and Modern Technologies & 6. Real-World Usage -->
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <!-- 5. Modern Technologies -->
+          <div class="hand-box p-2 bg-slate-50">
+            <h2 class="ink-red text-base font-bold mb-1">5. AWS and Modern Technologies</h2>
+            <div class="space-y-1 text-[11px] ink-blue">
+              <div><b>🤖 AI &amp; Machine Learning:</b> Developing and deploying advanced AI/ML workloads.</div>
+              <div><b>🌐 Internet of Things (IoT):</b> Connecting and managing fleets of IoT devices.</div>
+              <div><b>⚡ Serverless Computing:</b> Run applications without directly managing traditional servers.</div>
+              <div><b>📦 Containers:</b> Running and managing containerized microservices apps.</div>
+              <div><b>📊 Analytics:</b> Processing and analyzing massive volumes of big data.</div>
+            </div>
+          </div>
+
+          <!-- 6. Real-World Usage -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h2 class="ink-red text-base font-bold mb-1">6. AWS Real-World Usage</h2>
+            <p class="ink-blue text-[11px]">
+              AWS is used by organizations of different sizes, from early-stage startups to multinational enterprises.
+            </p>
+            <p class="text-[11px] font-bold ink-red mt-1">Examples of industries and use cases:</p>
+            <div class="grid grid-cols-2 gap-1 text-[10.5px] text-slate-800 mt-0.5">
+              <div>• E-commerce</div>
+              <div>• Financial services</div>
+              <div>• Healthcare</div>
+              <div>• Gaming</div>
+              <div>• Media &amp; entertainment</div>
+              <div>• Government</div>
+              <div>• Education</div>
+              <div>• Software development</div>
+              <div class="col-span-2">• Data analytics</div>
+            </div>
+            <p class="text-[10px] text-slate-500 italic mt-1">AWS publishes customer stories and case studies showing how organizations solve real-world problems.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Footer -->
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 1 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 2: WHY AWS IS POPULAR (SCALABILITY, GLOBAL REACH, RELIABILITY, SECURITY) -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-2">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Why AWS is Popular — The 4 Core Pillars</span>
+          <span>Sheet No: 02</span>
+        </div>
+
+        <!-- 7. Why is AWS Popular? Header Banner -->
+        <div class="hand-box-red p-2 mb-2 bg-amber-50/40">
+          <div class="flex items-center justify-between">
+            <h2 class="ink-red text-lg font-bold">7. Why is AWS Popular?</h2>
+            <span class="callout-badge badge-important">⭐ 4 PILLARS TO REMEMBER</span>
+          </div>
+          <p class="ink-blue text-xs">There are several important reasons. The four major concepts to remember are:</p>
+          <div class="grid grid-cols-4 gap-2 text-center text-xs font-bold mt-1">
+            <div class="p-1 bg-white border border-amber-300 rounded text-amber-900">📈 1. Scalability</div>
+            <div class="p-1 bg-white border border-blue-300 rounded text-blue-900">🌍 2. Global Reach</div>
+            <div class="p-1 bg-white border border-emerald-300 rounded text-emerald-900">🔄 3. Reliability</div>
+            <div class="p-1 bg-white border border-rose-300 rounded text-rose-900">🔐 4. Security</div>
+          </div>
+        </div>
+
+        <!-- 8. Scalability & 9. Global Reach -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- 8. Scalability -->
+          <div class="hand-box p-2">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-tip">PILLAR 1</span>
+              <h3 class="ink-red font-bold text-base">8. Scalability 📈</h3>
+            </div>
+            <p class="ink-blue text-xs">
+              <b>Definition:</b> <span class="hl font-bold">Scalability is the ability to increase or decrease computing resources according to workload requirements.</span>
+            </p>
+            <div class="diagram-box my-1 py-1 text-center font-mono text-[11px]">
+              <div>Initially: <b>100 Users</b> ➔ Small Resources</div>
+              <div class="text-rose-700 font-bold mt-0.5">Later: <b>100,000 Users</b> ➔ More Resources Required!</div>
+            </div>
+            <p class="text-[11px] ink-blue">AWS allows you to scale resources according to your application's requirements.</p>
+            <div class="border border-slate-300 rounded p-1 bg-white text-[11px] mt-1">
+              <b>Example:</b> A website may need:<br>
+              <code class="text-blue-800">2 GB RAM ➔ 4 GB RAM ➔ 8 GB RAM</code> or additional instances may be added dynamically.
+            </div>
+            <p class="text-[10.5px] font-bold text-slate-700 mt-1 italic">👉 Key Point: AWS makes it easier to scale infrastructure as demand changes.</p>
+          </div>
+
+          <!-- 9. Global Reach -->
+          <div class="hand-box p-2">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-faq">PILLAR 2</span>
+              <h3 class="ink-red font-bold text-base">9. Global Reach 🌍</h3>
+            </div>
+            <p class="ink-blue text-xs">Suppose your application has users spread across continents:</p>
+            <div class="grid grid-cols-3 gap-1 text-[11px] font-bold text-center my-1 text-slate-800">
+              <span class="bg-blue-50 border rounded p-0.5">🇮🇳 India</span>
+              <span class="bg-blue-50 border rounded p-0.5">🇺🇸 USA</span>
+              <span class="bg-blue-50 border rounded p-0.5">🇪🇺 Europe</span>
+              <span class="bg-blue-50 border rounded p-0.5">🇦🇺 Australia</span>
+              <span class="bg-blue-50 border rounded p-0.5 col-span-2">🇸🇬 Singapore</span>
+            </div>
+            <p class="ink-blue text-xs">
+              You may want your application and supporting infrastructure to be available <span class="hl">close to your users</span>.
+            </p>
+            <p class="text-[11px] ink-blue mt-1">AWS has infrastructure distributed across many geographic locations worldwide. This helps organizations build high-performance applications for global audiences.</p>
+          </div>
+        </div>
+
+        <!-- 10. Reliability & 11. Security -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- 10. Reliability -->
+          <div class="hand-box p-2 bg-emerald-50/20" style="border-color: #059669;">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-important">PILLAR 3</span>
+              <h3 class="ink-red font-bold text-base">10. Reliability 🔄</h3>
+            </div>
+            <p class="ink-blue text-xs">AWS provides infrastructure designed to support highly available and resilient applications.</p>
+            
+            <div class="grid grid-cols-2 gap-1 my-1 text-[10.5px]">
+              <div class="p-1 border border-red-300 rounded bg-red-50 text-center font-mono">
+                <b class="text-red-900 font-sans">Single Location (Risky):</b><br>
+                One Location ➔ Single Failure ➔ App Down ❌
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-emerald-50 text-center font-mono">
+                <b class="text-emerald-900 font-sans">Multi-AZ Setup:</b><br>
+                AWS Region ➔ AZ-1 | AZ-2 | AZ-3 ✓
+              </div>
+            </div>
+
+            <p class="text-[11px] ink-blue">
+              Instead of keeping everything in one physical location, you can architect applications across multiple Availability Zones. If one AZ experiences a problem, workloads can potentially continue operating in another zone!
+            </p>
+          </div>
+
+          <!-- 11. Security -->
+          <div class="hand-box p-2 bg-rose-50/20" style="border-color: #e11d48;">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-trick">PILLAR 4</span>
+              <h3 class="ink-red font-bold text-base">11. Security 🔐</h3>
+            </div>
+            <p class="ink-blue text-xs">Security is one of the most important aspects of cloud computing. AWS provides many security-related capabilities, including:</p>
+            <div class="grid grid-cols-2 gap-0.5 text-[10.5px] text-slate-800 my-1 font-bold">
+              <div>• Identity &amp; Access (IAM)</div>
+              <div>• Encryption</div>
+              <div>• Network security</div>
+              <div>• Monitoring &amp; Logging</div>
+              <div>• Security services</div>
+              <div>• Granular Access control</div>
+            </div>
+            <div class="sticky-note text-[10.5px]">
+              <b class="text-red-900">⚠️ Critical Rule:</b> AWS does <i>not</i> automatically make every application secure. Customers are also responsible for securing the resources and apps they configure.<br>
+              <span class="hl font-bold">AWS Shared Responsibility Model</span> (covered in depth later).
+            </div>
+          </div>
+        </div>
+
+        <!-- 12. AWS in the Cloud Market -->
+        <div class="hand-box p-2 bg-slate-50">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-base font-bold">12. AWS in the Cloud Market</h2>
+            <span class="callout-badge badge-faq">COMPETITIVE LANDSCAPE</span>
+          </div>
+          <p class="ink-blue text-xs">
+            AWS is one of the largest and most widely used cloud platforms globally. Other major cloud providers include:
+          </p>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs my-1 font-bold">
+            <div class="border border-amber-400 bg-amber-50 rounded p-1">
+              <b class="text-amber-900 text-sm">AWS</b><br>
+              <span class="text-[10.5px] font-normal">Amazon Web Services (Pioneer &amp; Market Leader)</span>
+            </div>
+            <div class="border border-blue-400 bg-blue-50 rounded p-1">
+              <b class="text-blue-900 text-sm">Microsoft Azure</b><br>
+              <span class="text-[10.5px] font-normal">Microsoft's Cloud Computing Platform</span>
+            </div>
+            <div class="border border-red-400 bg-red-50 rounded p-1">
+              <b class="text-red-900 text-sm">Google Cloud (GCP)</b><br>
+              <span class="text-[10.5px] font-normal">Google's Cloud Computing Platform</span>
+            </div>
+          </div>
+
+          <div class="border-t border-slate-300 pt-1 text-[11px] ink-blue flex items-center justify-between">
+            <span><b>Hierarchy:</b> <code>AWS ➔ [ Microsoft Azure | Google Cloud ]</code></span>
+            <span class="text-slate-500 italic">⚠️ Market-share rankings change over time, so don't memorize an old percentage from a particular quarter as a permanent fact.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 2 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 3: POPULAR AWS SERVICES (EC2, S3, RDS, LAMBDA, CLOUDFRONT) & CONSOLE -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-3">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Core AWS Services &amp; Management Console</span>
+          <span>Sheet No: 03</span>
+        </div>
+
+        <!-- 13. Popular AWS Services Intro -->
+        <div class="mb-1.5">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-lg font-bold">13. Popular AWS Services (The Big 5 for Beginners)</h2>
+            <span class="callout-badge badge-important">MUST-KNOW SERVICES</span>
+          </div>
+          <p class="ink-blue text-xs">AWS has hundreds of services, but as a beginner, you should first focus on the most important ones:</p>
+        </div>
+
+        <!-- Service Cards Grid -->
+        <div class="space-y-2 mb-2 text-xs">
+          <!-- 1. Amazon EC2 & 2. Amazon S3 -->
+          <div class="grid grid-cols-2 gap-2">
+            <!-- EC2 -->
+            <div class="hand-box p-2 bg-blue-50/30">
+              <div class="flex items-center justify-between mb-0.5">
+                <b class="text-blue-900 text-sm">🖥️ Amazon EC2</b>
+                <span class="text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-mono font-bold">COMPUTE</span>
+              </div>
+              <p class="text-[11px] ink-blue">
+                <b>Full Form:</b> <span class="hl font-bold">Elastic Compute Cloud</span><br>
+                Used for scalable compute capacity / virtual servers.
+              </p>
+              <div class="diagram-box my-1 py-1 text-center text-[10.5px] font-mono">
+                Application ➔ <b>EC2 Instance</b> ➔ Compute Resources (vCPU, RAM, OS)
+              </div>
+              <p class="text-[10.5px] text-slate-600">Rent VMs in the cloud without purchasing physical servers.</p>
+            </div>
+
+            <!-- S3 -->
+            <div class="hand-box p-2 bg-amber-50/30">
+              <div class="flex items-center justify-between mb-0.5">
+                <b class="text-amber-900 text-sm">💾 Amazon S3</b>
+                <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono font-bold">OBJECT STORAGE</span>
+              </div>
+              <p class="text-[11px] ink-blue">
+                <b>Full Form:</b> <span class="hl font-bold">Simple Storage Service</span><br>
+                Used for highly durable object storage.
+              </p>
+              <p class="text-[10.5px] text-slate-700 mt-0.5"><b>Common uses:</b> Images, videos, documents, backups, logs, static website files.</p>
+              <div class="diagram-box my-1 py-1 text-center text-[10.5px] font-mono">
+                Application ➔ <b>S3 Bucket</b> ➔ Objects / Files (Unlimited scale)
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Amazon RDS & 4. AWS Lambda -->
+          <div class="grid grid-cols-2 gap-2">
+            <!-- RDS -->
+            <div class="hand-box p-2 bg-emerald-50/30" style="border-color: #059669;">
+              <div class="flex items-center justify-between mb-0.5">
+                <b class="text-emerald-900 text-sm">🗄️ Amazon RDS</b>
+                <span class="text-[10px] bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-mono font-bold">MANAGED DATABASE</span>
+              </div>
+              <p class="text-[11px] ink-blue">
+                <b>Full Form:</b> <span class="hl font-bold">Relational Database Service</span><br>
+                Used to run and manage relational databases without administrative burdens.
+              </p>
+              <p class="text-[10.5px] font-bold text-slate-700 mt-1">Supported database engines:</p>
+              <div class="grid grid-cols-3 gap-1 text-[10.5px] text-center my-0.5">
+                <span class="bg-white border rounded p-0.5">MySQL</span>
+                <span class="bg-white border rounded p-0.5">PostgreSQL</span>
+                <span class="bg-white border rounded p-0.5">MariaDB</span>
+                <span class="bg-white border rounded p-0.5">Oracle</span>
+                <span class="bg-white border rounded p-0.5 col-span-2">SQL Server</span>
+              </div>
+            </div>
+
+            <!-- Lambda -->
+            <div class="hand-box p-2 bg-purple-50/30" style="border-color: #9333ea;">
+              <div class="flex items-center justify-between mb-0.5">
+                <b class="text-purple-900 text-sm">⚡ AWS Lambda</b>
+                <span class="text-[10px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold">SERVERLESS COMPUTE</span>
+              </div>
+              <p class="text-[11px] ink-blue">
+                A serverless compute service. You can <span class="hl">run code without managing traditional servers directly</span>.
+              </p>
+              <div class="diagram-box my-1 py-1 text-center text-[10.5px] font-mono">
+                Event Occurs ➔ <b>Lambda Triggered</b> ➔ Code Executes ➔ Auto-Shuts Down
+              </div>
+              <p class="text-[10.5px] text-slate-600">Zero server provisioning, auto-scales, pay only for milliseconds executed.</p>
+            </div>
+          </div>
+
+          <!-- 5. Amazon CloudFront -->
+          <div class="hand-box p-2 bg-cyan-50/30" style="border-color: #0891b2;">
+            <div class="flex items-center justify-between mb-0.5">
+              <b class="text-cyan-900 text-sm">🌐 Amazon CloudFront</b>
+              <span class="text-[10px] bg-cyan-100 text-cyan-900 px-1.5 py-0.5 rounded font-mono font-bold">CDN (GLOBAL DELIVERY)</span>
+            </div>
+            <p class="text-[11px] ink-blue">
+              A <b>Content Delivery Network (CDN) service</b>. It helps deliver content (videos, data, APIs) to users with <span class="hl font-bold">lower latency</span> by using a globally distributed edge network.
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center text-[11px] font-mono">
+              User in India ➔ <b>CloudFront Edge Location (Close to User)</b> ➔ Content Delivered Fast! ⚡
+            </div>
+          </div>
+        </div>
+
+        <!-- 14. AWS Management Console -->
+        <div class="hand-box p-2 bg-slate-50">
+          <div class="flex items-center justify-between mb-0.5">
+            <h2 class="ink-red text-base font-bold">14. AWS Management Console</h2>
+            <span class="callout-badge badge-faq">PORTAL INTERFACE</span>
+          </div>
+          <p class="ink-blue text-xs">
+            AWS provides a web-based management interface called the: <span class="hl font-bold">AWS Management Console</span>. You can use any modern web browser to access AWS services directly.
+          </p>
+
+          <div class="diagram-box text-center py-1.5 my-1 bg-white">
+            <span class="font-bold text-xs text-slate-800">Typical Console Workflow:</span>
+            <div class="flex justify-between items-center text-[11px] font-mono font-bold mt-1 px-1 text-indigo-950">
+              <span class="p-1 border bg-slate-50 rounded">1. Browser</span>
+              <span>➔</span>
+              <span class="p-1 border bg-slate-50 rounded">2. AWS Console</span>
+              <span>➔</span>
+              <span class="p-1 border bg-slate-50 rounded">3. Select Region</span>
+              <span>➔</span>
+              <span class="p-1 border bg-slate-50 rounded">4. Select Service</span>
+              <span>➔</span>
+              <span class="p-1 border bg-slate-50 rounded">5. Configure Resource</span>
+              <span>➔</span>
+              <span class="p-1 border bg-emerald-50 text-emerald-900 rounded">6. Create &amp; Manage</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-600 italic">You can manage, monitor, and deploy many AWS resources directly from this intuitive visual console.</p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 3 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 4: GLOBAL INFRASTRUCTURE: REGIONS, AZs & LOCAL ZONES -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-4">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Global Infrastructure (Regions, AZs &amp; Local Zones)</span>
+          <span>Sheet No: 04</span>
+        </div>
+
+        <!-- 15, 16, 17. AWS Regions -->
+        <div class="hand-box p-2 mb-2 bg-blue-50/20">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">CORE CONCEPT</span>
+              <h2 class="ink-red text-base font-bold">15. AWS Regions 🌍</h2>
+            </div>
+            <span class="text-xs text-blue-900 font-bold">Geographic Physical Location</span>
+          </div>
+          <p class="ink-blue text-xs">
+            <b>Definition:</b> <span class="hl font-bold">An AWS Region is a separate geographic area where AWS has infrastructure for running cloud workloads.</span>
+          </p>
+          <div class="flex justify-around text-[11px] font-bold text-slate-800 my-1">
+            <span>• India</span>
+            <span>• USA</span>
+            <span>• Europe</span>
+            <span>• Asia Pacific</span>
+            <span>• Australia</span>
+            <span>• Middle East</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+            <!-- 16. Why Do Regions Matter? -->
+            <div class="border border-blue-200 rounded p-1.5 bg-white">
+              <b class="text-blue-900">16. Why Do Regions Matter?</b>
+              <p class="text-[10.5px] ink-blue mt-0.5">Suppose your customers are primarily in India. You choose an Indian Region to minimize network latency and satisfy regulatory laws.</p>
+              <div class="diagram-box my-1 py-0.5 text-center text-[10px] font-mono">
+                Indian Users ➔ AWS India Region ➔ Application (Ultra-low latency!)
+              </div>
+              <p class="text-[10px] text-slate-600"><b>Choosing a Region affects:</b> Latency, Data residency, Service availability, Pricing, and Disaster recovery architecture.</p>
+            </div>
+
+            <!-- 17. AWS Region Example — Mumbai -->
+            <div class="border border-amber-200 rounded p-1.5 bg-amber-50/40">
+              <b class="text-amber-900">17. AWS Region Example — Mumbai</b>
+              <p class="text-[10.5px] ink-blue mt-0.5">AWS has a major Region in Mumbai. Its unique AWS Region identifier code is:</p>
+              <div class="text-center my-1">
+                <span class="bg-amber-200 text-amber-950 font-mono font-bold px-2 py-0.5 rounded text-xs">ap-south-1</span>
+              </div>
+              <div class="text-[10px] text-center font-mono text-slate-700">
+                India ➔ Mumbai Region ➔ <code>ap-south-1</code>
+              </div>
+              <p class="text-[10px] text-slate-600 mt-1">When deploying resources (like EC2 or RDS), you select this Region to provision resources locally.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 18 & 19. Availability Zones (AZs) -->
+        <div class="hand-box p-2 mb-2 bg-emerald-50/20" style="border-color: #059669;">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-tip">FAULT ISOLATION</span>
+              <h2 class="ink-red text-base font-bold">18. Availability Zones (AZs) &amp; 19. Why AWS Uses Them</h2>
+            </div>
+            <span class="text-xs text-emerald-900 font-bold">Isolated Datacenters within Region</span>
+          </div>
+
+          <p class="ink-blue text-xs">
+            <b>Definition:</b> A Region is divided into multiple isolated locations called <span class="hl font-bold">Availability Zones (AZs)</span>. An AZ consists of <b>one or more discrete data centers</b> with independent power, cooling, and physical security, designed to isolate failures.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+            <div class="border border-emerald-200 rounded p-1.5 bg-white text-center">
+              <span class="text-[11px] font-bold text-slate-800">Region Hierarchy:</span>
+              <div class="text-[10.5px] font-mono text-emerald-900 mt-1">
+                AWS Region ➔ [ AZ-1 | AZ-2 | AZ-3 ]
+              </div>
+              <p class="text-[10px] text-slate-500 mt-1">Connected via low-latency redundant fiber optics.</p>
+            </div>
+
+            <div class="border border-emerald-200 rounded p-1.5 bg-white">
+              <b class="text-emerald-900">Why Use Multiple AZs?</b>
+              <p class="text-[10.5px] ink-blue mt-0.5"><b>High Availability &amp; Fault Tolerance:</b> If an app runs in only AZ-1 and AZ-1 fails ➔ App goes down ❌! But across AZ-1, AZ-2, AZ-3 ➔ If one fails, others continue serving traffic smoothly ✓.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 20. Region vs Availability Zone Comparison Table -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">20. Region vs Availability Zone (Interview Favorite!)</h3>
+            <span class="callout-badge badge-faq">HIGH YIELD</span>
+          </div>
+          <table class="hand-table">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Feature</th>
+                <th style="width: 37%;">Region</th>
+                <th style="width: 38%;">Availability Zone (AZ)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>Definition</b></td>
+                <td>Geographic physical area</td>
+                <td>Isolated location / data center(s) within a Region</td>
+              </tr>
+              <tr>
+                <td><b>Composition</b></td>
+                <td>Contains multiple AZs (typically 3+)</td>
+                <td>Belongs to a specific Region</td>
+              </tr>
+              <tr>
+                <td><b>Example</b></td>
+                <td>Mumbai (<code>ap-south-1</code>)</td>
+                <td><code>ap-south-1a</code>, <code>ap-south-1b</code></td>
+              </tr>
+              <tr>
+                <td><b>Primary Use</b></td>
+                <td>Geographic deployment, latency &amp; compliance</td>
+                <td>High availability &amp; fault isolation</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="sticky-note mt-1 text-[11px]">
+            <b class="text-amber-900">Memory Trick 🧠:</b> <b>Region = City/Geographic Area</b> | <b>AZ = Separate infrastructure location / data center within that city</b>.
+          </div>
+        </div>
+
+        <!-- 21 & 22. Local Zones & Hierarchy -->
+        <div class="hand-box p-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="ink-red text-sm font-bold">21. Local Zones &amp; 22. Region + AZ + Local Zone Hierarchy</h3>
+            <span class="callout-badge badge-aws">LOW LATENCY</span>
+          </div>
+          <p class="ink-blue text-[11px]">
+            <b>AWS Local Zones:</b> An extension of an AWS Region that places selected compute, storage, and database services closer to large population and industry centers for workloads requiring <span class="hl font-bold">single-digit millisecond latency</span> (e.g., real-time gaming, live media production, enterprise apps).
+          </p>
+          
+          <div class="diagram-box my-1 py-1 text-center font-mono text-[11px] bg-white">
+            AWS Global Infrastructure ➔ Regions ➔ AZ-1, AZ-2, AZ-3 ➔ Local Zone (Closer to specific cities!)
+          </div>
+          <p class="text-[10px] text-slate-500 italic text-center">These concepts help AWS customers design applications for maximum Performance, Availability, Resilience, and Geographic distribution.</p>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 4 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 5: PRICING CALCULATOR, FREE TIER, COST AWARENESS & RAJU'S ARCHITECTURE -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-5">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Pricing Calculator, Cost Awareness &amp; Architecture</span>
+          <span>Sheet No: 05</span>
+        </div>
+
+        <!-- 23 & 24. AWS Pricing Calculator -->
+        <div class="hand-box p-2 mb-2 bg-amber-50/30">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-trick">COST TOOL</span>
+              <h2 class="ink-red text-base font-bold">23. AWS Pricing Calculator 💰 &amp; 24. Why Use It?</h2>
+            </div>
+            <span class="text-xs text-amber-900 font-bold">Estimate Costs Before Launch</span>
+          </div>
+
+          <p class="ink-blue text-xs">
+            <b>Definition:</b> The <b>AWS Pricing Calculator</b> allows you to <span class="hl font-bold">estimate the expected cost of AWS services before deploying them</span>.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+            <div class="border border-amber-300 rounded p-1.5 bg-white text-[11px]">
+              <b class="text-amber-900">Example — Estimating EC2:</b><br>
+              Select: Region, Operating system, Instance type, Number of instances, Estimated usage hours, EBS storage volume.<br>
+              ➔ Calculator immediately outputs accurate estimated monthly cost!
+            </div>
+
+            <div class="border border-amber-300 rounded p-1.5 bg-white text-[10.5px]">
+              <b class="text-emerald-900">Why Use Pricing Calculator?</b>
+              <div class="space-y-0.5 mt-0.5 text-slate-800">
+                <div>✅ Estimate monthly infrastructure costs</div>
+                <div>✅ Compare different instance configurations</div>
+                <div>✅ Plan infrastructure budgets in advance</div>
+                <div>✅ Avoid shocking unexpected expenses</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="diagram-box mt-1 py-0.5 text-center font-mono text-[10.5px]">
+            Choose Service ➔ Choose Region ➔ Choose Configuration ➔ Estimate Usage ➔ <b>Estimated Cost</b>
+          </div>
+        </div>
+
+        <!-- 25, 26, 27. Free Tier & Cost Awareness -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- 25 & 26. Free Tier -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <h3 class="ink-red font-bold text-sm mb-1">25. AWS Free Tier &amp; 26. EC2 Usage</h3>
+            <p class="ink-blue text-[11px]">
+              AWS provides a Free Tier for eligible services and accounts, subject to specific limits and terms. Useful for: <span class="hl">Learning, practicing, building small experiments</span>.
+            </p>
+            <div class="sticky-note my-1 text-[10.5px]">
+              <b class="text-red-900">⚠️ IMPORTANT WARNING:</b><br>
+              Never assume <i>"AWS is completely free."</i> AWS has many paid services and usage beyond free limits results in charges!
+            </div>
+            <p class="text-[10px] text-slate-600">Always check eligible instance types (e.g. <code>t2.micro</code> / <code>t3.micro</code>), free hours (750 hrs/month), and storage limits before starting.</p>
+          </div>
+
+          <!-- 27. Cost Awareness -->
+          <div class="hand-box-red p-2 bg-red-50/30">
+            <div class="flex items-center gap-1 mb-1">
+              <span class="callout-badge badge-important">CRITICAL ADVICE</span>
+              <h3 class="ink-red font-bold text-sm">27. AWS Cost Awareness ⚠️</h3>
+            </div>
+            <p class="ink-blue text-[11px]">
+              <b>Golden rule for beginners:</b> When learning AWS, <b>don't create resources and simply forget about them!</b>
+            </p>
+            <div class="diagram-box my-1 py-0.5 text-center text-[10px] font-mono text-red-900">
+              Create EC2 ➔ Instance keeps running ➔ Usage accumulates ➔ Potential charges on your credit card! 💸
+            </div>
+            <p class="text-[10.5px] font-bold text-emerald-800">Good Practice: After practicing, always <u>Stop</u> or <u>Terminate</u> unused resources! Continuously check AWS Billing &amp; Cost Explorer.</p>
+          </div>
+        </div>
+
+        <!-- 28. Big Picture & 29. Why AWS is Useful for Businesses (Raju's App) -->
+        <div class="hand-box p-2 bg-slate-50 text-xs">
+          <h2 class="ink-red text-base font-bold mb-1">28. AWS Global Infrastructure &amp; 29. Raju's Architecture</h2>
+          <p class="ink-blue text-[11px]">
+            Remember Raju from our e-commerce scenario? Instead of buying physical hardware, here is how Raju builds an enterprise-ready store on AWS:
+          </p>
+
+          <!-- Visual Architecture Diagram -->
+          <div class="diagram-box my-1 py-2 bg-white text-center">
+            <div class="inline-block px-3 py-0.5 border border-indigo-500 rounded bg-indigo-50 font-bold text-xs text-indigo-950">
+              🛒 Raju's E-Commerce Application on AWS
+            </div>
+            <div class="text-slate-400 text-xs">│</div>
+            <div class="grid grid-cols-3 gap-2 px-2 text-[11px]">
+              <div class="p-1 border border-blue-300 rounded bg-blue-50/40">
+                <b class="text-blue-900">🖥️ EC2 Instances</b><br>
+                <span>App &amp; Web Servers</span>
+              </div>
+              <div class="p-1 border border-amber-300 rounded bg-amber-50/40">
+                <b class="text-amber-900">💾 S3 Buckets</b><br>
+                <span>Product Images &amp; Media</span>
+              </div>
+              <div class="p-1 border border-emerald-300 rounded bg-emerald-50/40">
+                <b class="text-emerald-900">🗄️ Amazon RDS</b><br>
+                <span>User &amp; Order Database</span>
+              </div>
+            </div>
+            <div class="text-slate-400 text-xs mt-1">├─── Elastic Load Balancing (ELB) distributes incoming traffic ───┤</div>
+            <div class="text-slate-400 text-xs">└─── Auto Scaling dynamically adds/removes EC2 instances based on demand ───┘</div>
+          </div>
+
+          <div class="flex justify-between items-center text-[10.5px] text-slate-700 font-bold px-1 mt-0.5">
+            <span>🛡️ IAM (Security)</span>
+            <span>📊 CloudWatch (Monitoring)</span>
+            <span>🌐 Route 53 (DNS)</span>
+            <span>⚡ CloudFront (CDN)</span>
+            <span>💾 Automated Backups</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 5 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 6: CAREER OPPORTUNITIES, SKILLS INTEGRATION & LEARNING ROADMAP -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-6">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Career Scope, Skills &amp; Learning Roadmap</span>
+          <span>Sheet No: 06</span>
+        </div>
+
+        <!-- 30. AWS Career Opportunities 👨‍💻 -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-important">CAREER PATHS</span>
+              <h2 class="ink-red text-lg font-bold">30. AWS Career Opportunities 👨‍💻</h2>
+            </div>
+            <span class="text-xs text-slate-500 font-bold">Complements Multiple Tech Roles</span>
+          </div>
+          <p class="ink-blue text-xs mb-1">AWS skills are versatile across the tech industry. You don't just have to be an "AWS-only" specialist:</p>
+
+          <div class="grid grid-cols-3 gap-1.5 text-xs">
+            <div class="p-1.5 border border-blue-200 rounded bg-white">
+              <b class="text-blue-900">☁️ Cloud Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">Compute, storage, networking, security, and everyday infrastructure maintenance.</p>
+            </div>
+            <div class="p-1.5 border border-purple-200 rounded bg-white">
+              <b class="text-purple-900">🏗️ Solutions Architect:</b>
+              <p class="text-[10.5px] text-slate-700">Designs high-level cloud architectures for scalability, security, availability, and cost.</p>
+            </div>
+            <div class="p-1.5 border border-emerald-200 rounded bg-white">
+              <b class="text-emerald-900">⚙️ DevOps Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">CI/CD pipelines, automated deployments, containers, and infrastructure as code.</p>
+            </div>
+            <div class="p-1.5 border border-amber-200 rounded bg-white">
+              <b class="text-amber-900">👨‍💻 Cloud Developer:</b>
+              <p class="text-[10.5px] text-slate-700">Builds modern cloud-native apps leveraging SDKs, Lambda, and serverless APIs.</p>
+            </div>
+            <div class="p-1.5 border border-cyan-200 rounded bg-white">
+              <b class="text-cyan-900">📊 Data Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">Data pipelines, analytics clusters, ETL workflows, databases, and data lakes.</p>
+            </div>
+            <div class="p-1.5 border border-rose-200 rounded bg-white">
+              <b class="text-rose-900">🔐 Cloud Security Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">IAM policies, encryption keys, network defenses, compliance, and threat monitoring.</p>
+            </div>
+            <div class="p-1.5 border border-indigo-200 rounded bg-white">
+              <b class="text-indigo-900">🤖 ML Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">Training, deploying, and managing AI/ML models using cloud infrastructure.</p>
+            </div>
+            <div class="p-1.5 border border-teal-200 rounded bg-white">
+              <b class="text-teal-900">🛠️ AWS Support Engineer:</b>
+              <p class="text-[10.5px] text-slate-700">Troubleshooting customer issues with EC2, VPC, storage, and connectivity.</p>
+            </div>
+            <div class="p-1.5 border border-orange-200 rounded bg-white">
+              <b class="text-orange-900">📈 SRE (Site Reliability):</b>
+              <p class="text-[10.5px] text-slate-700">System availability, performance optimization, incident management, and automation.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 31. AWS + Your Existing IT Skills -->
+        <div class="hand-box p-2 mb-2 bg-amber-50/20 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="ink-red text-base font-bold">31. AWS + Your Existing IT Skills (Multiplier Effect!)</h3>
+            <span class="callout-badge badge-trick">CAREER STRATEGY</span>
+          </div>
+          <p class="ink-blue text-[11.5px] font-bold">
+            Key Career Takeaway: <span class="hl">AWS does not replace your existing technical skills; it enhances them.</span>
+          </p>
+
+          <div class="grid grid-cols-4 gap-1.5 mt-1 text-[11px]">
+            <div class="p-1 border border-slate-300 rounded bg-white">
+              <b class="text-blue-900">Linux + AWS:</b><br>
+              Indispensable for server management, EC2 instances, and command line administration.
+            </div>
+            <div class="p-1 border border-slate-300 rounded bg-white">
+              <b class="text-emerald-900">Networking + AWS:</b><br>
+              Mastering VPC, subnets, routing tables, security groups, and DNS.
+            </div>
+            <div class="p-1 border border-slate-300 rounded bg-white">
+              <b class="text-purple-900">DevOps + AWS:</b><br>
+              Powering CI/CD, Terraform (IaC), Docker containers, and automation scripts.
+            </div>
+            <div class="p-1 border border-slate-300 rounded bg-white">
+              <b class="text-rose-900">Security + AWS:</b><br>
+              Managing IAM policies, KMS encryption, firewall rules, and audits.
+            </div>
+          </div>
+        </div>
+
+        <!-- 32. Step-by-Step AWS Learning Roadmap -->
+        <div class="hand-box p-2 bg-slate-50 text-xs">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="ink-red text-base font-bold">32. Step-by-Step AWS Learning Roadmap</h3>
+            <span class="callout-badge badge-faq">STEP-BY-STEP PATH</span>
+          </div>
+          <p class="ink-blue text-[11px] mb-1">Follow this proven sequence to build a rock-solid foundation for a Cloud/DevOps career:</p>
+
+          <!-- Visual Flow Diagram -->
+          <div class="grid grid-cols-5 gap-1 text-[10.5px] font-bold text-center">
+            <div class="p-1 bg-white border border-blue-300 rounded">1. Cloud Basics</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">2. Linux Basics</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">3. Networking</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">4. AWS IAM</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">5. AWS EC2</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">6. AWS S3</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">7. AWS VPC</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">8. AWS RDS</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">9. Load Balancer</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">10. Auto Scaling</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">11. CloudWatch</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">12. Lambda / Serv.</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">13. Containers</div>
+            <div class="p-1 bg-white border border-blue-300 rounded">14. DevOps CI/CD</div>
+            <div class="p-1 bg-emerald-100 border border-emerald-400 rounded text-emerald-950">15. Terraform / IaC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 6 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 7: KEY CONCEPTS, REVISION TABLE, INTERVIEW Q&A & FINAL REVISION -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-7">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Key Concepts, Revision Table &amp; Interview Q&amp;A</span>
+          <span>Sheet No: 07</span>
+        </div>
+
+        <!-- ⭐ Most Important AWS Concepts & Quick Revision Table -->
+        <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+          <!-- ⭐ Most Important AWS Concepts -->
+          <div class="hand-box p-2 bg-blue-50/20">
+            <span class="callout-badge badge-important">⭐ MOST IMPORTANT CONCEPTS</span>
+            <div class="mt-1 space-y-0.5 text-[10.5px] ink-blue">
+              <div>• <b>AWS:</b> Amazon's cloud platform &amp; Cloud Service Provider (CSP).</div>
+              <div>• <b>EC2:</b> Scalable compute capacity / virtual servers.</div>
+              <div>• <b>S3:</b> Highly durable object storage service.</div>
+              <div>• <b>RDS:</b> Managed relational database service.</div>
+              <div>• <b>Lambda:</b> Serverless compute service (event-driven).</div>
+              <div>• <b>CloudFront:</b> Fast Content Delivery Network (CDN).</div>
+              <div>• <b>Region:</b> Geographic area containing multiple isolated AZs.</div>
+              <div>• <b>Availability Zone:</b> Isolated location designed for fault resilience.</div>
+              <div>• <b>Local Zone:</b> Extension of Region bringing AWS closer to users.</div>
+            </div>
+          </div>
+
+          <!-- 🧠 Quick Revision Table -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <span class="callout-badge badge-trick">🧠 QUICK REVISION TABLE</span>
+            <table class="hand-table text-[11px] mt-0.5">
+              <thead>
+                <tr><th>Concept</th><th>Remember It As</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>AWS</b></td><td>Cloud Service Provider (CSP)</td></tr>
+                <tr><td><b>EC2</b></td><td>Compute / Virtual Servers</td></tr>
+                <tr><td><b>S3</b></td><td>Object Storage</td></tr>
+                <tr><td><b>RDS</b></td><td>Relational Database</td></tr>
+                <tr><td><b>Lambda</b></td><td>Serverless Compute</td></tr>
+                <tr><td><b>CloudFront</b></td><td>Global CDN</td></tr>
+                <tr><td><b>Region</b></td><td>Geographic Area / City</td></tr>
+                <tr><td><b>AZ</b></td><td>Isolated Data Center in Region</td></tr>
+                <tr><td><b>Local Zone</b></td><td>Low-latency extension</td></tr>
+                <tr><td><b>IAM / CloudWatch</b></td><td>Identity &amp; Access / Monitoring</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 🎯 Top 10 Interview Questions & Answers -->
+        <div class="mb-2">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-1">
+              <span class="callout-badge badge-faq">INTERVIEW CORNER</span>
+              <h2 class="ink-red text-base font-bold">🎯 Top 10 Interview Questions &amp; Exact Answers</h2>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-xs">
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q1. What is AWS?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> A cloud computing platform that provides on-demand IT resources and services over the Internet using pay-as-you-go pricing.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q2. When was AWS launched?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> AWS was launched as a commercial cloud platform in <b>2006</b>.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q3. What are popular AWS services?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> EC2 (compute), S3 (storage), RDS (databases), Lambda (serverless), VPC (networking), IAM (security), and CloudFront (CDN).</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q4. What is an AWS Region?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> A separate geographic area containing infrastructure and multiple isolated Availability Zones.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q5. What is an Availability Zone (AZ)?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> An isolated location within an AWS Region with discrete data centers, designed for fault isolation and high availability.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q6. Why are multiple AZs used?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> To design fault-tolerant systems; if one AZ fails, workloads can continue operating in another zone without total downtime.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q7. Region vs Availability Zone?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> A Region is a geographic area; an AZ is an isolated infrastructure location / data center within that Region.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q8. What is AWS Local Zone?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> Extensions that place AWS compute and storage closer to large population centers for single-digit millisecond latency.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q9. What is AWS Pricing Calculator?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> A web tool to estimate expected monthly costs of AWS services based on chosen configurations and usage.</p>
+            </div>
+            <div class="hand-box p-1.5">
+              <b class="ink-red">Q10. Is AWS completely free?</b>
+              <p class="ink-blue text-[10.5px] mt-0.5"><b>Ans:</b> <span class="ink-red font-bold">No.</span> Free Tier offers exist for eligible services/limits, but many services are chargeable and usage beyond free limits incurs costs.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🔥 Final 1-Minute Revision -->
+        <div class="hand-box-red p-2 bg-red-50/30 text-xs">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="callout-badge badge-important">🔥 FINAL 1-MINUTE REVISION</span>
+            <span class="font-bold text-red-900 text-[11px]">Core Architecture Summary</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[10.5px] ink-blue">
+            <div>
+              <b>Service Chain:</b> AWS ➔ EC2 (Compute) | S3 (Storage) | RDS (DB) | Lambda (Serverless) | VPC (Network) | CloudFront (CDN) | IAM (Security) | CloudWatch (Monitoring)
+            </div>
+            <div>
+              <b>Infrastructure Chain:</b> AWS ➔ Regions (Geographic) ➔ Availability Zones (Fault-isolated) ➔ Data Centers
+            </div>
+          </div>
+          <div class="mt-1 pt-1 border-t border-red-200 flex justify-between items-center text-[10px] text-slate-700 font-bold">
+            <span>⭐ 4 Advantages: Scalability, Global Reach, Reliability, Security</span>
+            <span>⭐ Core Idea: Consume cloud IT on-demand without owning physical hardware</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 7 of 8</span>
+      </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- PAGE 8: 8 BONUS STUDY TIPS (SIMPLIFIED IN PLAIN ENGLISH) & TOPPER STRATEGY -->
+    <!-- ========================================== -->
+    <div class="notebook-page" id="page-8">
+      <div class="spiral-spine">
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+        <div class="spiral-ring-unit"><div class="spiral-wire"></div><div class="spiral-hole"></div></div>
+      </div>
+
+      <div class="page-content">
+        <div class="page-header">
+          <span>📚 Subject: Cloud Computing &amp; AWS</span>
+          <span>Topic: Bonus Topper Study Guide (Explained Simply!)</span>
+          <span>Sheet No: 08</span>
+        </div>
+
+        <!-- Header Callout -->
+        <div class="hand-box-red text-center mb-2.5" style="background: rgba(254, 243, 199, 0.45);">
+          <div class="flex items-center justify-center gap-2">
+            <span class="callout-badge badge-tip">TOPPER STRATEGY</span>
+            <h2 class="ink-red text-xl font-bold tracking-wide">
+              💡 8 Bonus Study Tips for AWS Exams (Explained in Plain English!)
+            </h2>
+          </div>
+          <p class="text-xs text-slate-600 font-sans tracking-wide mt-0.5">Use these 8 proven study methods to retain AWS services and infrastructure concepts effortlessly.</p>
+        </div>
+
+        <!-- Detailed 8 Bonus Study Tips Grid -->
+        <div class="grid grid-cols-2 gap-2 text-xs mb-2.5">
+          <!-- 1. Mind Maps -->
+          <div class="hand-box p-2 bg-blue-50/30">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold ink-red text-sm">1. Mind Maps 🗺️</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Put <b>AWS</b> at the center of your page and branch out: <i>Compute (EC2, Lambda)</i>, <i>Storage (S3)</i>, <i>Databases (RDS)</i>, and <i>Networking (VPC, CloudFront)</i>. A visual diagram sticks in your mind 10x better than reading long text!
+            </p>
+          </div>
+
+          <!-- 2. Flow Charts -->
+          <div class="hand-box p-2 bg-emerald-50/30" style="border-color: #059669;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-emerald-900 text-sm">2. Flow Charts ➔</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Always draw step-by-step arrows for user requests: <code>User in India ➔ CloudFront Edge ➔ Region (ap-south-1) ➔ Multi-AZ EC2 ➔ RDS Database</code>. Flow charts in exam papers prove you understand real architectural workflows.
+            </p>
+          </div>
+
+          <!-- 3. Formula / Rule Box -->
+          <div class="hand-box p-2 bg-amber-50/30">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-amber-900 text-sm">3. Formula / Rule Box 📦</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Memorize golden architecture rules in concise formulas: <code>Region Choice = Lowest Latency + Legal Data Residency + Service Cost</code> and <code>High Availability = Minimum 2 or 3 Availability Zones</code>.
+            </p>
+          </div>
+
+          <!-- 4. Revision Section -->
+          <div class="hand-box p-2 bg-purple-50/30" style="border-color: #9333ea;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-purple-900 text-sm">4. Revision Section ⏱️</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Don't re-read hundreds of pages before interviews. Spend 60 seconds reviewing the <i>Quick Revision Table</i> and <i>Final 1-Minute Summary</i> on Page 7 every morning.
+            </p>
+          </div>
+
+          <!-- 5. Highlighted Keywords -->
+          <div class="hand-box p-2 bg-pink-50/30" style="border-color: #db2777;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-pink-900 text-sm">5. Highlighted Keywords 🖍️</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> AWS examiners look for specific terms! Highlight keywords like <span class="hl">"Fault Isolation"</span>, <span class="hl">"ap-south-1"</span>, <span class="hl">"Shared Responsibility"</span>, <span class="hl">"Object Storage"</span>, and <span class="hl">"Pay-as-you-go"</span>.
+            </p>
+          </div>
+
+          <!-- 6. Colour Coding -->
+          <div class="hand-box p-2 bg-cyan-50/30" style="border-color: #0891b2;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-cyan-900 text-sm">6. Colour Coding 🎨</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Use a consistent 3-pen system: <b>Red ink</b> for AWS service names &amp; definitions, <b>Blue ink</b> for operational explanations, and <b>Yellow highlighter</b> for service codes and exam answers.
+            </p>
+          </div>
+
+          <!-- 7. Important Questions -->
+          <div class="hand-box p-2 bg-rose-50/30" style="border-color: #e11d48;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-rose-900 text-sm">7. Important Questions 🎯</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Prioritize repeated questions: <b>Q4 &amp; Q5 (Region vs AZ)</b>, <b>Q6 (Why Multi-AZ?)</b>, and <b>Q10 (Is AWS free?)</b>. These make up over 80% of screening questions for entry-level cloud positions!
+            </p>
+          </div>
+
+          <!-- 8. Quick Summary -->
+          <div class="hand-box p-2 bg-indigo-50/30" style="border-color: #4f46e5;">
+            <div class="flex items-center gap-1.5 mb-1">
+              <span class="font-bold text-indigo-900 text-sm">8. Quick Summary 📝</span>
+            </div>
+            <p class="text-slate-700 text-[11px]">
+              <b>In simple terms:</b> Conclude every interview answer with a 2-line punchline: <i>"In summary, AWS replaces large capital server purchases with on-demand, globally distributed, fault-isolated cloud infrastructure."</i>
+            </p>
+          </div>
+        </div>
+
+        <!-- Quick AWS Services Cheat Sheet -->
+        <div class="hand-box p-2 bg-amber-50/40 mb-2 text-xs">
+          <span class="ink-red font-bold text-sm">💡 Quick AWS Service Matcher Cheatsheet:</span>
+          <div class="grid grid-cols-4 gap-1.5 mt-1 text-[10.5px] text-slate-800">
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>Virtual Server?</b><br>
+              ➔ <b>EC2</b> (Elastic Compute)
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>Files &amp; Images?</b><br>
+              ➔ <b>S3</b> (Object Storage)
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>SQL Database?</b><br>
+              ➔ <b>RDS</b> (Relational DB)
+            </div>
+            <div class="p-1 border border-amber-300 rounded bg-white">
+              <b>No-Server Code?</b><br>
+              ➔ <b>Lambda</b> (Serverless)
+            </div>
+          </div>
+        </div>
+
+        <!-- Notebook End Stamp -->
+        <div class="mt-1 flex justify-between items-center text-xs px-2 text-slate-500">
+          <span>✨ End of AWS Overview &amp; Introduction Notes</span>
+          <span class="font-bold ink-red border border-red-400 px-3 py-0.5 rounded-full bg-red-50">100% COMPLETE &amp; VERIFIED</span>
+          <span>Prepared with Care ✍️</span>
+        </div>
+      </div>
+
+      <div class="page-footer">
+        <span>Handwritten Lecture Notes</span>
+        <span>Page 8 of 8</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS S3 (Simple Storage Service) - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 29px;
+    font-weight: 700;
+    text-align: center;
+    margin: 2px 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 10px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 17.5px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a;
+    font-size: 15px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 13.5px;
+  }
+
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS S3 (Simple Storage Service)</div>
+
+  <!-- 1. Introduction -->
+  <h2 class="sec-heading">1. Introduction to Amazon S3</h2>
+  <p><span class="highlight">Amazon S3 = Simple Storage Service</span></p>
+  <p>Amazon S3 is an AWS cloud-based object storage service used to store, manage, and retrieve large amounts of data.</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Common Uses of S3</h3>
+      <p>S3 can store:</p>
+      <ul style="font-size: 14px;">
+        <li>Images, Videos, Documents</li>
+        <li>Backup files, Logs</li>
+        <li>Application data</li>
+        <li>Static website files</li>
+        <li>Archived data</li>
+      </ul>
+    </div>
+    <div class="sticky-note" style="margin-top:0;">
+      <span class="tag-badge badge-imp">Main Idea</span>
+      <p style="font-weight:700; color:#b45309; font-size: 16px; margin: 4px 0;">S3 = Bucket + Objects</p>
+      <p style="margin: 2px 0;"><strong>Bucket</strong> → Container where data is stored</p>
+      <p style="margin: 2px 0;"><strong>Object</strong> → Individual file/data stored inside the bucket</p>
+    </div>
+  </div>
+
+  <!-- 2. What is an S3 Bucket? -->
+  <h2 class="sec-heading">2. What is an S3 Bucket?</h2>
+  <p>An S3 bucket is a container used to store objects.</p>
+  <p>For example:</p>
+  <div class="ascii-tree">S3
+└── Bucket
+    ├── index.html
+    ├── style.css
+    ├── image1.jpg
+    └── image2.jpg</div>
+
+  <h3 class="subsec-heading">Important Properties of a Bucket</h3>
+  <p><strong>1. Globally Unique Bucket Name:</strong> An S3 bucket name must be globally unique across AWS. It is not enough for the name to be unique only inside your account. Example: <span class="code-term">demo-bucket-abc12345</span></p>
+  <p><strong>2. Region-Specific:</strong> When you create a bucket, you select an AWS Region. Example: <span class="code-term">Bucket → Stockholm Region</span>. The bucket belongs to that selected AWS Region.</p>
+  <p><strong>3. Objects are Stored Inside Buckets:</strong> Files uploaded to S3 are treated as objects. So remember: <span class="highlight">Bucket = Container | Object = File/Data inside the container</span>.</p>
+
+  <!-- 3. S3 Object Model & 4. Maximum Object Size -->
+  <h2 class="sec-heading">3. S3 Object Model &nbsp;|&nbsp; 4. Maximum Object Size</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p>An S3 object can be understood using a simple <strong>Key–Value</strong> concept.</p>
+      <p><strong>Key:</strong> The key identifies the object. Example: <span class="code-term">index.html</span> (Key = index.html).</p>
+      <p><strong>Value:</strong> The actual contents/data of the file are the value. Example: HTML code inside index.html.</p>
+      <div class="ascii-tree">Object
+├── Key → index.html
+└── Value → HTML file contents</div>
+    </div>
+    <div class="hand-box">
+      <p>According to the course material: <span class="highlight">Maximum size of a single S3 object = 5 TB</span>.</p>
+      <p>For very large objects, <strong>multipart upload</strong> is used/recommended. A large file can be divided into smaller parts and uploaded separately.</p>
+      <div class="flow-h" style="font-size:13px; gap:4px;">
+        <span class="flow-node">Large File</span> <span class="flow-arrow">→</span> <span class="flow-node">Parts 1-4</span> <span class="flow-arrow">→</span> <span class="flow-node">S3 combines parts</span>
+      </div>
+      <p style="font-size:13px;">Why? It makes large-file uploads easier to manage and can improve reliability.</p>
+    </div>
+  </div>
+
+  <!-- 5. Data Durability -->
+  <h2 class="sec-heading">5. S3 Data Durability and Availability</h2>
+  <p>S3 is designed to provide highly reliable object storage. The transcript explains that S3 data is replicated across multiple Availability Zones (AZs) within the selected Region.</p>
+  <div class="ascii-tree" style="text-align: center;">AWS Region
+│
+├── Availability Zone 1
+├── Availability Zone 2
+└── Availability Zone 3</div>
+  <p>This helps protect data against failures affecting an individual Availability Zone.</p>
+  <div class="warn-box">
+    <span class="tag-badge badge-imp">Important</span>
+    <p style="margin:2px 0;">Do not confuse: <strong>Region</strong> and <strong>Availability Zone</strong>. A bucket is created in a Region, not in a specific Availability Zone.</p>
+  </div>
+
+  <!-- 6. Creating Bucket & 7. Uploading -->
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading">6. Creating an S3 Bucket</h3>
+      <p style="font-size:13px;">Basic process: Open AWS Console → Search for S3 → Select Create bucket → Choose bucket type → Select AWS Region → Enter globally unique bucket name → Configure settings → Create bucket.</p>
+      <p style="font-size:13px;">After creation, the bucket becomes a container for storing objects.</p>
+    </div>
+    <div>
+      <h3 class="subsec-heading">7. Uploading Files to S3</h3>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px; font-size:12px;">
+        <span class="flow-node">Bucket</span> <span class="flow-arrow">↓</span> <span class="flow-node">Upload</span> <span class="flow-arrow">↓</span> <span class="flow-node">Select/Review Files</span> <span class="flow-arrow">↓</span> <span class="flow-node">Upload</span>
+      </div>
+      <p style="font-size:13px;">Inside a bucket, you can upload: Individual files, Multiple files, Folders, or use drag-and-drop. After successful upload, the objects appear inside the bucket.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 8. Working with S3 Objects & 9. Hosting a Static Website -->
+  <h2 class="sec-heading">8. Working with S3 Objects</h2>
+  <p>After uploading an object, several operations can be performed. Common Operations: Open, Download, Delete, View properties, Change storage class, Manage versions.</p>
+  <p>For example: <span class="code-term">index.html</span>, <span class="code-term">style.css</span>, <span class="code-term">image.jpg</span>. A text-based object can be opened and inspected, while an image object can be opened to view the image.</p>
+
+  <h2 class="sec-heading">9 & 10 & 11. Hosting a Static Website on S3</h2>
+  <p>One important use case of S3 is <strong>Static Website Hosting</strong>. A static website may contain: <span class="code-term">index.html</span>, <span class="code-term">style.css</span>, <span class="code-term">image1.jpg</span>, <span class="code-term">image2.jpg</span>. There is no server-side application logic required for a basic static website.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree">Website Structure
+│
+├── index.html (Main/Default)
+├── style.css
+├── image1.jpg
+└── image2.jpg</div>
+    <div class="hand-box">
+      <p style="font-weight:700; color:#1e40af; margin-top:0;">Steps to Host:</p>
+      <p style="margin:2px 0;"><strong>Step 1:</strong> Upload Website Files to the S3 bucket.</p>
+      <p style="margin:2px 0;"><strong>Step 2:</strong> Enable Static Website Hosting. (Bucket → Properties → Static website hosting).</p>
+      <p style="margin:2px 0;">Specify: Index document → <span class="code-term">index.html</span>, Error document → <span class="code-term">error.html</span></p>
+    </div>
+  </div>
+
+  <!-- 12 & 13. Access Denied & Block Public Access -->
+  <h2 class="sec-heading">12. Why "Access Denied" Can Occur &nbsp;|&nbsp; 13. Block Public Access</h2>
+  <p>Simply enabling static website hosting does not automatically make the objects publicly accessible. You need appropriate permissions.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:4px;">
+    <div class="flow-node">Static Website Hosting</div> <span class="flow-arrow">+</span> <div class="flow-node">Public Access Permission</div> <span class="flow-arrow">↓</span> <div class="flow-node" style="background:#ecfdf5; border-color:#10b981;">Website Accessible</div>
+  </div>
+  
+  <div class="warn-box">
+    <span class="tag-badge badge-imp">Important Warning</span>
+    <p style="margin:2px 0;">S3 provides Block Public Access settings. If public website access is required, the relevant public-access blocking configuration must be adjusted appropriately.</p>
+    <p style="font-weight:700; margin:2px 0;">Public access should be enabled only when required. Making an S3 bucket public can expose its contents to the internet. Always understand what data is being made public before changing public-access settings.</p>
+  </div>
+
+  <!-- 14, 15, 16. Bucket Policy -->
+  <h2 class="sec-heading">14. S3 Bucket Policy &nbsp;|&nbsp; 15. Important Actions</h2>
+  <p>A Bucket Policy is a JSON-based policy attached to an S3 bucket. It controls: Who can access the bucket, What actions they can perform, Which resources the policy applies to. (It defines: <em>Who can do what on which resource?</em>)</p>
+  
+  <div class="two-col">
+    <div class="sticky-note" style="border-left-color: #f59e0b; background: #fffbeb;">
+      <span class="tag-badge badge-trick">Easy Memory Trick</span>
+      <p style="margin:4px 0;"><strong>GetObject</strong> → Used to retrieve/read/download an object. (<span class="code-term">s3:GetObject</span>) | <em>GET → Get/Read object</em></p>
+      <p style="margin:4px 0;"><strong>PutObject</strong> → Used to upload/write an object. (<span class="code-term">s3:PutObject</span>) | <em>PUT → Upload/Write object</em></p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. Bucket Policy Structure</h3>
+      <div class="ascii-tree">Policy
+│
+├── Effect   → Allow / Deny
+├── Principal→ Who?
+├── Action   → What can they do?
+└── Resource → Which resource?</div>
+      <p style="font-size:12px; margin:2px 0;"><em>Principal:</em> Defines who gets permission. <em>Action:</em> Defines what the user/service can do (e.g. s3:GetObject). <em>Resource:</em> Defines the bucket/object.</p>
+    </div>
+  </div>
+
+  <!-- 17 & 18. Policy Generator & Overall Flow -->
+  <h2 class="sec-heading">17. Policy Generator &nbsp;|&nbsp; 18. Static Website Access — Overall Flow</h2>
+  <p>If you are not comfortable writing JSON manually, AWS provides a Policy Generator.</p>
+  <div class="flow-h" style="font-size: 13px; gap: 4px;">
+    <span class="flow-node">Select Type</span><span class="flow-arrow">→</span><span class="flow-node">Effect=Allow</span><span class="flow-arrow">→</span><span class="flow-node">Action</span><span class="flow-arrow">→</span><span class="flow-node">Resource</span><span class="flow-arrow">→</span><span class="flow-node">Generate</span><span class="flow-arrow">→</span><span class="flow-node">Copy JSON</span>
+  </div>
+
+  <h3 class="subsec-heading">18. The Complete Static Website Access Concept:</h3>
+  <div class="flow-h" style="flex-direction:column; align-items:center; gap:2px;">
+    <div class="flow-node">Website Files → S3 Bucket</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Enable Static Website Hosting</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Configure Public Access → Bucket Policy → Allow Required Object Access</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="border-color:#16a34a; background:#dcfce7; font-weight:700;">Website Endpoint → Website Accessible</div>
+  </div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 19, 20, 21. S3 Versioning -->
+  <h2 class="sec-heading">19. S3 Versioning</h2>
+  <h3 class="subsec-heading">What is Versioning?</h3>
+  <p>S3 Versioning keeps multiple versions of an object.</p>
+  <p>Suppose you upload: <span class="code-term">index.html</span> → Version 1. Then modify it and upload again: <span class="code-term">index.html</span> → Version 2. S3 can keep both versions.</p>
+  <div class="ascii-tree">index.html
+├── Version 1
+└── Version 2</div>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">20. Why Versioning is Useful</h3>
+      <p>Versioning helps with: Accidental overwrites, Accidental deletion, Data recovery, Maintaining previous versions, Backup-like protection.</p>
+      <p><strong>Example:</strong> Version 1 → Old Website | Version 2 → Updated Website. If Version 2 causes a problem, you can recover/use the previous version.</p>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">21. Important Point</h3>
+      <p>When versioning is enabled, new versions uploaded after enabling versioning receive version IDs. Objects uploaded before versioning was enabled may appear with: <span class="highlight-pink">Version ID = null</span>.</p>
+    </div>
+  </div>
+
+  <!-- 22 & 23. Versioning Example & Accidental Deletion -->
+  <h2 class="sec-heading">22. S3 Versioning Example &nbsp;|&nbsp; 23. Accidental Deletion</h2>
+  <div class="flow-h" style="font-size: 13px; gap: 4px;">
+    <span class="flow-node">Upload index.html</span><span class="flow-arrow">→</span><span class="flow-node">Version 1</span><span class="flow-arrow">→</span><span class="flow-node">Modify/Upload</span><span class="flow-arrow">→</span><span class="flow-node">Version 2</span><span class="flow-arrow">→</span><span class="flow-node">Modify/Upload</span><span class="flow-arrow">→</span><span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Version 3 (Current)</span>
+  </div>
+  <p>S3 maintains the different versions. The latest version is normally used as the current object.</p>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">Key Concept</span>
+    <strong>Versioning = Protection against accidental changes/deletion.</strong> If the current version is removed, an earlier version may still be available depending on the deletion operation and versioning state.
+  </div>
+
+  <!-- 24. S3 Replication -->
+  <h2 class="sec-heading">24. S3 Replication</h2>
+  <p>S3 supports automatic replication of objects between buckets. Two important scenarios are:</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">1. Same-Region Replication</h3>
+      <p>Data can be replicated between buckets in the same AWS Region.</p>
+      <div class="ascii-tree" style="text-align: center;">Primary Bucket
+      ↓
+ Replication
+      ↓
+Secondary Bucket</div>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">2. Cross-Region Replication</h3>
+      <p>Objects can be replicated to a bucket in another AWS Region.</p>
+      <div class="ascii-tree" style="text-align: center;">Mumbai Region (Primary)
+      ↓
+Cross-Region Replication
+      ↓
+Europe Region (Secondary)</div>
+    </div>
+  </div>
+
+  <!-- 25. Why Use S3 Replication? -->
+  <h2 class="sec-heading">25. Why Use S3 Replication?</h2>
+  <p>Common use cases include:</p>
+  <ul>
+    <li><strong>Backup:</strong> Maintain another copy of important data.</li>
+    <li><strong>Disaster Recovery:</strong> If the primary location has problems, another copy exists elsewhere.</li>
+    <li><strong>Geographic Data Access:</strong> Data can be replicated closer to users in another geographical region.</li>
+  </ul>
+
+  <!-- 26, 27, 28. Replication Requirements & Flow -->
+  <h2 class="sec-heading">26. Requirements &nbsp;|&nbsp; 27. Practical Flow &nbsp;|&nbsp; 28. Existing Objects</h2>
+  <p>A destination bucket must already exist before replication can be configured. Replication is generally configured using a replication rule. (<span class="code-term">Source Bucket → Replication Rule → Destination Bucket</span>). You can configure replication for all objects or specific objects/prefixes.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">27. Practical Flow</h3>
+      <p style="font-size: 13px;">Create destination bucket → Enable versioning → Open source bucket → Management → Create replication rule → Select source scope → Select destination bucket → Configure IAM role/permissions → Configure options → Save rule.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">28. Existing vs New Objects</h3>
+      <p style="font-size: 13px;">When configuring replication, there can be an option/process for handling existing objects as well as objects uploaded after the rule is created. <span class="highlight">Existing Objects + Future Objects</span>. The exact behavior depends on the configuration.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 29. S3 Storage Classes -->
+  <h2 class="sec-heading">29. S3 Storage Classes</h2>
+  <p>AWS provides different S3 Storage Classes. Why? Because different types of data have different: Access frequencies, Retention requirements, Performance requirements, Cost requirements. <span class="highlight">Choose the storage class according to your workload.</span></p>
+
+  <!-- 30 to 36. Storage Classes Detailed -->
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">30. S3 Standard</h3>
+      <p><strong>Use Case:</strong> Frequently accessed data (website files, app data).<br>
+      <strong>Characteristics:</strong> High durability, high availability, low latency.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">31. S3 Intelligent-Tiering</h3>
+      <p>Automatically moves data between appropriate access tiers based on usage patterns. Frequent Access → suitable tier, Infrequent Access → lower-cost tier. Best when access patterns are unknown.</p>
+    </div>
+    
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">32. S3 Standard-IA</h3>
+      <p><strong>IA = Infrequent Access</strong>. Used for data that must remain readily available but is accessed less frequently (e.g., occasional backups). Lower storage cost, but retrieval charges apply.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">33. S3 One Zone-IA</h3>
+      <p>Designed for infrequently accessed data where lower storage cost is important and data can tolerate a single AZ. <strong>Use Case:</strong> Non-critical or reproducible data (temporary logs, secondary copies). <em>Do not choose blindly for critical data.</em></p>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">34. S3 Glacier</h3>
+      <p>Designed for long-term archival. Good for data that is rarely accessed and needs long-term retention (old records, historical data).</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">35. S3 Glacier Deep Archive</h3>
+      <p>Designed for very long-term archival with very low storage cost. Example: Compliance records retained for many years.</p>
+    </div>
+  </div>
+
+  <!-- 36. S3 Outposts -->
+  <h2 class="sec-heading">36. S3 Outposts</h2>
+  <p>S3 Outposts provides S3 storage capabilities using AWS infrastructure deployed through AWS Outposts for workloads that require local/on-premises data residency or processing characteristics.</p>
+
+  <!-- Memory Trick -->
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">Memory Trick</span>
+    <div class="flow-h" style="font-size: 13.5px; gap: 4px;">
+      <span class="flow-node">Frequent</span><span class="flow-arrow">→</span><span class="flow-node">Standard</span>
+      <span style="margin: 0 4px;">|</span>
+      <span class="flow-node">Less Frequent</span><span class="flow-arrow">→</span><span class="flow-node">Standard-IA</span>
+      <span style="margin: 0 4px;">|</span>
+      <span class="flow-node">Rare</span><span class="flow-arrow">→</span><span class="flow-node">Glacier</span>
+      <span style="margin: 0 4px;">|</span>
+      <span class="flow-node">Very Long-term</span><span class="flow-arrow">→</span><span class="flow-node">Deep Archive</span>
+    </div>
+  </div>
+
+  <!-- 37. Storage Class Selection Table -->
+  <h2 class="sec-heading">37. Storage Class Selection</h2>
+  <p>A simple decision-making approach:</p>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Requirement</th>
+        <th>Suitable Class</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Frequently accessed data</td><td>S3 Standard</td></tr>
+      <tr><td>Unknown/changing access pattern</td><td>S3 Intelligent-Tiering</td></tr>
+      <tr><td>Infrequently accessed data</td><td>S3 Standard-IA</td></tr>
+      <tr><td>Infrequent, non-critical/re-creatable data</td><td>S3 One Zone-IA</td></tr>
+      <tr><td>Long-term archive</td><td>S3 Glacier</td></tr>
+      <tr><td>Very long-term archive/compliance</td><td>S3 Glacier Deep Archive</td></tr>
+      <tr><td>AWS Outposts local storage use case</td><td>S3 Outposts</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 13px;">Always check current AWS pricing and storage-class conditions before making a production decision.</p>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 38, 39, 40. Lifecycle Rules -->
+  <h2 class="sec-heading">38. S3 Lifecycle Rules</h2>
+  <p><strong>What is a Lifecycle Rule?</strong> An S3 Lifecycle rule automatically manages objects as they age or become less relevant. It can: Transition objects between storage classes, Expire/delete objects, Manage old versions in versioned buckets.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">39. Example Lifecycle Policy</h3>
+      <p style="font-size:12.5px;">Suppose website data is frequently accessed for the first month:</p>
+      <div class="ascii-tree">Day 0 → S3 Standard
+ ↓
+After 30 days → S3 Standard-IA
+ ↓
+After 60 days → S3 One Zone-IA / lower-cost tier
+ ↓
+After 90 days → Archive storage
+ ↓
+After required retention period → Delete</div>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">40. Benefits of Lifecycle Rules</h3>
+      <ul style="font-size:13.5px;">
+        <li><strong>Reduce Cost:</strong> Old data automatically moves to cheaper storage.</li>
+        <li><strong>Automate Data Mgmt:</strong> No manual moving needed.</li>
+        <li><strong>Manage Retention:</strong> Data automatically expires.</li>
+        <li><strong>Operational Efficiency:</strong> Upload → Store → Transition → Archive → Delete (automatic).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 41 & 42. Glacier & Cost Concept -->
+  <h2 class="sec-heading">41. S3 Glacier — Key Idea &nbsp;|&nbsp; 42. S3 Storage Cost Concept</h2>
+  <p>Think of Glacier as: <span class="highlight">Cold/Archive Storage</span>. It is suitable when data is stored mainly for retention rather than frequent access. (Historical records, backup archives, compliance data).</p>
+  <div class="warn-box">
+    <p style="margin:2px 0;"><strong>42. S3 Storage Cost Concept:</strong> S3 costs depend on factors such as amount of data stored, storage class, requests, data retrieval, data transfer, and lifecycle/replication configs. <span class="highlight-pink">More data + more operations can mean higher cost.</span> Lifecycle rules and appropriate classes help optimize costs.</p>
+  </div>
+
+  <!-- 43 to 48. Snow Family -->
+  <h2 class="sec-heading">AWS Snow Family (43 - 48)</h2>
+  <p>The AWS Snow Family is used for moving large amounts of data and for certain edge-computing use cases. It becomes useful when transferring huge datasets over the internet would be: Too slow, Difficult, Expensive, Operationally challenging.</p>
+  
+  <p><strong>Concept:</strong> Imagine an organization has 10 TB of data. Uploading over internet takes too long. AWS provides physical devices to transfer data.</p>
+  <div class="flow-h" style="font-size:13px; gap:4px;">
+    <span class="flow-node">Your Data Center</span><span class="flow-arrow">→</span><span class="flow-node">AWS Snow Device</span><span class="flow-arrow">→</span><span class="flow-node">Ship Device to AWS</span><span class="flow-arrow">→</span><span class="flow-node">AWS imports data to S3</span>
+  </div>
+
+  <div class="two-col" style="margin-top: 8px;">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">45. Snowcone</h3>
+      <p>Snowcone is a small and portable device intended for smaller-scale data transfer and edge use cases.<br><em>Memory: Snowcone = Small + Portable</em></p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">46. Snowball</h3>
+      <p>Snowball is a larger device designed for transferring much larger quantities of data. Supports some edge computing.<br><em>Memory: Snowball → Larger</em></p>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">47. Snowmobile</h3>
+    <p>Snowmobile is designed for extremely large-scale data transfers. Think of it as a massive data-transfer solution (truck/container-scale) for very large datasets.<br><em>Memory: Snowcone (Small) → Snowball (Large) → Snowmobile (Massive)</em></p>
+  </div>
+
+  <h3 class="subsec-heading">48. Snow Family — Exam Memory Table</h3>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Service</th><th>Main Idea</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Snowcone</td><td>Small, portable data transfer/edge device</td></tr>
+      <tr><td>Snowball</td><td>Large-scale data transfer and edge computing</td></tr>
+      <tr><td>Snowmobile</td><td>Extremely large-scale data migration</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 49 to 52. Storage Gateway -->
+  <h2 class="sec-heading">49 & 50 & 51. AWS Storage Gateway</h2>
+  <p>AWS Storage Gateway is a hybrid cloud storage service. Hybrid Cloud Meaning: A hybrid environment combines: <span class="highlight">On-Premises Infrastructure + AWS Cloud</span>.</p>
+  <p>Suppose a company has an On-Premises Application in a Local Data Center but wants to use AWS storage services. Storage Gateway can provide a bridge between on-premises environments and AWS storage.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree">On-Premises Application
+    ↓
+Storage Gateway
+    ↓
+AWS Storage</div>
+    <div class="hand-box" style="margin-top:0;">
+      <p style="font-weight:700; color:#1e40af; margin-top:0; font-size: 14px;">51. Storage Gateway Types:</p>
+      <ul style="font-size:13px; margin-bottom:0;">
+        <li><strong>File Gateway:</strong> File-based access to AWS storage.</li>
+        <li><strong>Volume Gateway:</strong> Block-storage-oriented functionality.</li>
+        <li><strong>Tape Gateway:</strong> Virtual tape for backup/archive workflows.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="subsec-heading">52. S3 vs Snow Family vs Storage Gateway</h3>
+  <table class="hand-table">
+    <thead>
+      <tr><th>Service</th><th>Main Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>S3</td><td>Cloud object storage</td></tr>
+      <tr><td>S3 Glacier</td><td>Long-term archive</td></tr>
+      <tr><td>Snow Family</td><td>Large-scale physical data transfer / edge</td></tr>
+      <tr><td>Storage Gateway</td><td>Hybrid on-premises + AWS storage</td></tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding: 4px 8px;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <strong>S3</strong> → Store data in cloud | <strong>Snow</strong> → Physically move huge amounts of data | <strong>Storage Gateway</strong> → Connect on-premises storage with AWS
+  </div>
+
+  <!-- 53 & 54. Encryption & Security -->
+  <h2 class="sec-heading">53 & 54. S3 Encryption & Security Concepts</h2>
+  <p>Data security is an important part of S3. Encryption protects data by making it unreadable without the appropriate decryption mechanism. S3 supports encryption options for protecting data at rest.</p>
+  <div class="flow-h" style="font-size:13px; gap:4px;"><span class="flow-node">Data</span><span class="flow-arrow">→</span><span class="flow-node">Encryption</span><span class="flow-arrow">→</span><span class="flow-node" style="background:#ecfdf5; border-color:#10b981;">Protected Storage</span></div>
+  <p><strong>54. S3 Security Areas:</strong> Block Public Access, Bucket Policies, IAM Permissions, Encryption, Versioning.</p>
+
+  <!-- 55 & 56. One-Page Revision & Workflow -->
+  <h2 class="sec-heading">55. Important S3 Concepts — One-Page Revision</h2>
+  <div class="two-col" style="font-size: 13.5px;">
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>S3:</strong> Object storage service.</li>
+      <li><strong>Bucket:</strong> Container for objects. Name is globally unique. Tied to an AWS Region.</li>
+      <li><strong>Object:</strong> Individual file/data (Max size: 5 TB).</li>
+      <li><strong>Versioning:</strong> Maintains multiple versions.</li>
+      <li><strong>Replication:</strong> Copies objects between buckets.</li>
+      <li><strong>Bucket Policy:</strong> JSON-based access-control.</li>
+    </ul>
+    <ul style="list-style-type: none; margin-left: 0;">
+      <li><strong>GetObject:</strong> Retrieve/read object.</li>
+      <li><strong>PutObject:</strong> Upload/write object.</li>
+      <li><strong>Static Website:</strong> Host static website files.</li>
+      <li><strong>Lifecycle:</strong> Automate transition/expiration.</li>
+      <li><strong>Storage Classes:</strong> Options based on access.</li>
+      <li><strong>Snow Family:</strong> Large-scale physical transfer.</li>
+      <li><strong>Storage Gateway:</strong> Hybrid storage.</li>
+    </ul>
+  </div>
+
+  <h3 class="subsec-heading">56. S3 Practical Workflow — Complete</h3>
+  <div class="ascii-tree" style="font-size: 11.5px; line-height: 1.2;">Creating a Bucket: AWS Console → S3 → Create Bucket → Region → Unique Name → Create
+Uploading Files: Bucket → Upload → Select Files → Review → Upload
+Static Website: Upload Website → Enable Hosting → index.html → Access Config → Policy → Endpoint
+Versioning: Bucket → Enable Versioning → Upload New Version → Previous Versions Maintained
+Replication: Source Bucket → Replication Rule → Destination Bucket
+Lifecycle: New Object → Standard → IA → Archive → Expiration/Delete</div>
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 57. Important Interview Questions -->
+  <h2 class="sec-heading">57. Important Interview Questions</h2>
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is Amazon S3?</div><div class="qa-a">Amazon S3 is an AWS object storage service used to store, manage, and retrieve large amounts of data.</div></div>
+      <div class="qa-block"><div class="qa-q">Q2. What is an S3 bucket?</div><div class="qa-a">A bucket is a container used to store S3 objects.</div></div>
+      <div class="qa-block"><div class="qa-q">Q3. What is an S3 object?</div><div class="qa-a">An object is an individual piece of data/file stored inside an S3 bucket.</div></div>
+      <div class="qa-block"><div class="qa-q">Q4. Difference between bucket and object?</div><div class="qa-a">Bucket → Container | Object → File/Data inside the container</div></div>
+      <div class="qa-block"><div class="qa-q">Q5. Must an S3 bucket name be unique?</div><div class="qa-a">Yes. The bucket name must be globally unique.</div></div>
+      <div class="qa-block"><div class="qa-q">Q6. What is S3 Versioning?</div><div class="qa-a">Versioning allows S3 to maintain multiple versions of an object.</div></div>
+      <div class="qa-block"><div class="qa-q">Q7. Why is versioning useful?</div><div class="qa-a">Protects against accidental overwrites/deletions and allows previous versions to be recovered.</div></div>
+      <div class="qa-block"><div class="qa-q">Q8. What is a Bucket Policy?</div><div class="qa-a">A JSON-based resource policy used to control access to an S3 bucket and its objects.</div></div>
+      <div class="qa-block"><div class="qa-q">Q9. What does GetObject mean?</div><div class="qa-a">It allows retrieval/read access to an S3 object.</div></div>
+      <div class="qa-block"><div class="qa-q">Q10. What does PutObject mean?</div><div class="qa-a">It allows an object to be uploaded/written to S3.</div></div>
+    </div>
+    <div>
+      <div class="qa-block"><div class="qa-q">Q11. What is S3 Lifecycle?</div><div class="qa-a">A lifecycle config automatically transitions or expires objects based on rules such as age.</div></div>
+      <div class="qa-block"><div class="qa-q">Q12. Why are different Storage Classes available?</div><div class="qa-a">To optimize storage according to: Access frequency, Retention period, Retrieval requirements, Cost.</div></div>
+      <div class="qa-block"><div class="qa-q">Q13. What is S3 Intelligent-Tiering?</div><div class="qa-a">A storage class designed to automatically optimize storage costs based on changing access patterns.</div></div>
+      <div class="qa-block"><div class="qa-q">Q14. What is S3 Glacier used for?</div><div class="qa-a">Long-term archival and rarely accessed data.</div></div>
+      <div class="qa-block"><div class="qa-q">Q15. What is Glacier Deep Archive?</div><div class="qa-a">A very low-cost storage option intended for long-term archival and retention.</div></div>
+      <div class="qa-block"><div class="qa-q">Q16. What is S3 Replication?</div><div class="qa-a">It automatically copies eligible objects from a source bucket to a destination bucket.</div></div>
+      <div class="qa-block"><div class="qa-q">Q17. What is Cross-Region Replication?</div><div class="qa-a">Replication of objects from a bucket in one AWS Region to a bucket in another Region.</div></div>
+      <div class="qa-block"><div class="qa-q">Q18. What is the Snow Family?</div><div class="qa-a">Provides physical devices/services for large-scale data transfer and edge-computing.</div></div>
+      <div class="qa-block"><div class="qa-q">Q19. What is AWS Storage Gateway?</div><div class="qa-a">A hybrid cloud storage service that connects on-premises environments with AWS storage.</div></div>
+    </div>
+  </div>
+
+  <!-- 58 & 59. Final Revisions -->
+  <div class="two-col" style="margin-top: 8px;">
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">58. Quick Memory Map</h2>
+      <div class="ascii-tree" style="font-size: 11px; line-height: 1.15;">                    AMAZON S3
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+      Bucket         Object        Security
+        │              │              │
+   Container          File       Policy / IAM
+                                   Encryption
+                                   Public Access
+        │
+        ├── Versioning
+        │
+        ├── Replication
+        │
+        ├── Lifecycle
+        │
+        ├── Static Website
+        │
+        └── Storage Classes
+                │
+      ┌─────────┼─────────┐
+      │         │         │
+   Standard     IA      Glacier
+      │                   │
+ Frequent             Archive
+ Access</div>
+    </div>
+    
+    <div>
+      <h2 class="sec-heading" style="margin-top:0;">59. Final Exam Revision</h2>
+      <p>Remember these 10 key points:</p>
+      <ul style="font-size: 13.5px; margin-left: 10px;">
+        <li><strong>S3</strong> = Simple Storage Service</li>
+        <li><strong>Bucket</strong> = Container</li>
+        <li><strong>Object</strong> = File/Data</li>
+        <li>Bucket names are globally unique</li>
+        <li>Buckets are created in a selected Region</li>
+        <li><strong>Versioning</strong> maintains multiple object versions</li>
+        <li><strong>Bucket Policies</strong> control resource access</li>
+        <li><strong>Lifecycle Rules</strong> automate transitions and expiration</li>
+        <li><strong>Storage Classes</strong> help optimize cost according to access patterns</li>
+        <li><strong>Snow Family + Storage Gateway</strong> solve specialized data-transfer and hybrid-storage requirements</li>
+      </ul>
+      
+      <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+        <div style="font-size: 17px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+          ⭐ Super-Short Formula
+        </div>
+        <p style="font-size: 14.5px; color: #881337; margin: 2px 0; font-weight: 700;">
+          S3 = Buckets + Objects + Security + Versioning + Replication + Lifecycle + Storage Classes + Website Hosting
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

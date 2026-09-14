@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS ELB & ASG - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 6px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .badge-note {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1.5px solid #6366f1;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #0f172a;
+    font-size: 14px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 15px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS Elastic Load Balancing (ELB) & Auto Scaling Groups (ASG)</div>
+
+  <!-- 1. Overview -->
+  <h2 class="sec-heading">1. Overview</h2>
+  <p>This section covers two important AWS concepts:</p>
+  <ul>
+    <li><span class="highlight">Elastic Load Balancing (ELB)</span></li>
+    <li><span class="highlight">Auto Scaling Groups (ASG)</span></li>
+  </ul>
+  <p>Before understanding ELB and ASG, three concepts are important:</p>
+  <ul>
+    <li>Scalability</li>
+    <li>High Availability</li>
+    <li>Elasticity</li>
+  </ul>
+
+  <!-- 2. Scalability -->
+  <h2 class="sec-heading">2. Scalability</h2>
+  <h3 class="subsec-heading">Definition</h3>
+  <p>Scalability is the ability to increase or decrease computing resources to handle changes in workload or traffic.</p>
+  
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose a website is running on one EC2 instance. Suddenly, traffic increases significantly.</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Normal Traffic</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">1 EC2</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Website</div>
+  </div>
+  <p>When traffic becomes high, the existing resources may not be sufficient. You can scale the resources to handle the additional load. AWS provides different ways to scale.</p>
+
+  <!-- 3. Types of Scalability -->
+  <h2 class="sec-heading">3. Types of Scalability</h2>
+  <p>There are two major types:</p>
+  <ul>
+    <li><span class="highlight-pink">Vertical Scaling</span></li>
+    <li><span class="highlight-pink">Horizontal Scaling</span></li>
+  </ul>
+
+  <!-- 4. Vertical Scaling -->
+  <h2 class="sec-heading">4. Vertical Scaling — Scaling Up</h2>
+  <p>Vertical scaling means increasing the capacity of an existing EC2 instance.</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px;">
+    <span class="code-term">t2.micro</span> <span class="flow-arrow">→</span> <span class="code-term">m5.large</span>
+  </div>
+  <p>You increase resources such as: CPU, RAM, Computing power.</p>
+  
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose your website is running on <span class="code-term">t2.micro</span> and traffic increases. You can move to a more powerful instance type such as <span class="code-term">m5.large</span>. The same instance now has greater computing capacity.</p>
+  
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">Memory Trick</span>
+    <p>Vertical = Make the existing machine bigger.</p>
+    <div class="flow-h" style="justify-content: flex-start;">
+      <div class="flow-node" style="font-size: 13px;">Small EC2</div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-node" style="font-size: 16px; font-weight: 700;">Bigger EC2</div>
+    </div>
+  </div>
+
+  <!-- 5. Horizontal Scaling -->
+  <h2 class="sec-heading">5. Horizontal Scaling — Scaling Out</h2>
+  <p>Horizontal scaling means adding more EC2 instances. Instead of making one server bigger, you add multiple servers.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">Before:</p>
+      <div class="ascii-tree">       EC2
+        ↓
+     Website</div>
+    </div>
+    <div class="hand-box">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">After:</p>
+      <div class="ascii-tree">     EC2 #1
+        ↓
+     EC2 #2
+        ↓
+     EC2 #3
+        ↓
+     EC2 #4</div>
+    </div>
+  </div>
+  <p>All instances can work together to handle incoming traffic.</p>
+  <div class="sticky-note" style="padding: 4px 8px;">
+    <span class="tag-badge badge-trick">Memory Trick</span> Horizontal = Add more machines.
+  </div>
+
+  <!-- 6. Vertical vs Horizontal -->
+  <h2 class="sec-heading">6. Vertical vs Horizontal Scaling</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Vertical Scaling</th>
+        <th>Horizontal Scaling</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Also called</strong></td>
+        <td>Scaling Up</td>
+        <td>Scaling Out</td>
+      </tr>
+      <tr>
+        <td><strong>Method</strong></td>
+        <td>Increase capacity of one instance</td>
+        <td>Add more instances</td>
+      </tr>
+      <tr>
+        <td><strong>Example</strong></td>
+        <td>t2.micro → m5.large</td>
+        <td>1 EC2 → 3 EC2</td>
+      </tr>
+      <tr>
+        <td><strong>Main resource</strong></td>
+        <td>CPU/RAM/compute power</td>
+        <td>Number of servers</td>
+      </tr>
+      <tr>
+        <td><strong>Multiple servers</strong></td>
+        <td>No</td>
+        <td>Yes</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="hand-box" style="background:#fefce8; border-color:#ca8a04;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <p style="margin:2px 0;"><strong>Scale Up = Bigger Server</strong></p>
+    <p style="margin:2px 0;"><strong>Scale Out = More Servers</strong></p>
+  </div>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 7. High Availability -->
+  <h2 class="sec-heading">7. High Availability (HA)</h2>
+  <h3 class="subsec-heading">Definition</h3>
+  <p>High Availability means keeping an application/service available with minimal downtime. The goal is: <span class="highlight">Users should be able to access the application even if a resource or infrastructure component fails.</span></p>
+  
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose your website is running on one EC2 instance. If that EC2 instance fails:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 4px;">
+    <div class="flow-node">EC2</div> <span class="flow-arrow">↓</span> <div class="flow-node">Website</div> <span class="flow-arrow">↓</span> <div class="flow-node" style="border-color:#ef4444; background:#fee2e2;">FAILURE</div> <span class="flow-arrow">↓</span> <div class="flow-node" style="border-color:#ef4444; background:#fee2e2;">Website Down</div>
+  </div>
+  <p>This creates a single point of failure.</p>
+
+  <!-- 8. HA Using Multiple AZs -->
+  <h2 class="sec-heading">8. High Availability Using Multiple Availability Zones</h2>
+  <p>To improve availability, you can run resources across multiple Availability Zones (AZs).</p>
+  <div class="two-col">
+    <div class="hand-box">
+      <div class="flow-node" style="border-color:#ca8a04;">Availability Zone A</div>
+      <div style="text-align:center; color:#ef4444; font-weight:700;">↓</div>
+      <div class="flow-node">EC2 #1</div>
+    </div>
+    <div class="hand-box">
+      <div class="flow-node" style="border-color:#ca8a04;">Availability Zone B</div>
+      <div style="text-align:center; color:#ef4444; font-weight:700;">↓</div>
+      <div class="flow-node">EC2 #2</div>
+    </div>
+  </div>
+  <p>If one Availability Zone experiences a problem, the other can continue serving users.</p>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-imp">Key Idea</span> High Availability = Keep the application running despite failures.
+  </div>
+
+  <!-- 9. Scalability vs HA -->
+  <h2 class="sec-heading">9. Scalability vs High Availability</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Scalability</th>
+        <th>High Availability</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Handles increasing/decreasing workload</td>
+        <td>Handles failures and reduces downtime</td>
+      </tr>
+      <tr>
+        <td>Focuses on capacity</td>
+        <td>Focuses on availability</td>
+      </tr>
+      <tr>
+        <td>Adds or increases resources</td>
+        <td>Uses redundancy</td>
+      </tr>
+      <tr>
+        <td>Example: Add EC2 instances</td>
+        <td>Example: Run EC2 across AZs</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="hand-box" style="background:#fdf2f8; border-color:#db2777;">
+    <span class="tag-badge badge-trick" style="background:#fce7f3; color:#9d174d; border-color:#f43f5e;">Simple Memory Trick</span>
+    <p style="margin:2px 0;"><strong>Scalability</strong> = Can I handle more traffic?</p>
+    <p style="margin:2px 0;"><strong>High Availability</strong> = Can I stay online if something fails?</p>
+  </div>
+
+  <!-- 10. Elasticity -->
+  <h2 class="sec-heading">10. Elasticity</h2>
+  <h3 class="subsec-heading">Definition</h3>
+  <p>Elasticity is the ability to automatically adjust resources according to demand.</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Traffic increases</div> <span class="flow-arrow">↓</span> <div class="flow-node">Add resources automatically</div> <span class="flow-arrow">↓</span> <div class="flow-node">Traffic decreases</div> <span class="flow-arrow">↓</span> <div class="flow-node">Remove unnecessary resources</div>
+  </div>
+  
+  <h3 class="subsec-heading">Example</h3>
+  <p>Suppose normally you need: <span class="highlight">2 EC2 instances</span></p>
+  <p>During peak traffic: <span class="highlight">2 → 5 EC2 instances</span></p>
+  <p>When traffic becomes normal: <span class="highlight">5 → 2 EC2 instances</span></p>
+  <p>This automatic adjustment is the key idea behind elasticity.</p>
+
+  <!-- 11. Elasticity vs Scalability -->
+  <h2 class="sec-heading">11. Elasticity vs Scalability</h2>
+  <p>A useful distinction from this section:</p>
+  <ul>
+    <li><strong>Scalability</strong> → Ability to increase/decrease capacity.</li>
+    <li><strong>Elasticity</strong> → <span class="highlight-pink">Automatic adjustment</span> of capacity based on demand.</li>
+  </ul>
+
+  <!-- 12. What is Elastic Load Balancing? -->
+  <h2 class="sec-heading">12. What is Elastic Load Balancing?</h2>
+  <p>ELB (Elastic Load Balancing) distributes incoming traffic across multiple resources such as EC2 instances.</p>
+  <p>Instead of users directly accessing individual EC2 instances, users can access the Load Balancer.</p>
+  <div class="ascii-tree" style="text-align: center;">Users
+  ↓
+Load Balancer
+  ↓
+ ┌───────┬───────┬───────┐
+ EC2 #1  EC2 #2  EC2 #3</div>
+
+  <!-- 13. Why Do We Need a Load Balancer? -->
+  <h2 class="sec-heading">13. Why Do We Need a Load Balancer?</h2>
+  <p>Suppose you have three EC2 instances running the same website. The question becomes: <span class="highlight">Which EC2 instance should receive each request?</span></p>
+  <p>The Load Balancer handles this responsibility. It accepts incoming requests and distributes them among the available instances.</p>
+  <div class="ascii-tree">User 1 ──┐
+User 2 ──┼──→ Load Balancer
+User 3 ──┘          │
+             ┌──────┼──────┐
+             ↓      ↓      ↓
+           EC2-1  EC2-2  EC2-3</div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 14. Benefits of Load Balancing -->
+  <h2 class="sec-heading">14. Benefits of Load Balancing</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>1. Traffic Distribution:</strong> Traffic is distributed across multiple EC2 instances.</p>
+      <p><strong>2. Improved Availability:</strong> If one instance fails, traffic can continue to healthy instances.</p>
+    </div>
+    <div class="hand-box">
+      <p><strong>3. Scalability:</strong> More instances can be added behind the Load Balancer.</p>
+      <p><strong>4. Single Point of Access:</strong> Users access the Load Balancer instead of exposing individual EC2 instances directly.</p>
+    </div>
+  </div>
+
+  <!-- 15. Load Balancer + Multiple AZs -->
+  <h2 class="sec-heading">15. Load Balancer + Multiple Availability Zones</h2>
+  <p>For better availability, instances can be distributed across multiple AZs.</p>
+  <div class="ascii-tree" style="text-align: center;">                 Load Balancer
+                      │
+          ┌───────────┼───────────┐
+          ↓           ↓           ↓
+        AZ-A        AZ-B        AZ-C
+         EC2         EC2         EC2</div>
+  <p>This provides two major benefits: Traffic distribution & Higher availability/fault tolerance.</p>
+
+  <!-- 16, 17, 18, 19, 20. ELB Types -->
+  <h2 class="sec-heading">16. ELB Types</h2>
+  <p>The section introduces these load balancer types:</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">17. Application Load Balancer (ALB)</h3>
+      <p>Primarily designed for application-level traffic: <span class="code-term">HTTP</span>, <span class="code-term">HTTPS</span></p>
+      <p>Works at: <span class="highlight">OSI Layer 7 — Application Layer</span></p>
+      <p><strong>Common Use Case:</strong> Websites and web applications.</p>
+      <div class="flow-h" style="gap:4px; font-size:13px;"><div class="flow-node">User</div><span class="flow-arrow">↓</span><div class="flow-node">HTTP/HTTPS</div><span class="flow-arrow">↓</span><div class="flow-node">ALB</div><span class="flow-arrow">↓</span><div class="flow-node">EC2</div></div>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">18. Network Load Balancer (NLB)</h3>
+      <p>Designed for high-performance, low-latency network traffic.</p>
+      <p>Works at: <span class="highlight">OSI Layer 4 — Transport Layer</span> (<span class="code-term">TCP</span>, <span class="code-term">UDP</span>, <span class="code-term">TLS</span>)</p>
+      <p><strong>Common Use Cases:</strong> High-performance apps, real-time apps, gaming, financial apps.</p>
+    </div>
+  </div>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">19. Gateway Load Balancer (GWLB)</h3>
+    <p>Designed to deploy and manage third-party virtual appliances. Examples include: Firewalls, Monitoring solutions, Security appliances.</p>
+    <div class="flow-h" style="gap:4px; font-size:13px;"><div class="flow-node">Client</div><span class="flow-arrow">↓</span><div class="flow-node">GWLB</div><span class="flow-arrow">↓</span><div class="flow-node">Third-Party Appliance</div><span class="flow-arrow">↓</span><div class="flow-node">Server</div></div>
+  </div>
+
+  <!-- 20. Load Balancer Type Comparison -->
+  <h3 class="subsec-heading">20. Load Balancer Type Comparison</h3>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Load Balancer</th>
+        <th>Layer</th>
+        <th>Main Use</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ALB</strong></td>
+        <td>Layer 7</td>
+        <td>HTTP/HTTPS applications</td>
+      </tr>
+      <tr>
+        <td><strong>NLB</strong></td>
+        <td>Layer 4</td>
+        <td>TCP/UDP/TLS, high performance</td>
+      </tr>
+      <tr>
+        <td><strong>GWLB</strong></td>
+        <td>Gateway/network appliance use</td>
+        <td>Third-party virtual appliances</td>
+      </tr>
+      <tr>
+        <td><strong>Classic LB</strong></td>
+        <td>Older generation</td>
+        <td>Legacy use</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="sticky-note" style="padding: 4px 8px; margin: 4px 0;">
+    <span class="tag-badge badge-trick">Quick Memory</span> ALB → Application | NLB → Network | GWLB → Gateway / Appliances
+  </div>
+
+  <!-- 21 & 22. Practical ELB Architecture & EC2 -->
+  <h2 class="sec-heading">21. Practical ELB Architecture &nbsp;|&nbsp; 22. Creating EC2 Instances</h2>
+  <div class="two-col">
+    <div class="ascii-tree">                    Internet
+                       │
+                       ↓
+              Application LB
+                       │
+                Target Group
+                 /          \
+                /            \
+               ↓              ↓
+          EC2 Web #1      EC2 Web #2</div>
+    <div class="hand-box" style="margin-top:0;">
+      <p>For a basic Load Balancer practical, at least two EC2 instances are useful because the purpose is to distribute traffic.</p>
+      <p><strong>Configuration:</strong> Each EC2 instance has: Amazon Linux, Web server (httpd), Simple website.</p>
+    </div>
+  </div>
+
+  <!-- 23 & 24. User Data & Hostname -->
+  <div class="two-col">
+    <div>
+      <h3 class="subsec-heading">23. Using User Data</h3>
+      <p>Instead of manually installing the web server, User Data can automate the setup:</p>
+      <div class="flow-h" style="flex-direction:column; align-items:flex-start; gap:2px; font-size: 13px;">
+        <span class="flow-node">Launch EC2</span><span class="flow-arrow" style="margin-left:10px;">↓</span><span class="flow-node">User Data executes</span><span class="flow-arrow" style="margin-left:10px;">↓</span><span class="flow-node">Install httpd</span><span class="flow-arrow" style="margin-left:10px;">↓</span><span class="flow-node">Start httpd</span><span class="flow-arrow" style="margin-left:10px;">↓</span><span class="flow-node">Create website</span>
+      </div>
+    </div>
+    <div>
+      <h3 class="subsec-heading">24. Using Hostname to Test</h3>
+      <p>A useful testing technique is to display the hostname of the EC2 instance on the webpage.</p>
+      <div class="code-term">Welcome to Web Server<br>Hostname: server-1</div>
+      <p>Now, when the Load Balancer distributes requests, you can identify which server responded.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 25 to 29. Setup Components -->
+  <h2 class="sec-heading">Components of Load Balancer Setup (25 - 29)</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">25. Availability Zones</h3>
+      <p>For better High Availability, place instances in different Availability Zones: <span class="code-term">AZ-A → EC2 #1</span>, <span class="code-term">AZ-B → EC2 #2</span>. This improves fault tolerance.</p>
+      
+      <h3 class="subsec-heading">26. Security Group</h3>
+      <p>The Load Balancer needs an appropriate Security Group. For an HTTP website: <span class="highlight">HTTP | Port 80 | Source: Anywhere</span>.</p>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">27 & 28. Target Group</h3>
+      <p>A Target Group contains the targets to which the Load Balancer forwards requests.</p>
+      <p><strong>Config:</strong> Target type → EC2 instances | Protocol → HTTP | Port → 80 | Health check → HTTP</p>
+      
+      <h3 class="subsec-heading">29. Listener</h3>
+      <p>The Load Balancer listens for incoming requests on a specified port (e.g., HTTP : 80).</p>
+    </div>
+  </div>
+
+  <!-- 30. Complete Request Flow -->
+  <h2 class="sec-heading">30. Complete Request Flow</h2>
+  <div class="ascii-tree" style="text-align: center;">              User
+                │
+                ↓
+        Load Balancer
+                │
+        HTTP : 80 Listener
+                │
+                ↓
+          Target Group
+             /      \
+            /        \
+           ↓          ↓
+        EC2 #1      EC2 #2
+           │          │
+           ↓          ↓
+        Website     Website</div>
+
+  <!-- 31 to 35. Health Checks & Fault Tolerance -->
+  <h2 class="sec-heading">31. Health Checks & Fault Tolerance</h2>
+  <div class="two-col">
+    <div>
+      <p>A Load Balancer checks whether registered targets are healthy. If an instance stops responding (<span class="code-term">Unhealthy</span>), the Load Balancer can stop sending traffic to it.</p>
+      <div class="sticky-note" style="padding: 2px 8px;"><span class="tag-badge badge-imp">Key Benefit</span> Traffic is sent to healthy targets.</div>
+      <p><strong>33. Testing Distribution:</strong> Refreshing the webpage can show different hostnames (Server 1, Server 2), proving load distribution.</p>
+    </div>
+    <div class="warn-box" style="margin-top: 0;">
+      <p style="font-weight: 700; color: #be123c; margin-top:0;">34 & 35. When an Instance Stops</p>
+      <p>If EC2 #2 stops, ELB detects it as <span class="code-term">Unhealthy</span> and routes all traffic to EC2 #1. This demonstrates fault tolerance.</p>
+      <p><strong>Important:</strong> Health checks take time. Do not expect the health status to change instantly when an instance stops or starts.</p>
+    </div>
+  </div>
+
+  <!-- 36 to 38. Auto Scaling Group (ASG) -->
+  <h2 class="sec-heading">36. Auto Scaling Group (ASG)</h2>
+  <p><strong>ASG = Auto Scaling Group</strong></p>
+  <p>An Auto Scaling Group automatically manages the number of EC2 instances according to defined requirements and policies. It can: Add EC2 instances, Remove EC2 instances, Replace unhealthy instances, Maintain a desired number of instances.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">37. Why Do We Need ASG?</h3>
+      <p>Manually managing EC2 instances during high/low traffic is inefficient. ASG automates the process.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">38. ASG and Elasticity</h3>
+      <p>ASG provides elasticity. High Traffic → 4 EC2. Low Traffic → 2 EC2. Automatic adjustment.</p>
+    </div>
+  </div>
+
+  <!-- 39. Main Functions of ASG -->
+  <h2 class="sec-heading">39. Main Functions of ASG</h2>
+  <div class="two-col">
+    <ul style="font-size: 14.5px;">
+      <li><strong>1. Automatic Scaling:</strong> Increase or decrease instances.</li>
+      <li><strong>2. Health Management:</strong> Replace unhealthy instances.</li>
+      <li><strong>3. Maintain Desired Capacity:</strong> Keep a specific number running.</li>
+      <li><strong>4. Scaling Policies:</strong> Rules based on CPU or request count.</li>
+    </ul>
+    <ul style="font-size: 14.5px;">
+      <li><strong>5. Scheduled Scaling:</strong> Scale at specific predictable times.</li>
+      <li><strong>6. Multi-AZ Deployment:</strong> Distribute across AZs for HA.</li>
+      <li><strong>7. Load Balancer Integration:</strong> Works with ELB to distribute traffic to the scaled instances.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 40 & 41. ELB vs ASG & Together -->
+  <h2 class="sec-heading">40. Very Important — ELB vs ASG</h2>
+  <p>A common confusion is: <span class="highlight">"Does ASG distribute traffic?"</span> No.</p>
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#eab308; background:#fefce8; text-align:center;">
+      <p style="font-weight:700; color:#ca8a04; font-size:18px; margin:0;">ELB</p>
+      <p>Handles: Traffic distribution</p>
+    </div>
+    <div class="hand-box" style="border-color:#3b82f6; background:#eff6ff; text-align:center;">
+      <p style="font-weight:700; color:#2563eb; font-size:18px; margin:0;">ASG</p>
+      <p>Handles: Number of EC2 instances</p>
+    </div>
+  </div>
+  
+  <h3 class="subsec-heading">41. ELB + ASG Together</h3>
+  <div class="ascii-tree" style="text-align: center;">                    Users
+                      │
+                      ↓
+              Load Balancer
+                      │
+                      ↓
+                Target Group
+                      │
+          ┌───────────┼───────────┐
+          ↓           ↓           ↓
+        EC2 #1      EC2 #2      EC2 #3
+          ↑           ↑           ↑
+          └──────── Auto Scaling ────────┘</div>
+  <p>Together they provide: Scalability, Elasticity, High Availability, Fault tolerance.</p>
+
+  <!-- 42. Capacity Settings -->
+  <h2 class="sec-heading">42. Desired, Minimum and Maximum Capacity</h2>
+  <div class="two-col">
+    <div>
+      <p><strong>Minimum Capacity:</strong> Minimum number of instances (e.g., Min = 1)</p>
+      <p><strong>Desired Capacity:</strong> Normal/target number of instances (e.g., Desired = 2)</p>
+      <p><strong>Maximum Capacity:</strong> Maximum instances ASG can create (e.g., Max = 3)</p>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <p style="margin:0;">Normal condition: 2 instances</p>
+      <p style="margin:0;">High demand: 2 → 3 instances</p>
+      <p style="margin:0;">Low demand: 2 → 1 instance</p>
+    </div>
+  </div>
+
+  <!-- 43 & 44. Launch Template & AMI -->
+  <h2 class="sec-heading">43 & 44. ASG + Launch Templates & AMIs</h2>
+  <p>ASG needs a way to know how new EC2 instances should be launched. This is why a Launch Template is important.</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">AMI</div> <span class="flow-arrow">↓</span> <div class="flow-node">Launch Template</div> <span class="flow-arrow">↓</span> <div class="flow-node">ASG</div> <span class="flow-arrow">↓</span> <div class="flow-node">Creates EC2</div>
+  </div>
+  <p>You need an AMI so you don't launch empty instances. The AMI contains the web server, application, and configuration.</p>
+
+  <!-- 45. ASG Creation Flow -->
+  <h2 class="sec-heading">45. ASG Creation Flow</h2>
+  <div class="ascii-tree" style="font-size:12px;">1. Create AMI → 2. Create/Use Launch Template → 3. Create Auto Scaling Group
+   ↓
+4. Select AZs/Subnets → 5. Attach Load Balancer → 6. Configure Health Checks
+   ↓
+7. Set Minimum/Desired/Maximum → 8. Configure Scaling Policy → 9. Create ASG</div>
+
+  <!-- 48, 49, 50. AZs, LB Integration, Health Checks -->
+  <div class="two-col" style="margin-top: 10px;">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">48. Multiple AZs</h3>
+      <p>ASG can distribute instances across AZ-A, AZ-B, AZ-C to ensure if one zone fails, others continue.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">49 & 50. LB & Health</h3>
+      <p>ASG uses the ELB Target Group. ASG can use LB health checks to detect and replace unhealthy instances automatically.</p>
+    </div>
+  </div>
+
+  <!-- 51 to 54. Scaling Policies -->
+  <h2 class="sec-heading">Scaling Policies (51 - 54)</h2>
+  <ul style="margin-bottom: 0;">
+    <li><strong>CPU-Based Scaling:</strong> e.g., Target Average CPU Utilization = 50%. ASG attempts to maintain this target.</li>
+    <li><strong>Request-Based Scaling:</strong> More Requests → Higher Load → Add Instances.</li>
+    <li><strong>Scheduled Scaling:</strong> Useful when traffic patterns are known (e.g., 6 PM → Increase, 12 AM → Reduce).</li>
+  </ul>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 55 & 56. Desired Capacity & History -->
+  <h2 class="sec-heading">55. Maintaining Desired Capacity</h2>
+  <p>If Desired = 2, and one instance is manually terminated, ASG notices the shortage and launches a replacement. <span class="highlight">ASG tries to maintain the configured capacity.</span> (Sec 56: You can view Activity History to see what happened and why).</p>
+
+  <!-- 57. Complete Architecture Flow -->
+  <h2 class="sec-heading">57. Practical Example — Complete Architecture</h2>
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#8b5cf6; background:#f5f3ff;">
+      <p style="font-weight:700; color:#6d28d9; margin-top:0;">Traffic Flow:</p>
+      <p style="font-size:13px; margin:0;">User → Load Balancer → Target Group → Healthy EC2</p>
+    </div>
+    <div class="hand-box" style="border-color:#10b981; background:#ecfdf5;">
+      <p style="font-weight:700; color:#047857; margin-top:0;">Scaling Flow:</p>
+      <p style="font-size:13px; margin:0;">High Traffic → Scaling Policy → ASG → Launch new EC2 → Target Group → Load Balancer</p>
+    </div>
+  </div>
+
+  <!-- 59 & 60. Cleanup -->
+  <h2 class="sec-heading">59 & 60. Cleanup After Practical Work</h2>
+  <div class="warn-box">
+    <p style="font-weight:700; margin-top:0;">Important Rule: Delete the ASG First!</p>
+    <p>If you manually terminate instances while the ASG is active, ASG sees capacity below desired and will just launch replacements. <strong>Delete ASG → Delete LB → Terminate EC2.</strong></p>
+  </div>
+
+  <!-- 61. Most Important Differences -->
+  <h2 class="sec-heading">61. Most Important Differences</h2>
+  <table class="hand-table">
+    <tbody>
+      <tr>
+        <td style="width: 30%;"><strong>Scalability vs HA</strong></td>
+        <td>Scalability = Handle workload. HA = Minimize downtime.</td>
+      </tr>
+      <tr>
+        <td><strong>Vertical vs Horizontal</strong></td>
+        <td>Vertical = Bigger instance. Horizontal = More instances.</td>
+      </tr>
+      <tr>
+        <td><strong>ELB vs ASG</strong></td>
+        <td>ELB = Distributes traffic. ASG = Manages EC2 capacity.</td>
+      </tr>
+      <tr>
+        <td><strong>AMI vs Launch Template</strong></td>
+        <td>AMI = Machine image. Launch Template = EC2 launch config.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- AMI + Launch Template + ASG + ELB -->
+  <div class="ascii-tree">AMI             →  What should the EC2 contain?
+Launch Template →  How should EC2 be launched?
+ASG             →  How many EC2 instances should exist?
+ELB             →  Where should user traffic go?</div>
+
+  <!-- 62. Interview Questions Summary -->
+  <h2 class="sec-heading" style="margin-top: 10px;">62. Interview Questions (Summary)</h2>
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q9. Does ASG distribute traffic?</div><div class="qa-a">No. ELB distributes traffic. ASG manages capacity.</div></div>
+      <div class="qa-block"><div class="qa-q">Q12. What is an ALB?</div><div class="qa-a">Application Load Balancer (Layer 7 - HTTP/HTTPS).</div></div>
+    </div>
+    <div>
+      <div class="qa-block"><div class="qa-q">Q13. What is an NLB?</div><div class="qa-a">Network Load Balancer (Layer 4 - TCP/UDP, high perf).</div></div>
+      <div class="qa-block"><div class="qa-q">Q16. What is Min/Desired/Max?</div><div class="qa-a">Min allowed, target normal, max allowed capacity.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED CLOUD PRACTITIONER & SAA // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 63. Quick Revision Sheet -->
+  <h2 class="sec-heading">63. Quick Revision Sheet</h2>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>Scalability:</strong> Handle changing workload.<br>
+      <em>Vertical:</em> 1 EC2 → Bigger EC2<br>
+      <em>Horizontal:</em> 1 EC2 → Multiple EC2</p>
+      
+      <p style="margin-top:8px;"><strong>High Availability:</strong><br>
+      Multiple resources + Multiple AZs = Higher availability.</p>
+
+      <p style="margin-top:8px;"><strong>Elasticity:</strong><br>
+      High Demand → Add resources<br>
+      Low Demand → Remove resources</p>
+    </div>
+    
+    <div class="hand-box">
+      <p><strong>ALB:</strong> Layer 7 | HTTP/HTTPS | Web apps<br>
+      <strong>NLB:</strong> Layer 4 | TCP/UDP/TLS | High perf<br>
+      <strong>GWLB:</strong> Firewalls / monitoring appliances</p>
+
+      <p style="margin-top:8px;"><strong>ELB:</strong> Main job → Distribute traffic<br>
+      <strong>ASG:</strong> Main job → Manage EC2 capacity</p>
+    </div>
+  </div>
+
+  <!-- 64. Final Memory Map -->
+  <h2 class="sec-heading">64. Final Memory Map</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 13.5px; line-height: 1.4;">                    AWS APPLICATION
+                           │
+                           ▼
+                    LOAD BALANCER
+                           │
+                  Distributes Traffic
+                           │
+                           ▼
+                     TARGET GROUP
+                           │
+             ┌─────────────┼─────────────┐
+             ↓             ↓             ↓
+            EC2           EC2           EC2
+             ↑             ↑             ↑
+             └─────────────┼─────────────┘
+                           │
+                           ▼
+                  AUTO SCALING GROUP
+                           │
+                Manages Instance Count
+                           │
+              ┌────────────┴────────────┐
+              ↓                         ↓
+        Scale Out/In             Replace Unhealthy</div>
+
+  <!-- The 5 Things to Remember -->
+  <h3 class="subsec-heading" style="margin-top: 15px;">The 5 Things to Remember</h3>
+  <ol style="font-weight: 700; color: #1e3a8a; font-size: 16px;">
+    <li><span class="highlight">Scalability</span> → Handle more workload.</li>
+    <li><span class="highlight">High Availability</span> → Stay available despite failures.</li>
+    <li><span class="highlight">Elasticity</span> → Automatically adjust capacity.</li>
+    <li><span class="highlight">ELB</span> → Distribute traffic.</li>
+    <li><span class="highlight">ASG</span> → Automatically manage EC2 instance count.</li>
+  </ol>
+
+  <!-- Star One-Line Architecture Box -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 15px;">
+    <div style="font-size: 19px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ One-Line Architecture
+    </div>
+    <p style="font-size: 16.5px; color: #881337; margin: 2px 0; font-weight: 700;">
+      ELB distributes traffic, ASG manages EC2 capacity, AMI provides the machine image, and Launch Template defines how new EC2 instances are launched.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

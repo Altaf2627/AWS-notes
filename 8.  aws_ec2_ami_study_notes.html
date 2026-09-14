@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS EC2 — AMI, Launch Templates & EC2 Image Builder Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 14.5px;
+    line-height: 1.4;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 14mm 14mm 14mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Spiral Spine on Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 12mm;
+    bottom: 12mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 13px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 15px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Headings & Text */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0 0 4px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .subtitle {
+    font-family: 'Caveat', cursive;
+    color: #047857;
+    font-size: 18px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c;
+    font-size: 19px;
+    font-weight: 700;
+    margin: 8px 0 3px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c;
+    font-size: 16.5px;
+    font-weight: 700;
+    margin: 6px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Handwritten blue ink */
+    font-size: 14px;
+    margin: 2px 0;
+    font-weight: 400;
+  }
+
+  ul {
+    margin: 3px 0 5px 16px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 1.5px;
+  }
+
+  /* Highlights & Badges */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .highlight-green {
+    background: linear-gradient(104deg, rgba(167,243,208,0.75) 0%, rgba(110,231,183,0.65) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #064e3b;
+    font-weight: 600;
+  }
+
+  .highlight-pink {
+    background: linear-gradient(104deg, rgba(251,207,232,0.8) 0%, rgba(244,114,182,0.4) 100%);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #831843;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  .badge-note {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1.5px solid #6366f1;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 6px 10px;
+    margin: 5px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 6px 10px;
+    margin: 5px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 5px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 4px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.5px solid #2563eb;
+    border-radius: 7px;
+    padding: 2px 8px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 13.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 16px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 1px 4px;
+    color: #0f172a;
+    font-size: 13px;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 6px 0;
+    border: 1.5px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 13px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 5px 8px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 15.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 4px 8px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 4px 8px;
+    margin: 4px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 14px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 5px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">AWS EC2 — AMI, LAUNCH TEMPLATES & EC2 IMAGE BUILDER</div>
+  <div class="subtitle">Structured & Revision-Friendly Handwritten Notes</div>
+
+  <!-- 1. AMI — Amazon Machine Image -->
+  <h2 class="sec-heading">1. AMI — Amazon Machine Image</h2>
+  <h3 class="subsec-heading">What is an AMI?</h3>
+  <p>An <span class="highlight">AMI (Amazon Machine Image)</span> is a pre-configured template/blueprint that contains the information required to launch an EC2 instance.</p>
+  <p>It is more than just an operating system.</p>
+  <p>An AMI can contain:</p>
+  <div class="two-col">
+    <ul>
+      <li>Base Operating System</li>
+      <li>Installed software</li>
+      <li>Application configuration</li>
+      <li>Environment configuration</li>
+    </ul>
+    <ul>
+      <li>Network configuration</li>
+      <li>Users</li>
+      <li>Firewall settings</li>
+      <li>DNS-related settings</li>
+      <li>Other required setup</li>
+    </ul>
+  </div>
+
+  <div class="sticky-note">
+    <div style="font-weight: 700; color: #b45309; font-family: 'Caveat', cursive; font-size: 16px;">Simple Definition</div>
+    <p><span class="highlight">AMI = A pre-configured image used to create EC2 instances with a consistent setup.</span></p>
+    <p>Instead of installing and configuring everything manually every time, you can create an AMI once and use it to launch new EC2 instances.</p>
+  </div>
+
+  <!-- 2. Why Do We Need AMI? -->
+  <h2 class="sec-heading">2. Why Do We Need AMI?</h2>
+  <p>Suppose you create an EC2 instance for a testing environment.</p>
+  <p>You manually perform the following:</p>
+  <ul>
+    <li>Launch EC2 instance</li>
+    <li>Install httpd web server</li>
+    <li>Configure the web server</li>
+    <li>Deploy your customized static website</li>
+    <li>Configure other required settings</li>
+  </ul>
+  <p>Now your testing environment is working properly.</p>
+  <p>Later, you need to create the production environment.</p>
+
+  <div class="two-col">
+    <div class="warn-box" style="margin:2px 0;">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">Without an AMI (Manual Repeat):</p>
+      <div class="ascii-tree">Create EC2
+   ↓
+Install Web Server
+   ↓
+Configure Web Server
+   ↓
+Deploy Website
+   ↓
+Configure Environment
+   ↓
+Production Ready</div>
+      <p style="font-size:12.5px;">This is time-consuming and can lead to configuration differences.</p>
+    </div>
+
+    <div class="hand-box" style="background:#f0fdf4; border-color:#16a34a; margin:2px 0;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">With an AMI:</p>
+      <div class="ascii-tree">Testing EC2
+    ↓
+Create AMI
+    ↓
+Launch Production EC2 from AMI
+    ↓
+Ready with the same base configuration</div>
+      <p style="font-weight:700; color:#15803d; margin:2px 0;">Main Advantages:</p>
+      <ul style="margin:2px 0 2px 14px; font-size:12.5px;">
+        <li>Saves time</li>
+        <li>Maintains consistency</li>
+        <li>Reduces repetitive configuration</li>
+        <li>Makes deployment easier</li>
+        <li>Helps create identical environments</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 3. Real-Life AMI Example -->
+  <h2 class="sec-heading">3. Real-Life AMI Example</h2>
+  <p>Imagine your testing EC2 instance contains:</p>
+  <div style="display:flex; flex-wrap:wrap; gap:6px; margin:3px 0;">
+    <span class="flow-node">Linux OS</span>
+    <span class="flow-node">httpd web server</span>
+    <span class="flow-node">Web server configuration</span>
+    <span class="flow-node">Customized website</span>
+    <span class="flow-node">Required software</span>
+    <span class="flow-node">Required environment configuration</span>
+  </div>
+  <p>You can create an AMI from this EC2 instance. Then you can use the AMI to launch a new production EC2 instance. The new instance starts with the configuration captured in the AMI.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin:4px 0;">
+    <span class="tag-badge badge-imp">Important Point</span>
+    <strong>The goal is to make the testing and production environments consistent, while production-specific settings can still be adjusted when launching the production instance.</strong>
+  </div>
+
+  <!-- 4. Creating an AMI from an EC2 Instance -->
+  <h2 class="sec-heading">4. Creating an AMI from an EC2 Instance</h2>
+  <p>From the EC2 Dashboard:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EC2 Dashboard</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Instances</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select Instance</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Image and templates</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create image</div>
+  </div>
+  <p>You provide an image name.</p>
+  <div class="hand-box">
+    <p><strong>Example:</strong> <span class="highlight">WebServer-v1</span></p>
+    <p>Here: <span class="code-term">WebServer</span> → application/environment name &nbsp;|&nbsp; <span class="code-term">v1</span> → Version 1</p>
+    <p>Version naming is useful because the image can later be upgraded. For example: <span class="code-term">WebServer-v1</span>, <span class="code-term">WebServer-v2</span>, <span class="code-term">WebServer-v3</span>.</p>
+  </div>
+
+  <!-- 5. Reboot Instance Option -->
+  <h2 class="sec-heading">5. Reboot Instance Option</h2>
+  <p>While creating an AMI, AWS provides a reboot-related option. A reboot can help ensure data consistency while creating the image. The source transcript notes that this option can be removed if desired.</p>
+  <div class="sticky-note" style="padding:3px 8px; margin:3px 0;">
+    <span class="tag-badge badge-trick">Remember</span>
+    <strong>Reboot → potentially better data consistency.</strong> But whether to reboot depends on the application and operational requirements.
+  </div>
+
+  <!-- 6. Launching an EC2 Instance from an AMI & 7. AMI State -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading" style="margin-top:4px;">6. Launching EC2 from AMI</h2>
+      <p>After creating the AMI:</p>
+      <div class="flow-h" style="justify-content: flex-start; gap:4px;">
+        <span class="flow-node" style="font-size:12px;">EC2 Dashboard</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Images</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">AMIs</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Select AMI</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Launch instance from AMI</span>
+      </div>
+      <p style="font-size:13px;">You can then configure: Instance type, Key pair, Network settings, Security settings, Storage, Other instance-specific options.</p>
+      <p style="font-size:13px;"><strong>Example:</strong> Testing: <span class="code-term">WebServer-v1</span> → Production: <span class="code-term">WebServer-Prod</span></p>
+      <p style="font-size:12.5px;">The production instance can be launched from the AMI created from the tested environment.</p>
+    </div>
+
+    <div>
+      <h2 class="sec-heading" style="margin-top:4px;">7. AMI State — Practical Point</h2>
+      <p>An AMI may not become immediately available after creation. It can initially be in a state such as: <span class="highlight-pink">Pending</span></p>
+      <p>This means the image creation process is still in progress. You may need to wait until the AMI becomes available before launching an EC2 instance from it.</p>
+      <p><strong>Flow:</strong></p>
+      <div class="flow-h" style="justify-content: flex-start;">
+        <div class="flow-node">Create AMI</div>
+        <span class="flow-arrow">↓</span>
+        <div class="flow-node" style="border-color:#f59e0b; background:#fef3c7;">Pending</div>
+        <span class="flow-arrow">↓</span>
+        <div class="flow-node" style="border-color:#10b981; background:#ecfdf5;">Available</div>
+        <span class="flow-arrow">↓</span>
+        <div class="flow-node">Launch EC2</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 8. Types / Categories of AMIs -->
+  <h2 class="sec-heading">8. Types / Categories of AMIs</h2>
+  <p>The transcript discusses three broad categories:</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">1. Public AMI</h3>
+    <p>Publicly available AMIs that can be used by AWS customers. Examples include quick-start operating system images. They are useful when you want to quickly launch an EC2 instance with a basic OS.</p>
+    
+    <h3 class="subsec-heading">2. Private AMI</h3>
+    <p>An AMI created for your own use.</p>
+    <div class="flow-h" style="justify-content: flex-start;">
+      <div class="flow-node">Your EC2</div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-node">Create AMI</div>
+      <span class="flow-arrow">↓</span>
+      <div class="flow-node" style="background:#eff6ff;">Private AMI</div>
+    </div>
+    <p>It is normally available within your AWS environment/account unless you explicitly share it. A private AMI can also be shared with selected team members/accounts according to AWS sharing capabilities.</p>
+
+    <h3 class="subsec-heading">3. Paid / Marketplace AMI</h3>
+    <p>Some AMIs are available through the AWS Marketplace and may involve additional charges. These can be supplied by third-party organizations.</p>
+  </div>
+
+  <!-- 9. Quick Start AMIs & 10. AWS Marketplace AMIs -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading">9. Quick Start AMIs</h2>
+      <p>AWS provides Quick Start AMIs for common operating systems and configurations. They are useful when you want to launch an EC2 instance quickly.</p>
+      <p>Think of a Quick Start AMI as: <span class="highlight">A ready-to-use starting point for launching an EC2 instance.</span></p>
+      <div class="warn-box">
+        <span class="tag-badge badge-imp">Important</span>
+        <p style="margin:2px 0;"><strong>Public does not automatically mean completely free.</strong> Some AMIs may involve additional software or licensing charges. Always check the pricing before using a paid image.</p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec-heading">10. AWS Marketplace AMIs</h2>
+      <p>The AWS Marketplace provides software and application images from third-party providers.</p>
+      <p>Instead of manually installing and configuring an entire application stack, you may be able to use a preconfigured Marketplace AMI.</p>
+    </div>
+  </div>
+
+  <!-- 11. Example — LAMP Stack -->
+  <h2 class="sec-heading">11. Example — LAMP Stack</h2>
+  <p>The transcript gives the example of a LAMP-based application.</p>
+  <p><strong>LAMP refers to a common web application stack involving:</strong> <span class="highlight">Linux</span> + <span class="highlight">Apache</span> + <span class="highlight">MySQL</span> + <span class="highlight">PHP</span></p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">Manual Approach (Without Preconfigured Image):</p>
+      <div class="ascii-tree">Launch EC2
+   ↓
+Install Linux/base OS
+   ↓
+Install Apache
+   ↓
+Install MySQL
+   ↓
+Install PHP
+   ↓
+Configure everything
+   ↓
+Deploy application</div>
+      <p style="font-size:12.5px; color:#be123c;">This requires significant manual work.</p>
+    </div>
+
+    <div class="hand-box" style="background:#f0fdf4; border-color:#22c55e;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">Marketplace Approach:</p>
+      <p style="font-size:13px;">Search AWS Marketplace for an appropriate LAMP image containing required components.</p>
+      <div class="ascii-tree">Select Marketplace AMI
+       ↓
+Subscribe / use according to terms
+       ↓
+Launch EC2
+       ↓
+Application environment ready</div>
+      <p style="font-weight:700; color:#15803d; margin:2px 0;">Benefit:</p>
+      <p style="font-size:12.5px;">A preconfigured image can reduce: Installation effort, Configuration effort, Setup time, Repetitive work.</p>
+    </div>
+  </div>
+
+  <!-- 12. AMI and Production Security & 13. Cleanup Script -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading">12. AMI and Production Security</h2>
+      <div class="warn-box" style="margin:2px 0;">
+        <span class="tag-badge badge-imp">Key Lesson</span>
+        <strong>Do not blindly move a testing environment into production.</strong>
+      </div>
+      <p>Testing environments are often configured casually (multiple users, extra permissions, temp config, less restrictive settings).</p>
+      <p><strong>Production should be reviewed carefully.</strong> Before creating a production-ready AMI, consider removing: Unnecessary users, Unnecessary permissions, Temporary access, Testing configurations, Other unnecessary settings.</p>
+    </div>
+
+    <div>
+      <h2 class="sec-heading">13. Cleanup Script</h2>
+      <p>The transcript introduces a cleanup script concept to clean a test environment before production conversion.</p>
+      <div class="ascii-tree">Testing Environment
+       ↓
+Review Configuration
+       ↓
+Cleanup
+       ↓
+Remove Unnecessary Access
+       ↓
+Create Production AMI
+       ↓
+Deploy</div>
+      <div class="sticky-note" style="padding:3px 6px; margin:2px 0;">
+        <strong>Key Lesson:</strong> Consistency is important, but security is also important. Do not simply clone every testing configuration without reviewing it.
+      </div>
+    </div>
+  </div>
+
+  <!-- 14, 15, 16, 17: AMI vs Launch Template -->
+  <h2 class="sec-heading">14. AMI vs Launch Template &nbsp;|&nbsp; 15. Create Image &nbsp;|&nbsp; 16. Launch Template</h2>
+  <p>AWS EC2 provides both <strong>Create Image</strong> and <strong>Create Launch Template</strong>. They solve different problems.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">15. Create Image (AMI)</h3>
+      <p>Captures machine/application environment (OS, installed apps, config, environment settings).</p>
+      <p><span class="highlight">AMI = What is installed/configured inside the machine.</span></p>
+      <p><strong>Example:</strong> OS + Web Server + Application + Configuration = <strong>AMI</strong></p>
+    </div>
+
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">16. Launch Template</h3>
+      <p>Stores specifications used when launching EC2 instances (AMI, instance type, key pair, network, SG, storage).</p>
+      <p><span class="highlight">Launch Template = How the EC2 instance should be launched.</span></p>
+    </div>
+  </div>
+
+  <!-- 17. Comparison Table -->
+  <h3 class="subsec-heading">17. AMI vs Launch Template — Easy Comparison</h3>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>AMI</th>
+        <th>Launch Template</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Main purpose</strong></td>
+        <td>Machine/application image</td>
+        <td>EC2 launch configuration</td>
+      </tr>
+      <tr>
+        <td><strong>OS</strong></td>
+        <td>Included</td>
+        <td>References an AMI</td>
+      </tr>
+      <tr>
+        <td><strong>Installed software</strong></td>
+        <td>Can be included</td>
+        <td>Not the primary purpose</td>
+      </tr>
+      <tr>
+        <td><strong>Application configuration</strong></td>
+        <td>Can be included</td>
+        <td>References required configuration</td>
+      </tr>
+      <tr>
+        <td><strong>Instance type</strong></td>
+        <td>Not the main purpose</td>
+        <td>Can specify</td>
+      </tr>
+      <tr>
+        <td><strong>Security groups</strong></td>
+        <td>Not the main purpose</td>
+        <td>Can specify</td>
+      </tr>
+      <tr>
+        <td><strong>Key pair</strong></td>
+        <td>Not the main purpose</td>
+        <td>Can specify</td>
+      </tr>
+      <tr>
+        <td><strong>Network settings</strong></td>
+        <td>Not the main purpose</td>
+        <td>Can specify</td>
+      </tr>
+      <tr>
+        <td><strong>Repeated EC2 launches</strong></td>
+        <td>Useful</td>
+        <td>Very useful</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note" style="padding:4px 8px; margin-top:3px;">
+    <span class="tag-badge badge-trick">Memory Trick</span>
+    <strong>AMI = WHAT &nbsp;|&nbsp; Launch Template = HOW</strong> — AMI tells you what the machine contains. Launch Template tells you how to launch the machine.
+  </div>
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 18. Creating a Launch Template from an Instance -->
+  <h2 class="sec-heading">18. Creating a Launch Template from an Instance</h2>
+  <p>From the EC2 instance:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Instances</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select Instance</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Image and templates</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Create template from instance</div>
+  </div>
+  <p>Give the template a name. <strong>Example:</strong> <span class="highlight">MyTemplate</span></p>
+  <p>You can configure/reference: <span class="code-term">AMI</span>, <span class="code-term">Instance type</span>, <span class="code-term">Key pair</span>, <span class="code-term">Network settings</span>, <span class="code-term">Security groups</span>, <span class="code-term">EBS volumes</span>, <span class="code-term">Other launch settings</span>. Then create the launch template.</p>
+
+  <!-- 19. Launching EC2 from a Launch Template -->
+  <h2 class="sec-heading">19. Launching EC2 from a Launch Template</h2>
+  <p>After creating the template:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">EC2 Dashboard</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Launch Templates</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Select MyTemplate</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Actions</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Launch instance from template</div>
+  </div>
+  <p>AWS uses the predefined configuration to launch the EC2 instance. This avoids repeatedly entering the same settings.</p>
+
+  <!-- 20. Why Use Launch Templates? -->
+  <h2 class="sec-heading">20. Why Use Launch Templates?</h2>
+  <p>Imagine you need to launch: <span class="highlight">20 EC2 instances</span> and most require identical settings (AMI, Instance type, SG, Network, Storage, Key pair, etc.).</p>
+  <div class="two-col">
+    <div class="hand-box">
+      <p style="font-weight:700; color:#1e40af; margin-top:0;">With a Launch Template:</p>
+      <div class="ascii-tree">Create Template Once
+       ↓
+Reuse Template
+       ↓
+Launch Instance
+       ↓
+Launch Another
+       ↓
+Launch Another</div>
+    </div>
+    <div class="hand-box" style="background:#f0fdf4; border-color:#16a34a;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">Main Benefits:</p>
+      <ul>
+        <li>Saves time</li>
+        <li>Reduces configuration mistakes</li>
+        <li>Provides consistency</li>
+        <li>Makes repeated deployments easier</li>
+        <li>Useful for large-scale EC2 deployments</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 21. Launch Template — Example -->
+  <h2 class="sec-heading">21. Launch Template — Example</h2>
+  <p>Suppose your standard web server requires:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap:8px;">
+    <span class="flow-node">AMI: WebServer-v1</span>
+    <span class="flow-node">Instance Type: t3.micro</span>
+    <span class="flow-node">Security Group: Web-SG</span>
+    <span class="flow-node">Key Pair: MyKey</span>
+    <span class="flow-node">Storage: Defined EBS</span>
+  </div>
+  <p>Instead of entering these values every time:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Launch Template</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Predefined Configuration</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Launch EC2</div>
+  </div>
+  <p>You can reuse the same template.</p>
+
+  <!-- 22. AMI + Launch Template Together -->
+  <h2 class="sec-heading">22. AMI + Launch Template Together</h2>
+  <p>AMI and Launch Template can work together. A very useful way to think about the relationship:</p>
+  <div class="ascii-tree">AMI
+│
+├── Operating System
+├── Web Server
+├── Application
+└── Configuration
+        ↓
+Launch Template
+│
+├── AMI
+├── Instance Type
+├── Network
+├── Security Group
+├── Key Pair
+└── Storage
+        ↓
+EC2 Instance</div>
+
+  <!-- 23. AMI — What Can It Represent? & 24. AMI as a Clone -->
+  <h2 class="sec-heading">23. AMI — What Can It Represent?</h2>
+  <p>The transcript's summary highlights that an AMI can represent much more than a simple operating system:</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>Installed Applications:</strong> Software already installed on the instance.</p>
+      <p><strong>Configuration Settings:</strong> Application/server configurations.</p>
+      <p><strong>Environment Variables:</strong> Required environment-level values/configuration.</p>
+      <p><strong>Network Configuration:</strong> Relevant machine/network configuration.</p>
+    </div>
+    <div class="hand-box">
+      <p><strong>DNS Settings:</strong> DNS-related settings present in the environment.</p>
+      <p><strong>Users:</strong> Configured users.</p>
+      <p><strong>Firewall Settings:</strong> Firewall/security-related machine settings.</p>
+      <p><strong>Overall Environment:</strong> An AMI can serve as a <span class="highlight">reusable clone-like version</span> of the configured EC2 environment.</p>
+    </div>
+  </div>
+
+  <h2 class="sec-heading" style="margin-top:6px;">24. AMI as a Clone</h2>
+  <p>A useful mental model is:</p>
+  <div class="flow-h" style="justify-content: flex-start;">
+    <div class="flow-node">Original Configured EC2</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#fef3c7;">AMI</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#ecfdf5;">New EC2</div>
+  </div>
+  <p>The new instance can be launched with the configuration captured in the AMI.</p>
+  <div class="sticky-note" style="padding:4px 8px; margin-top:3px;">
+    <span class="tag-badge badge-imp">Core Principle</span>
+    <strong>AMI = Reusable image of a configured machine environment.</strong>
+  </div>
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 25. EC2 Image Builder & 26. Why Do We Need Image Builder? -->
+  <h2 class="sec-heading">25. EC2 Image Builder &nbsp;|&nbsp; 26. Why Do We Need Image Builder?</h2>
+  <p><strong>What is Image Builder?</strong> EC2 Image Builder automates the process of: <span class="highlight">Building images</span>, <span class="highlight">Customizing images</span>, <span class="highlight">Testing images</span>, <span class="highlight">Validating images</span>, <span class="highlight">Deploying/distributing images</span>. Instead of manually performing these tasks every time, Image Builder can create a pipeline.</p>
+
+  <div class="two-col">
+    <div class="warn-box" style="margin:2px 0;">
+      <p style="font-weight:700; color:#b91c1c; margin-top:0;">Manual AMI Process:</p>
+      <div class="ascii-tree">Launch EC2
+   ↓
+Install Software
+   ↓
+Configure
+   ↓
+Create AMI</div>
+      <p style="font-size:12px;">Real production is complicated (security hardening, validation, multi-region). Manual setup every time is inefficient.</p>
+    </div>
+
+    <div class="hand-box" style="background:#f0fdf4; border-color:#16a34a; margin:2px 0;">
+      <p style="font-weight:700; color:#15803d; margin-top:0;">27. EC2 Image Builder Pipeline:</p>
+      <div class="ascii-tree">Base Image → Build → Customize
+    ↓
+Security / Configuration
+    ↓
+Test → Validate → Distribute
+    ↓
+Production Use</div>
+      <p style="font-size:12px; margin-top:2px;"><strong>Key Point:</strong> Not simply about creating an image; it automates the image lifecycle.</p>
+    </div>
+  </div>
+
+  <!-- 28 to 33: Pipeline Steps -->
+  <h2 class="sec-heading">Pipeline Steps (Sections 28 to 33)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>28. Base Image:</strong> The process starts with a base image (e.g. Base OS Image). Image Builder customizes that image according to requirements.</p>
+      <p><strong>29. Software Installation:</strong> The pipeline installs required software:</p>
+      <div class="ascii-tree">Base OS → Install Web Server → Install Dependencies → Apply Config</div>
+      <p style="font-size:12px;">This reduces manual setup.</p>
+      <p><strong>30. Security and Configuration:</strong> The image goes through security hardening steps to make sure it is suitable for production where consistency and security matter.</p>
+    </div>
+
+    <div class="hand-box">
+      <p><strong>31. Testing the Image:</strong> Major benefit is testing before deployment:</p>
+      <div class="flow-h" style="justify-content:flex-start; gap:4px;">
+        <span class="flow-node" style="font-size:12px;">Build Image</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Test</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Validate</span> <span class="flow-arrow">↓</span>
+        <span class="flow-node" style="font-size:12px;">Deploy</span>
+      </div>
+      <p style="font-size:12.5px;"><strong>Important Idea:</strong> Catch errors before production.</p>
+      <p><strong>32. Distribution:</strong> Supports distribution to different AWS Regions (Region A, Region B, Region C) to maintain consistency across environments.</p>
+      <p><strong>33. Scheduling Image Builds:</strong> Pipelines can be scheduled periodically: <span class="code-term">Schedule → Build → Test → Validate → Distribute</span>.</p>
+    </div>
+  </div>
+
+  <!-- 34. Cost Consideration & 35. Production Use Case -->
+  <div class="two-col">
+    <div>
+      <h2 class="sec-heading">34. Cost Consideration</h2>
+      <p>The Image Builder service itself is available <strong>without a separate service charge</strong>, while the underlying AWS resources used during building and testing can incur charges.</p>
+      <div class="warn-box" style="padding:4px 8px; margin:2px 0;">
+        <span class="tag-badge badge-imp">Remember</span>
+        No separate service charge does not mean the entire process is free. Always consider the resources used by the pipeline.
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec-heading">35. Production Use Case</h2>
+      <div class="ascii-tree" style="font-size:11px; line-height:1.2;">Developer / Admin → Base Image → Image Builder
+  ↓
+Software Installation → Configuration → Security
+  ↓
+Testing → Validation → AMI → Production Deployment</div>
+      <p style="font-size:12px;">Makes image creation repeatable and controlled.</p>
+    </div>
+  </div>
+
+  <!-- 36. AMI vs Image Builder -->
+  <h2 class="sec-heading">36. AMI vs Image Builder</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>AMI</th>
+        <th>EC2 Image Builder</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>An image/template</td>
+        <td>A service for automating image creation</td>
+      </tr>
+      <tr>
+        <td>Used to launch EC2</td>
+        <td>Builds/tests/distributes images</td>
+      </tr>
+      <tr>
+        <td>Can be created manually</td>
+        <td>Automates the workflow</td>
+      </tr>
+      <tr>
+        <td>Stores machine configuration</td>
+        <td>Provides an image pipeline</td>
+      </tr>
+      <tr>
+        <td>Reusable</td>
+        <td>Helps continuously create reusable images</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note" style="padding:4px 8px; margin:2px 0;">
+    <span class="tag-badge badge-trick">Easy Memory Trick</span>
+    <strong>AMI = PRODUCT &nbsp;|&nbsp; Image Builder = FACTORY</strong> — An AMI is the image you use. Image Builder is the automated factory that creates and prepares those images.
+  </div>
+
+  <!-- 37. AMI vs Launch Template vs Image Builder -->
+  <h2 class="sec-heading" style="margin-top:6px;">37. AMI vs Launch Template vs Image Builder</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Concept</th>
+        <th>Think Of It As</th>
+        <th>Main Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>AMI</strong></td>
+        <td>Blueprint/Image</td>
+        <td>Defines the machine environment</td>
+      </tr>
+      <tr>
+        <td><strong>Launch Template</strong></td>
+        <td>Launch Recipe</td>
+        <td>Defines how to launch EC2</td>
+      </tr>
+      <tr>
+        <td><strong>Image Builder</strong></td>
+        <td>Image Factory</td>
+        <td>Automates image creation/testing/distribution</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="flow-h" style="justify-content: flex-start; margin-top:4px;">
+    <span style="font-weight:700; color:#1e40af; margin-right:6px;">Simple Flow:</span>
+    <div class="flow-node">Image Builder</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">AMI</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node">Launch Template</div>
+    <span class="flow-arrow">↓</span>
+    <div class="flow-node" style="background:#ecfdf5;">EC2 Instance</div>
+  </div>
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 38. Complete Practical Example -->
+  <h2 class="sec-heading">38. Complete Practical Example</h2>
+  <p>Suppose you are developing a website:</p>
+
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>Step 1 — Testing:</strong> Create an EC2 instance. Install: Linux, Apache/httpd, Application, Configuration. Deploy your website.</p>
+      <p><strong>Step 2 — Test:</strong> Verify: Website works, Web server works, Configuration works, Application works.</p>
+      <p><strong>Step 3 — Create AMI:</strong> Once the environment is tested: <span class="code-term">EC2 → Create AMI → WebServer-v1</span></p>
+      <p><strong>Step 4 — Review Security:</strong> Before production: Remove unnecessary users, Remove unnecessary permissions, Remove testing-only settings, Review configuration.</p>
+    </div>
+
+    <div class="hand-box">
+      <p><strong>Step 5 — Launch Production:</strong> Use: <span class="code-term">WebServer-v1 → Production EC2</span></p>
+      <p><strong>Step 6 — Create Launch Template:</strong> Define common EC2 launch settings: AMI, Instance Type, Key Pair, Security Group, Network, Storage.</p>
+      <p><strong>Step 7 — Scale Deployment:</strong> Now if you need multiple similar EC2 instances: <span class="code-term">Launch Template → EC2 #1, EC2 #2, EC2 #3, EC2 #4...</span> No need to manually configure every instance from scratch.</p>
+      <p><strong>Step 8 — Automate with Image Builder:</strong> For a mature production setup: Base Image → Image Builder → Install Software → Configure → Security → Test → Validate → Create Image → Distribute → Launch through Template.</p>
+    </div>
+  </div>
+
+  <!-- 39. Important Exam / Interview Questions (Part 1: Q1 to Q8) -->
+  <h2 class="sec-heading" style="margin-top:10px;">39. Important Exam / Interview Questions (Part 1)</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q1. What is an AMI?</div>
+        <div class="qa-a">An AMI is a preconfigured image/template containing the information required to launch an EC2 instance.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q2. Is an AMI only an operating system?</div>
+        <div class="qa-a">No. An AMI can contain the OS along with installed software, configurations and other required environment settings.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q3. Why is an AMI useful?</div>
+        <div class="qa-a">It allows you to launch EC2 instances with a consistent predefined configuration and reduces repetitive setup work.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q4. What are the major AMI categories discussed?</div>
+        <div class="qa-a">Public AMIs, Private AMIs, Paid/Marketplace AMIs.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q5. What is a private AMI?</div>
+        <div class="qa-a">An AMI created for your own environment/account and usable according to its sharing permissions.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q6. What is a Marketplace AMI?</div>
+        <div class="qa-a">An AMI provided through AWS Marketplace, often by third-party vendors, and it may involve additional charges.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q7. What is the difference between AMI and Launch Template?</div>
+        <div class="qa-a">AMI defines the machine image/environment. Launch Template defines the configuration used to launch an EC2 instance.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q8. What is the easiest way to remember AMI vs Launch Template?</div>
+        <div class="qa-a"><strong>AMI = WHAT &nbsp;|&nbsp; Launch Template = HOW</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>AWS CERTIFIED SOLUTIONS ARCHITECT & CLOUD PRACTITIONER // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 39. Important Exam / Interview Questions (Part 2: Q9 to Q14) -->
+  <h2 class="sec-heading">39. Important Exam / Interview Questions (Part 2)</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q9. Why use Launch Templates?</div>
+        <div class="qa-a">They save time and provide consistent EC2 launch configurations, especially when launching many similar instances.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q10. What is EC2 Image Builder?</div>
+        <div class="qa-a">It is an AWS service that automates the process of building, customizing, testing, validating and distributing machine images.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q11. Why is testing important in Image Builder?</div>
+        <div class="qa-a">It helps detect errors before an image is deployed into production.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="qa-block">
+        <div class="qa-q">Q12. Can Image Builder distribute images?</div>
+        <div class="qa-a">Yes, the transcript discusses distributing images across different AWS Regions.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q13. Can Image Builder be scheduled?</div>
+        <div class="qa-a">Yes, image-building pipelines can be scheduled.</div>
+      </div>
+
+      <div class="qa-block">
+        <div class="qa-q">Q14. Is Image Builder completely free?</div>
+        <div class="qa-a">The transcript explains that the service itself has no separate charge, but the underlying resources used can incur AWS charges.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 40. Quick Revision Notes -->
+  <h2 class="sec-heading" style="margin-top:6px;">40. Quick Revision Notes</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <p><strong>AMI</strong><br>
+      AMI = Preconfigured EC2 image<br>
+      Contains: OS, Applications, Configuration, Environment settings, Users, Firewall-related settings, Other required setup.<br>
+      <em>Main purpose:</em> Create consistent EC2 environments.</p>
+
+      <p style="margin-top:4px;"><strong>Public AMI:</strong> Publicly available → Quick Start → Launch EC2</p>
+      <p><strong>Private AMI:</strong> Your configured EC2 → Create AMI → Private AMI</p>
+      <p><strong>Marketplace AMI:</strong> Third-party provider → AWS Marketplace → Preconfigured software/image. (May involve additional charges).</p>
+    </div>
+
+    <div class="hand-box">
+      <p><strong>Launch Template</strong><br>
+      Stores EC2 launch configuration: AMI, Instance Type, Key Pair, Network, Security Group, Storage, ...<br>
+      <em>Main purpose:</em> Launch similar EC2 instances quickly and consistently.</p>
+
+      <p style="margin-top:4px;"><strong>Image Builder</strong><br>
+      Automates: Build → Customize → Secure → Test → Validate → Distribute.<br>
+      <em>Main purpose:</em> Automate the image creation lifecycle.</p>
+    </div>
+  </div>
+
+  <!-- 41. Final Memory Map -->
+  <h2 class="sec-heading" style="margin-top:6px;">41. Final Memory Map</h2>
+  <p>Remember the complete concept using this chain:</p>
+
+  <div class="two-col">
+    <div class="ascii-tree">           EC2
+            │
+            ▼
+     Configure Machine
+            │
+            ▼
+           AMI
+     "What is inside?"
+            │
+            ▼
+    Launch Template
+     "How to launch?"
+            │
+            ▼
+      EC2 Instances</div>
+
+    <div class="ascii-tree">For automation:
+      Base Image
+           │
+           ▼
+    EC2 Image Builder
+           │
+      ┌────┼────┐
+      ▼    ▼    ▼
+    Build Test Validate
+           │
+           ▼
+          AMI
+           │
+           ▼
+   Launch Template
+           │
+           ▼
+      EC2 Instances</div>
+  </div>
+
+  <!-- Star One-Line Revision Box -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 6px;">
+    <div style="font-size: 17px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive;">
+      ⭐ One-Line Revision
+    </div>
+    <p style="font-size: 15px; color: #881337; margin: 2px 0; font-weight: 700;">
+      AMI stores the configured machine environment, Launch Template stores the EC2 launch configuration, and EC2 Image Builder automates the process of building, testing, validating and distributing images.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

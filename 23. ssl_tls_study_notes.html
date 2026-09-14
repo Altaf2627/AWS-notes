@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSL & TLS - Handwritten Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Kalam:wght@300;400;700&family=Patrick+Hand&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px 10px;
+    background: #2b2f38;
+    font-family: 'Patrick Hand', 'Kalam', cursive, sans-serif;
+    color: #1a365d;
+    font-size: 15.5px;
+    line-height: 1.45;
+  }
+
+  /* Notebook Page Structure */
+  .notebook-page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 35px auto;
+    position: relative;
+    background-color: #fdfbf7;
+    background-image: 
+      radial-gradient(#e5dec9 0.75px, transparent 0.75px),
+      linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(250,246,238,0.95) 100%);
+    background-size: 18px 18px, 100% 100%;
+    padding: 16mm 14mm 16mm 25mm;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    border-radius: 4px 14px 14px 4px;
+    page-break-after: always;
+    break-after: page;
+    overflow: visible;
+  }
+
+  @media print {
+    body {
+      background: transparent;
+      padding: 0;
+    }
+    .notebook-page {
+      margin: 0 auto;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always !important;
+      break-after: page !important;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+
+  /* Realistic Spiral Spine on the Left */
+  .spiral-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20mm;
+    background: linear-gradient(90deg, #d8d0be 0%, #ece5d6 45%, #f7f4ec 90%, transparent 100%);
+    border-right: 1px dashed rgba(160, 140, 110, 0.35);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .spiral-holes {
+    position: absolute;
+    top: 15mm;
+    bottom: 15mm;
+    left: 6mm;
+    width: 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .hole-ring-combo {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hole {
+    width: 10px;
+    height: 10px;
+    background: #34373d;
+    border-radius: 50%;
+    box-shadow: inset 1px 1px 3px #000, 0 1px 1px rgba(255,255,255,0.8);
+    position: absolute;
+    left: 1px;
+  }
+
+  .ring {
+    position: absolute;
+    left: -12px;
+    width: 25px;
+    height: 9px;
+    border: 2.8px solid #9ca3af;
+    border-top-color: #e5e7eb;
+    border-bottom-color: #4b5563;
+    border-radius: 12px;
+    transform: rotate(-12deg);
+    box-shadow: 1px 2px 3px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(100,100,100,0.1) 100%);
+  }
+
+  /* Notebook Header Bar */
+  .page-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px dashed #d1c7b7;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    font-family: 'Caveat', cursive;
+    color: #64748b;
+    font-size: 16px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Handwriting Typography & Colors */
+  .title-main {
+    font-family: 'Caveat', cursive;
+    color: #991b1b;
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    margin: 4px 0 8px 0;
+    line-height: 1.15;
+    text-shadow: 0.5px 0.5px 0px rgba(185, 28, 28, 0.3);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h2.sec-heading {
+    font-family: 'Caveat', cursive;
+    color: #b91c1c; /* Red ink */
+    font-size: 21px;
+    font-weight: 700;
+    margin: 12px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.5px solid rgba(185, 28, 28, 0.35);
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h3.subsec-heading {
+    font-family: 'Caveat', cursive;
+    color: #c2410c; /* Dark orange ink */
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 2px 0;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p, li {
+    color: #1e3a8a; /* Blue handwritten ink */
+    font-size: 15.5px;
+    margin: 3px 0;
+    font-weight: 400;
+  }
+  
+  strong {
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 2px;
+  }
+
+  /* Highlighters and Stickers */
+  .highlight {
+    background: linear-gradient(104deg, rgba(254,240,138,0.85) 0%, rgba(253,224,71,0.75) 100%);
+    padding: 1px 4px;
+    border-radius: 3px 6px 4px 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .tag-badge {
+    display: inline-block;
+    font-family: 'Caveat', cursive;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    transform: rotate(-1.5deg);
+    box-shadow: 1px 1.5px 2px rgba(0,0,0,0.15);
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .badge-imp {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #ef4444;
+  }
+
+  .badge-trick {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #f59e0b;
+  }
+
+  /* Notebook Hand-drawn Boxes */
+  .hand-box {
+    background: #fffefb;
+    border: 1.5px solid #3b82f6;
+    border-radius: 10px 4px 12px 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    box-shadow: 2px 2px 0px rgba(59, 130, 246, 0.2);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sticky-note {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+    border-left: 5px solid #eab308;
+    padding: 8px 12px;
+    margin: 7px 0;
+    border-radius: 2px 8px 6px 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .warn-box {
+    background: #fff1f2;
+    border: 1.5px dashed #f43f5e;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Hand-drawn flow diagrams */
+  .flow-h {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .flow-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .flow-node {
+    background: #ffffff;
+    border: 1.6px solid #2563eb;
+    border-radius: 8px;
+    padding: 3px 9px;
+    color: #1e3a8a;
+    font-weight: 600;
+    font-size: 14.5px;
+    box-shadow: 1.5px 2px 0px rgba(37, 99, 235, 0.2);
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: #ef4444;
+    font-weight: 700;
+    font-size: 18px;
+    user-select: none;
+  }
+
+  .code-term {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #0f172a;
+    font-size: 13px;
+    display: inline-block;
+    margin: 2px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .code-block {
+    font-family: monospace;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 6px 10px;
+    color: #0f172a;
+    font-size: 13px;
+    display: block;
+    margin: 6px 0;
+    white-space: pre-wrap;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Handwritten Table */
+  .hand-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 8px 0;
+    border: 1.6px solid #1e40af;
+    border-radius: 6px;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    font-size: 14.5px;
+  }
+
+  .hand-table th {
+    background: #dbeafe;
+    color: #1e3a8a;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-family: 'Caveat', cursive;
+    font-size: 17.5px;
+    border-bottom: 1.5px solid #1e40af;
+    border-right: 1px solid #bfdbfe;
+    text-align: left;
+  }
+
+  .hand-table th:last-child {
+    border-right: none;
+  }
+
+  .hand-table td {
+    padding: 6px 10px;
+    color: #1e3a8a;
+    border-bottom: 1px dashed #bfdbfe;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .hand-table td:last-child {
+    border-right: none;
+  }
+
+  .hand-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .qa-block {
+    background: #fafaf9;
+    border-left: 3.5px solid #dc2626;
+    padding: 5px 10px;
+    margin: 6px 0;
+    border-radius: 0 6px 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .qa-q {
+    font-weight: 700;
+    color: #991b1b;
+    font-size: 15.5px;
+  }
+
+  .qa-a {
+    color: #1e3a8a;
+    margin-top: 2px;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @media (max-width: 650px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ascii-tree {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.25;
+    background: #ffffff;
+    border: 1.5px dashed #64748b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #0f172a;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 6px 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 1</span>
+  </div>
+
+  <div class="title-main">🔐 SSL & TLS — Detailed and Structured Notes</div>
+
+  <!-- 1. What is SSL/TLS? -->
+  <h2 class="sec-heading">1. What is SSL/TLS?</h2>
+  <p>SSL (Secure Sockets Layer) and TLS (Transport Layer Security) are cryptographic protocols used to secure communication between a client and a server over a network such as the Internet.</p>
+  <p>Their main purpose is to <span class="highlight">protect sensitive information</span> while it is being transmitted.</p>
+
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example: Internet Banking</h3>
+    <div class="flow-v" style="gap:2px; font-size:12px;">
+      <span class="flow-node">Your Computer / Browser</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Internet</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node">Banking Website / Server</span>
+    </div>
+    <p style="margin-top: 6px;">You may send sensitive information such as: <strong>Username, Password, Account-related info, Confidential data</strong>.</p>
+    <p>If communication is not properly secured, an attacker could potentially intercept the data. SSL/TLS helps protect this communication.</p>
+  </div>
+
+  <!-- 2. SSL vs TLS -->
+  <h2 class="sec-heading">2. SSL vs TLS</h2>
+  <div class="two-col">
+    <div class="hand-box" style="border-color:#b91c1c; background:#fef2f2;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#991b1b;">SSL</h3>
+      <p style="font-weight:700; margin-bottom:2px;">Secure Sockets Layer</p>
+      <p style="font-size:14px; margin-top:0;">It is the older protocol family.</p>
+    </div>
+    <div class="hand-box" style="border-color:#16a34a; background:#f0fdf4;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#15803d;">TLS</h3>
+      <p style="font-weight:700; margin-bottom:2px;">Transport Layer Security</p>
+      <p style="font-size:14px; margin-top:0;">TLS is the successor to SSL and is the protocol used by modern secure connections.</p>
+    </div>
+  </div>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">🧠 Remember</span>
+    <p style="margin:2px 0;">People still commonly say “SSL certificate” or “SSL connection”. However, modern HTTPS connections generally use TLS, not the old SSL protocols.</p>
+    <p style="margin:2px 0;"><strong>SSL</strong> → Older protocol<br><strong>TLS</strong> → Successor and modern protocol</p>
+  </div>
+
+  <!-- 3. HTTPS and the Lock Icon -->
+  <h2 class="sec-heading">3. HTTPS and the Lock Icon</h2>
+  <p>When you visit a website using HTTPS, the browser indicates that the connection is protected (e.g., <span class="code-inline">https://example.com</span>).</p>
+  <p>Browsers commonly show a lock icon. Inspecting the connection reveals:</p>
+  <ul>
+    <li>Connection security</li>
+    <li>Certificate information</li>
+    <li>Certificate validity</li>
+    <li>Certificate issuer</li>
+  </ul>
+  
+  <p><strong>What does HTTPS mean?</strong><br>
+  HTTPS = <span class="highlight">HTTP Secure</span>. It uses TLS to protect HTTP communication between the client and server.</p>
+
+  <!-- 4. What Does SSL/TLS Provide? -->
+  <h2 class="sec-heading">4. What Does SSL/TLS Provide?</h2>
+  <p>SSL/TLS is designed to provide important security properties for communication. The three major concepts are:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 8px;">
+    <span class="flow-node">Confidentiality</span>
+    <span class="flow-node">Integrity</span>
+    <span class="flow-node">Authentication</span>
+  </div>
+  <p>These concepts are extremely important for understanding secure communication.</p>
+
+</div>
+
+<!-- =================== PAGE 2 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 2</span>
+  </div>
+
+  <!-- 5. Confidentiality -->
+  <h2 class="sec-heading">5. Confidentiality</h2>
+  <p><strong>Meaning:</strong> Confidentiality means that sensitive information should only be accessible to authorized parties.</p>
+  
+  <div class="hand-box">
+    <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+    <p style="font-size: 14px;">Imagine a confidential examination paper being transferred from a printing facility to an examination center. Only the authorized center should be able to access the contents. Someone who intercepts the transfer should not understand the contents.</p>
+    <div class="flow-v" style="gap:2px; font-size:12px; margin-top:4px;">
+      <span class="flow-node">Original Data</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node" style="border-color:#3b82f6; background:#eff6ff;">Encryption</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Encrypted Data (Internet)</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node" style="border-color:#16a34a; background:#dcfce7;">Decryption</span>
+      <span class="flow-arrow" style="font-size:12px;">↓</span>
+      <span class="flow-node">Original Data</span>
+    </div>
+  </div>
+
+  <!-- 6. Integrity -->
+  <h2 class="sec-heading">6. Integrity</h2>
+  <p><strong>Meaning:</strong> Ensuring that data has not been modified or tampered with during transmission.</p>
+  <div class="hand-box">
+    <p style="font-size:14px; margin: 0;">Suppose the original examination paper is: <span class="code-inline">DEMO</span></p>
+    <p style="font-size:14px; margin: 2px 0;">If an attacker changes it to: <span class="code-inline">MO</span>, the receiver should be able to detect that the data was modified.</p>
+    <p style="font-size:14px; margin: 0;">Hashing and message authentication mechanisms can help detect such changes.</p>
+  </div>
+
+  <!-- 7. Authentication -->
+  <h2 class="sec-heading">7. Authentication</h2>
+  <p><strong>Meaning:</strong> Verifying the identity of the party you are communicating with.</p>
+  <p>For example, when you visit a banking website, you want to know: <em>“Am I actually communicating with the legitimate website?”</em> Digital certificates help establish this identity.</p>
+
+  <!-- 8. CIA Triad -->
+  <h2 class="sec-heading">8. Confidentiality, Integrity & Authentication</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Security Property</th>
+        <th>Main Question</th>
+        <th>Common Mechanism</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Confidentiality</strong></td>
+        <td>Can unauthorized people read the data?</td>
+        <td>Encryption</td>
+      </tr>
+      <tr>
+        <td><strong>Integrity</strong></td>
+        <td>Was the data modified?</td>
+        <td>Hash / MAC-based integrity mechanisms</td>
+      </tr>
+      <tr>
+        <td><strong>Authentication</strong></td>
+        <td>Who am I communicating with?</td>
+        <td>Digital Certificates</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">🧠 Easy Memory Trick: CIA</span>
+    <p style="margin:2px 0;"><strong>C</strong> → Confidentiality<br><strong>I</strong> → Integrity<br><strong>A</strong> → Authentication</p>
+  </div>
+
+  <!-- 9 & 10. Encryption -->
+  <h2 class="sec-heading">9. Encryption &nbsp;|&nbsp; 10. Plaintext and Ciphertext</h2>
+  <p>Encryption is the process of converting readable information (<span class="highlight">plaintext</span>) into an encoded form (<span class="highlight-pink">ciphertext</span>) so that unauthorized parties cannot understand it.</p>
+  
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Plaintext</h3>
+      <p style="font-size:13.5px;">The original readable message. Example: <span class="code-inline">DEMO</span></p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Ciphertext</h3>
+      <p style="font-size:13.5px;">The encrypted version of the message. The exact output depends on the encryption algorithm and key.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 3 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 3</span>
+  </div>
+
+  <!-- 11. Simple Encryption Example -->
+  <h2 class="sec-heading">11. Simple Encryption Example</h2>
+  <p>Imagine a very basic historical technique where every character is shifted by three positions (Caesar Cipher style).</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree">D → G
+E → H
+M → P
+O → R</div>
+    <div>
+      <div class="flow-v" style="gap:2px; font-size:12px;">
+        <span class="flow-node">DEMO (Plaintext)</span>
+        <span class="flow-arrow" style="font-size:12px;">↓ Encryption</span>
+        <span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">GHPR (Ciphertext)</span>
+        <span class="flow-arrow" style="font-size:12px;">↓ Decryption</span>
+        <span class="flow-node">DEMO</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top: 4px;">
+    <span class="tag-badge badge-imp">⚠️ Important</span>
+    <p style="margin:2px 0;">This is only a simple educational example. Modern TLS does not use this type of simple character-shifting encryption. Modern cryptography uses mathematically designed algorithms and cryptographic keys.</p>
+  </div>
+
+  <!-- 12. Types of Encryption -->
+  <h2 class="sec-heading">12. Types of Encryption</h2>
+  <p>The two major categories discussed are:</p>
+  <div class="flow-h" style="justify-content: flex-start; gap: 8px;">
+    <span class="flow-node">Symmetric Encryption</span>
+    <span class="flow-node">Asymmetric Encryption</span>
+  </div>
+
+  <!-- 13. Symmetric Encryption -->
+  <h2 class="sec-heading">13. Symmetric Encryption</h2>
+  <p>In symmetric encryption, the <span class="highlight">same secret key</span> is used for both encryption and decryption.</p>
+  
+  <div class="ascii-tree" style="text-align: center;">          Same Secret Key
+                 │
+                 ↓
+Plaintext → Encryption → Ciphertext
+                 │
+                 ↓
+            Decryption
+                 │
+                 ↓
+             Plaintext</div>
+
+  <div class="two-col" style="margin-top: 6px;">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Advantages</h3>
+      <ul style="font-size: 13.5px; margin-bottom: 0;">
+        <li>Fast and Efficient</li>
+        <li>Suitable for large amounts of bulk data</li>
+        <li>Lower computational overhead</li>
+      </ul>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Main Challenge</h3>
+      <p style="font-size: 13.5px; margin-bottom: 0;"><strong>Key distribution:</strong> How do you securely share the secret key between the two parties? If intercepted, an attacker can decrypt the communication.</p>
+    </div>
+  </div>
+
+  <!-- 14. Asymmetric Encryption -->
+  <h2 class="sec-heading">14. Asymmetric Encryption</h2>
+  <p>Asymmetric encryption uses a <span class="highlight-pink">pair of keys</span>: a <strong>Public Key</strong> and a <strong>Private Key</strong>.</p>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-weight: 700; margin-bottom: 2px;">General Concept</p>
+      <div class="ascii-tree">Public Key
+    ↓
+Encryption
+
+Private Key
+    ↓
+Decryption</div>
+    </div>
+    <div class="hand-box" style="margin-top:0;">
+      <p style="font-size: 14px; margin-top:0;"><strong>Public Key:</strong> Can generally be shared openly.<br><strong>Private Key:</strong> Must be kept secret by its owner.</p>
+      <div class="ascii-tree" style="font-size: 11px;">    Server
+┌─────────────┐
+│ Public Key  │ ← Can be shared
+│ Private Key │ ← Must remain secret
+└─────────────┘</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 4 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 4</span>
+  </div>
+
+  <!-- 15. Symmetric vs Asymmetric Encryption -->
+  <h2 class="sec-heading">15. Symmetric vs Asymmetric Encryption</h2>
+  <table class="hand-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Symmetric</th>
+        <th>Asymmetric</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Keys</strong></td>
+        <td>Same secret key</td>
+        <td>Public + private key pair</td>
+      </tr>
+      <tr>
+        <td><strong>Speed</strong></td>
+        <td>Faster</td>
+        <td>Generally slower</td>
+      </tr>
+      <tr>
+        <td><strong>Computational cost</strong></td>
+        <td>Lower</td>
+        <td>Higher</td>
+      </tr>
+      <tr>
+        <td><strong>Large data</strong></td>
+        <td>Suitable</td>
+        <td>Generally not preferred</td>
+      </tr>
+      <tr>
+        <td><strong>Main challenge</strong></td>
+        <td>Key distribution</td>
+        <td>Public key can be shared</td>
+      </tr>
+      <tr>
+        <td><strong>Typical purpose</strong></td>
+        <td>Bulk data encryption</td>
+        <td>Key exchange / authentication</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 16 & 17. Hybrid Encryption -->
+  <h2 class="sec-heading">16. Why Hybrid Encryption is Used</h2>
+  <p>Instead of using only one, secure communication protocols combine their strengths. This idea is called <span class="highlight">hybrid cryptography/encryption</span>.</p>
+  
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;"> Asymmetric Cryptography
+             ↓
+ Secure Key Establishment
+             ↓
+   Symmetric Session Key
+             ↓
+ Fast Bulk Data Encryption
+             ↓
+   Secure Communication</div>
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">17. Example of Hybrid Encryption</h3>
+      <div class="ascii-tree" style="font-size: 11px;">Client                    Server
+  │                         │
+  │ ← Public-key mechanism →│
+  │    Establish secret     │
+  │       session key       │
+  │                         │
+  │==== Symmetric Key ======│
+  │ Encrypted application   │
+  │       data              │
+  │========================>│</div>
+    </div>
+  </div>
+
+  <!-- 18. Common Algorithms -->
+  <h2 class="sec-heading">18. Common Encryption Algorithms</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Symmetric Algorithms</h3>
+      <p style="font-size:13.5px; margin:2px 0;">Examples: <strong>AES, 3DES, RC4</strong></p>
+      <p style="font-size:13px; margin:2px 0;"><em>Important:</em> RC4 and 3DES are obsolete/unsuitable for modern deployments. <strong>AES</strong> is widely used.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">Asymmetric Algorithms</h3>
+      <p style="font-size:13.5px; margin:2px 0;">Examples: <strong>RSA, DSA, ECDSA</strong></p>
+      <p style="font-size:13px; margin:2px 0;">Modern TLS uses elliptic-curve mechanisms (ECDSA, ECDHE) depending on config.</p>
+    </div>
+  </div>
+
+  <!-- 19 & 20. Hashing -->
+  <h2 class="sec-heading">19. What is Hashing? &nbsp;|&nbsp; 20. Example</h2>
+  <p>Hashing is the process of converting input data into a <span class="highlight">fixed-length output</span> called a hash value or digest.</p>
+  
+  <div class="two-col">
+    <div class="flow-v" style="gap:2px; font-size:12px;">
+      <span class="flow-node">Input Data</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#3b82f6; background:#eff6ff;">Hash Function</span><span class="flow-arrow" style="font-size:12px;">↓</span><span class="flow-node" style="border-color:#ca8a04; background:#fefce8;">Fixed-Length Hash</span>
+    </div>
+    <div>
+      <h3 class="subsec-heading" style="margin-top:0;">Example</h3>
+      <p style="font-size: 13.5px;">Input: <span class="code-inline">DEMO</span> → Hash Function → Same Hash.</p>
+      <p style="font-size: 13.5px;">Input: <span class="code-inline">MODIFIED</span> → Hash Function → Different Hash.</p>
+      <p style="font-size: 13.5px;">A small change in input produces a completely different digest.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 5 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 5</span>
+  </div>
+
+  <!-- 21. Fixed-Length Hash & 22. Integrity -->
+  <h2 class="sec-heading">21. Fixed-Length Hash &nbsp;|&nbsp; 22. Hashing and Integrity</h2>
+  
+  <div class="two-col">
+    <div>
+      <p style="font-size: 14px;">One important property of cryptographic hash functions is that the output has a <strong>fixed size</strong>.</p>
+      <div class="ascii-tree">Small Input → SHA-256 → 256-bit digest
+Large Input → SHA-256 → 256-bit digest</div>
+      <p style="font-size: 14px; margin-top:6px;">Hashing can be used to detect whether data has changed.</p>
+      <p style="font-size: 13.5px; margin:2px 0;">Sender: <span class="code-inline">Hash(Message) = H1</span></p>
+      <p style="font-size: 13.5px; margin:2px 0;">Receiver: <span class="code-inline">Hash(Received Msg) = H2</span></p>
+      <p style="font-size: 13.5px; margin:2px 0;">If <span class="code-inline">H1 == H2</span>, data is consistent.</p>
+    </div>
+    
+    <div class="warn-box" style="margin-top:0;">
+      <span class="tag-badge badge-imp">⚠️ Important</span>
+      <p style="font-size:13.5px;">A plain hash alone does not prove who sent the message. An attacker could modify both the message and the hash. That is why authentication mechanisms such as MACs, digital signatures, and TLS's authenticated record protection are needed.</p>
+    </div>
+  </div>
+
+  <!-- 23 & 24. MD5 and SHA -->
+  <h2 class="sec-heading">23. MD5 &nbsp;|&nbsp; 24. SHA</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">MD5</h3>
+      <p style="font-size: 13px;">Message-Digest Algorithm 5.<br>Produces a <strong>128-bit digest</strong>.</p>
+      <p style="font-size: 13px; color:#b91c1c; font-weight:700;">Considered cryptographically broken. Do not use for modern security purposes.</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">SHA (Secure Hash Algorithms)</h3>
+      <p style="font-size: 13px;">Common SHA-2 variants:<br><strong>SHA-256 → 256-bit digest</strong><br>SHA-384 → 384-bit digest<br>SHA-512 → 512-bit digest</p>
+      <p style="font-size: 13px; color:#15803d; font-weight:700;">SHA-256 is commonly used in modern systems.</p>
+    </div>
+  </div>
+
+  <!-- 25. MAC & 26. HMAC -->
+  <h2 class="sec-heading">25. MAC &nbsp;|&nbsp; 26. HMAC</h2>
+  <p>A <strong>MAC (Message Authentication Code)</strong> is used to provide message integrity and authentication using a shared secret key.</p>
+  <p><strong>HMAC</strong> = Hash-based Message Authentication Code. It combines a cryptographic hash function with a secret key.</p>
+
+  <div class="two-col">
+    <div class="ascii-tree" style="text-align: center;">Message + Secret Key
+         ↓
+       HMAC
+         ↓
+ Authentication Tag</div>
+    <div>
+      <p style="font-size:14px; margin-top:0;"><strong>Why is HMAC stronger than an ordinary hash?</strong></p>
+      <p style="font-size:14px;">Because the secret key is involved. An attacker without the secret key cannot simply modify the message and calculate a valid HMAC.</p>
+    </div>
+  </div>
+
+  <!-- 27. Hash vs HMAC -->
+  <h2 class="sec-heading">27. Hash vs HMAC</h2>
+  <table class="hand-table" style="font-size: 14px;">
+    <thead>
+      <tr>
+        <th>Hash</th>
+        <th>HMAC</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>No secret key required</td>
+        <td>Uses a secret key</td>
+      </tr>
+      <tr>
+        <td>Produces a digest</td>
+        <td>Produces an authentication tag</td>
+      </tr>
+      <tr>
+        <td>Useful for integrity-related checks</td>
+        <td>Provides integrity + authentication with a shared secret</td>
+      </tr>
+      <tr>
+        <td>Example: SHA-256</td>
+        <td>Example: HMAC-SHA-256</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sticky-note">
+    <span class="tag-badge badge-trick">🧠 Remember</span>
+    <strong>Hash</strong> = Data → Digest &nbsp;|&nbsp; <strong>HMAC</strong> = Data + Secret Key → Authentication Tag
+  </div>
+
+</div>
+
+<!-- =================== PAGE 6 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 6</span>
+  </div>
+
+  <!-- 28. Digital Certificates -->
+  <h2 class="sec-heading">28. Digital Certificates</h2>
+  <p>A digital certificate helps a browser verify the identity associated with a website's public key. When you visit a secure website, the browser inspects its certificate.</p>
+  <p>The certificate contains: <strong>Website/domain identity, Public key, Issuer, Validity period, Digital signature</strong>.</p>
+
+  <!-- 29. Certificate Authority (CA) -->
+  <h2 class="sec-heading">29. What is a Certificate Authority (CA)?</h2>
+  <p>A Certificate Authority is a trusted organization/entity that issues digital certificates.</p>
+  <div class="ascii-tree" style="text-align: center;">Website Owner
+      ↓
+Requests Certificate
+      ↓
+Certificate Authority (CA)
+      ↓
+Verifies information & Issues Digital Certificate</div>
+  <p>The browser/OS has a set of trusted root certificate authorities. This system helps the browser determine whether a certificate chain can be trusted.</p>
+
+  <!-- 30 & 31. What Does a Certificate Contain? -->
+  <h2 class="sec-heading">30 & 31. What Does a Certificate Contain?</h2>
+  <div class="two-col">
+    <div>
+      <ul style="font-size: 14px; margin-top:0;">
+        <li><strong>1. Subject:</strong> Identifies the entity/domain covered.</li>
+        <li><strong>2. Public Key:</strong> Contains the associated public key.</li>
+        <li><strong>3. Issuer:</strong> Identifies the CA that issued it.</li>
+        <li><strong>4. Validity Period:</strong> Valid from & Valid until.</li>
+        <li><strong>5. Digital Signature:</strong> CA digitally signs it.</li>
+        <li><strong>6. Signature Algorithm:</strong> Used for the signature.</li>
+      </ul>
+    </div>
+    <div class="code-block">Subject: example.com
+Issuer: Trusted CA
+Valid From: Date A
+Valid Until: Date B
+Public Key: Available
+Signature: Available</div>
+  </div>
+
+  <!-- 32 & 33. Certificate Auth & Keys -->
+  <h2 class="sec-heading">32. Certificate Authentication &nbsp;|&nbsp; 33. Private Key</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">32. Validation Checks</h3>
+      <p style="font-size:13px; margin:2px 0;">The browser checks:</p>
+      <ul style="font-size:12.5px; margin:0;">
+        <li>Within validity period?</li>
+        <li>Matches requested domain?</li>
+        <li>Issuing CA trusted?</li>
+        <li>Certificate chain valid?</li>
+        <li>Signature valid?</li>
+        <li>Revoked?</li>
+      </ul>
+    </div>
+    <div class="warn-box" style="margin-top:0;">
+      <h3 class="subsec-heading" style="margin-top:0; color:#be123c;">33. Private Key Protection</h3>
+      <p style="font-size:13px; margin:2px 0;">A certificate contains the public key. The private key is kept securely by the server and is <strong>not</strong> included in the certificate.</p>
+      <p style="font-size:13px; font-weight:700; margin:2px 0;">If an attacker obtains the private key, security is seriously compromised.</p>
+    </div>
+  </div>
+
+  <!-- 34 to 37. Trust, Expiry, Issuers, Formats -->
+  <h2 class="sec-heading">34-37. Trust, Issuers, Expiry & Formats</h2>
+  <p><strong>34. Trust Model:</strong> <span class="code-inline">Root CA → Intermediate CA → Server Certificate</span>.</p>
+  <p><strong>35. Expiration:</strong> Certificates expire and must be renewed regularly.</p>
+  <p><strong>36. Issuers:</strong> DigiCert, Let's Encrypt, Sectigo, GlobalSign, etc.</p>
+  <p><strong>37. Formats:</strong> PEM (Text-based), DER, PKCS#12/PFX. <br><em>PEM Example:</em> <span class="code-inline">-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----</span></p>
+
+</div>
+
+<!-- =================== PAGE 7 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 7</span>
+  </div>
+
+  <!-- 38 to 44. TLS Handshake Steps -->
+  <h2 class="sec-heading">The TLS Handshake (Steps 38 - 44)</h2>
+  <p>The overall TLS connection process establishes a secure connection between Client and Server.</p>
+
+  <div class="hand-box">
+    <p style="font-weight:700; margin-bottom:2px;">Step 1 — ClientHello</p>
+    <p style="font-size:14px; margin-top:0;">Client sends supported TLS versions, cipher suites, and random/key-exchange info.</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 2 — ServerHello</p>
+    <p style="font-size:14px; margin-top:0;">Server responds and selects compatible parameters for the connection.</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 3 — Server Certificate</p>
+    <p style="font-size:14px; margin-top:0;">Server sends its digital certificate (containing public key and identity) to the client.</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 4 — Certificate Verification</p>
+    <p style="font-size:14px; margin-top:0;">Browser validates the certificate chain. If valid, server identity is trusted.</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 5 — Key Establishment</p>
+    <p style="font-size:14px; margin-top:0;">Client and server establish shared secret keying material (Modern TLS 1.3 commonly uses ephemeral Diffie-Hellman like ECDHE for forward secrecy).</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 6 — Session Keys</p>
+    <p style="font-size:14px; margin-top:0;">Handshake produces symmetric session keys used to protect the connection.</p>
+    
+    <p style="font-weight:700; margin-bottom:2px;">Step 7 — Secure Communication</p>
+    <p style="font-size:14px; margin-top:0;">Application data is protected using efficient symmetric cryptography and authenticated encryption/integrity mechanisms.</p>
+  </div>
+
+  <!-- 45. Simplified TLS Workflow -->
+  <h2 class="sec-heading">45. Simplified TLS Workflow</h2>
+  <div class="ascii-tree" style="text-align: center;">┌──────────────────────┐
+│   Client / Browser   │
+└──────────┬───────────┘
+           │
+           │ ClientHello
+           ↓
+┌──────────────────────┐
+│       Server         │
+└──────────┬───────────┘
+           │
+           │ ServerHello
+           │ Certificate
+           ↓
+┌──────────────────────┐
+│ Certificate          │
+│ Verification         │
+└──────────┬───────────┘
+           │
+           ↓
+┌──────────────────────┐
+│ Key Establishment    │
+└──────────┬───────────┘
+           │
+           ↓
+┌──────────────────────┐
+│ Session Keys         │
+└──────────┬───────────┘
+           │
+           ↓
+┌──────────────────────┐
+│ Secure Communication │
+└──────────────────────┘</div>
+
+</div>
+
+<!-- =================== PAGE 8 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 8</span>
+  </div>
+
+  <!-- 46 & 47. CIA Achieved & Complete Flow -->
+  <h2 class="sec-heading">46. How the Three Security Goals Are Achieved</h2>
+  <p><strong>Confidentiality:</strong> Provided through encryption (Plaintext → Encryption → Protected Data).</p>
+  <p><strong>Integrity:</strong> Cryptographic integrity protection detects modifications (e.g., AEAD modes like AES-GCM, ChaCha20-Poly1305).</p>
+  <p><strong>Authentication:</strong> The server's certificate helps authenticate identity.</p>
+
+  <!-- 48. Important Terms -->
+  <h2 class="sec-heading">48. Important Terms at a Glance</h2>
+  <table class="hand-table" style="font-size: 13px;">
+    <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>SSL / TLS</strong></td><td>SSL is older; TLS is the modern successor.</td></tr>
+      <tr><td><strong>HTTPS</strong></td><td>HTTP protected using TLS.</td></tr>
+      <tr><td><strong>Symmetric / Asymmetric Key</strong></td><td>Symmetric = Shared secret | Asymmetric = Public/Private pair</td></tr>
+      <tr><td><strong>Hash / MAC / HMAC</strong></td><td>Hash = Digest | MAC/HMAC = Auth/Integrity with secret key</td></tr>
+      <tr><td><strong>Digital Certificate / CA</strong></td><td>Binds identity to public key | CA issues/signs it</td></tr>
+      <tr><td><strong>Cipher Suite</strong></td><td>Set of crypto algorithms used by TLS</td></tr>
+      <tr><td><strong>TLS Handshake</strong></td><td>Process to negotiate parameters, authenticate & establish keys</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 49. Sym vs Asym vs Hash -->
+  <h2 class="sec-heading">49. Symmetric vs Asymmetric vs Hashing</h2>
+  <table class="hand-table" style="font-size: 13px;">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Symmetric</th>
+        <th>Asymmetric</th>
+        <th>Hashing</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Main purpose</strong></td>
+        <td>Confidentiality (bulk)</td>
+        <td>Key establishment, Auth</td>
+        <td>Integrity / fingerprint</td>
+      </tr>
+      <tr>
+        <td><strong>Keys</strong></td>
+        <td>Shared secret</td>
+        <td>Public + private</td>
+        <td>No key (for ordinary hash)</td>
+      </tr>
+      <tr>
+        <td><strong>Reversible?</strong></td>
+        <td>Yes, with key</td>
+        <td>Depends on operation</td>
+        <td>No practical reversal</td>
+      </tr>
+      <tr>
+        <td><strong>Speed</strong></td>
+        <td>Fast</td>
+        <td>Slower</td>
+        <td>Fast</td>
+      </tr>
+      <tr>
+        <td><strong>Example</strong></td>
+        <td>AES</td>
+        <td>RSA, ECDHE, ECDSA</td>
+        <td>SHA-256</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 50, 51, 52. Comparisons -->
+  <h2 class="sec-heading">Comparisons (50 - 52)</h2>
+  <div class="two-col">
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">50. Hash vs Encryption</h3>
+      <p style="font-size:13px; margin:2px 0;"><strong>Encryption:</strong> Designed to be reversible with key (Protect secrecy).</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Hashing:</strong> One-way function (Produce data fingerprint).</p>
+    </div>
+    <div class="hand-box">
+      <h3 class="subsec-heading" style="margin-top:0;">51 & 52. Keys & Passwords</h3>
+      <p style="font-size:13px; margin:2px 0;"><strong>Cert vs Public Key:</strong> Cert is a signed document that <em>contains</em> the public key.</p>
+      <p style="font-size:13px; margin:2px 0;"><strong>Private Key vs Password:</strong> Password is user-chosen. Private Key is mathematical secret for crypto pairs.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- =================== PAGE 9 =================== -->
+<div class="notebook-page">
+  <div class="spiral-spine"></div>
+  <div class="spiral-holes">
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+    <div class="hole-ring-combo"><div class="ring"></div><div class="hole"></div></div>
+  </div>
+
+  <div class="page-top-bar">
+    <span>CYBERSECURITY & NETWORKING // STUDY NOTES</span>
+    <span>PAGE 9</span>
+  </div>
+
+  <!-- 56. Interview Questions -->
+  <h2 class="sec-heading">56. 🎯 Interview Questions</h2>
+  
+  <div class="two-col">
+    <div>
+      <div class="qa-block"><div class="qa-q">Q1. What is SSL?</div><div class="qa-a">Secure Sockets Layer. An older crypto protocol to secure network communication.</div></div>
+      <div class="qa-block"><div class="qa-q">Q2. What is TLS?</div><div class="qa-a">Transport Layer Security. The successor to SSL, used for modern secure internet communication.</div></div>
+      <div class="qa-block"><div class="qa-q">Q4. Three major security properties of TLS?</div><div class="qa-a">Confidentiality, Integrity, Authentication.</div></div>
+      <div class="qa-block"><div class="qa-q">Q6. What is symmetric encryption?</div><div class="qa-a">Uses the same shared secret key for encryption and decryption.</div></div>
+      <div class="qa-block"><div class="qa-q">Q7. What is asymmetric cryptography?</div><div class="qa-a">Uses a public/private key pair for key establishment and digital signatures.</div></div>
+    </div>
+    
+    <div>
+      <div class="qa-block"><div class="qa-q">Q10. What is hybrid encryption?</div><div class="qa-a">Combines public-key cryptography (for key establishment) with symmetric cryptography (for fast bulk data protection).</div></div>
+      <div class="qa-block"><div class="qa-q">Q11. What is hashing?</div><div class="qa-a">Converts input data into a fixed-length digest.</div></div>
+      <div class="qa-block"><div class="qa-q">Q13. What is HMAC?</div><div class="qa-a">Keyed message authentication mechanism combining a secret key with a hash function.</div></div>
+      <div class="qa-block"><div class="qa-q">Q14. What is a digital certificate?</div><div class="qa-a">Binds an identity/domain to a public key and is digitally signed by a CA.</div></div>
+      <div class="qa-block"><div class="qa-q">Q17. What happens in a TLS handshake?</div><div class="qa-a">Negotiate crypto parameters, server authenticates via certificate, establish shared session keys.</div></div>
+    </div>
+  </div>
+
+  <!-- 58. Cheat Sheet -->
+  <h2 class="sec-heading">58. ⭐ Super-Important Cheat Sheet</h2>
+  <div class="ascii-tree" style="text-align: center; font-size: 11px; padding: 6px;">                TLS
+                 │
+     ┌───────────┼───────────┐
+     ↓           ↓           ↓
+Confidentiality Integrity Authentication
+     │           │           │
+Encryption   Integrity      Certificate
+             Protection         │
+                                ↓
+                         Public Key + Identity</div>
+                         
+  <div class="two-col" style="margin-top: 6px;">
+    <div class="hand-box">
+      <p style="font-weight:700; margin:0;">SYMMETRIC</p>
+      <p style="font-size:12px; margin:0;">Same Secret Key → Fast → Bulk Data (AES)</p>
+      <p style="font-weight:700; margin:4px 0 0 0;">ASYMMETRIC</p>
+      <p style="font-size:12px; margin:0;">Public + Private Key → Key Estab/Signatures (RSA/ECDHE)</p>
+    </div>
+    <div class="hand-box">
+      <p style="font-weight:700; margin:0;">HASHING</p>
+      <p style="font-size:12px; margin:0;">Data → Hash Function → Fixed Digest (SHA-256)</p>
+      <p style="font-weight:700; margin:4px 0 0 0;">HMAC</p>
+      <p style="font-size:12px; margin:0;">Message + Secret Key → Authentication Tag</p>
+    </div>
+  </div>
+
+  <!-- 59. Final Flow -->
+  <div class="sticky-note" style="border-left: 6px solid #e11d48; background: #fff1f2; margin-top: 10px;">
+    <div style="font-size: 18px; font-weight: 700; color: #9f1239; font-family: 'Caveat', cursive; text-align: center;">
+      🔥 Final TLS Flow to Remember
+    </div>
+    <p style="font-size: 14.5px; color: #881337; margin: 4px 0; font-weight: 700; text-align: center;">
+      The easiest sentence to remember:<br>
+      "TLS authenticates the server, establishes shared cryptographic keys, and then protects application data using efficient symmetric cryptography."
+    </p>
+  </div>
+
+</div>
+
+</body>
+</html>
